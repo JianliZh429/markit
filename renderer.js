@@ -1,5 +1,6 @@
 const { marked } = require("marked");
 
+const projectPane = document.getElementById("project-pane");
 const markdownInput = document.getElementById("markdown-input");
 const previewPane = document.getElementById("preview-pane");
 
