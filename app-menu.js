@@ -1,4 +1,29 @@
-const { app, Menu } = require("electron");
+const { app, dialog, Menu } = require("electron");
+
+const openFunc = (event, focusedWindow, focusedWebContents) => {
+  dialog
+    .showOpenDialog({
+      properties: ["openFile"],
+      filters: [{ name: "Markdown Files", extensions: ["md"] }],
+    })
+    .then((result) => {
+      if (!result.canceled) {
+        const filePath = result.filePaths[0];
+        fs.readFile(filePath, "utf-8", (err, data) => {
+          if (err) {
+            console.error(err);
+            return;
+          }
+          markdownInput.value = data;
+          updatePreview();
+        });
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
 const isMac = process.platform === "darwin";
 const template = [
   ...(isMac
@@ -36,6 +61,7 @@ const template = [
       },
       {
         label: "Open...",
+        click: openFunc,
       },
       {
         label: "Open Recent",

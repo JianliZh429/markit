@@ -1,5 +1,5 @@
+const { app, BrowserWindow } = require("electron");
 require("./app-menu");
-const { app, BrowserWindow, Menu, MenuItem } = require("electron");
 function createWindow() {
   const win = new BrowserWindow({
     width: 960,
