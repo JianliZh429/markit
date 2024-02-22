@@ -1,4 +1,4 @@
-const marked = require("marked");
+const { marked } = require("marked");
 
 const markdownInput = document.getElementById("markdown-input");
 const previewPane = document.getElementById("preview-pane");
