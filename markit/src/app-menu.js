@@ -1,35 +1,11 @@
-const { app, dialog, Menu } = require("electron");
-
-const openFunc = (event, focusedWindow, focusedWebContents) => {
-  dialog
-    .showOpenDialog({
-      properties: ["openFile"],
-      filters: [{ name: "Markdown Files", extensions: ["md"] }],
-    })
-    .then((result) => {
-      if (!result.canceled) {
-        const filePath = result.filePaths[0];
-        fs.readFile(filePath, "utf-8", (err, data) => {
-          if (err) {
-            console.error(err);
-            return;
-          }
-          markdownInput.value = data;
-          updatePreview();
-        });
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-};
+const { Menu } = require("electron");
 
 const isMac = process.platform === "darwin";
 const template = [
   ...(isMac
     ? [
         {
-          label: app.name,
+          label: "MarkIt",
           submenu: [
             { role: "about" },
             { type: "separator" },
@@ -60,8 +36,14 @@ const template = [
         type: "separator",
       },
       {
-        label: "Open...",
-        click: openFunc,
+        label: "Open File",
+        click: openFile,
+      },
+      {
+        label: "Open Project",
+        click: () => {
+          win?.webContents.send("open-directory-dialog");
+        },
       },
       {
         label: "Open Recent",
