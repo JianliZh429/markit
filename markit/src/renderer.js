@@ -36,49 +36,57 @@ const loadFile = (filePath) => {
   });
 };
 
-const appendNode = ($parenEl, filePath, isFile) => {
+const appendNode = ($ul, filePath, isFile) => {
   let pasedPath = path.parse(filePath);
   let $li = document.createElement("li");
   $li.appendChild(document.createTextNode(pasedPath.base));
-  $parenEl.appendChild($li);
+  $ul.appendChild($li);
 
   if (isFile) {
     $li.className += "file";
-    $li.addEventListener("dblclick", () => {
+    $li.addEventListener("dblclick", (event) => {
       loadFile(filePath);
+      event.stopPropagation();
     });
   } else {
     $li.className += "folder";
-    $li.addEventListener("dblclick", () => {
-      let $ul = document.createElement("ul");
-      $li.appendChild($ul);
-      unfoldDir($ul, filePath);
+    $li.addEventListener("dblclick", (event) => {
+      let $target = event.target;
+      let $ul = $target.getElementsByTagName('ul');
+      if ($ul.length > 0) {
+        $target.removeChild($ul[0]);
+      } else {
+        let $ul2 = document.createElement("ul");
+        $target.appendChild($ul2);
+        unfoldDir($ul2, filePath);
+      }
+      event.stopPropagation();
     });
   }
   return $li;
-}
+};
 
-
-const unfoldDir = ($el, filePath) => {
+const unfoldDir = ($ul, filePath) => {
   fs.readdirSync(filePath).forEach((f) => {
     let fPath = path.join(filePath, f);
     let parsedPath = path.parse(fPath);
     if (fs.statSync(fPath).isDirectory()) {
-      appendNode($el, fPath, false);
+      appendNode($ul, fPath, false);
     } else if (parsedPath.ext.toLowerCase() == ".md") {
-      appendNode($el, fPath, true);
+      appendNode($ul, fPath, true);
     }
   });
 };
-const showFileTree = ($el, filePath) => {
+
+const showFileTree = ($root, filePath) => {
   let state = fs.statSync(filePath);
   if (state.isDirectory()) {
-    let parent = appendNode($el, filePath, false);
+    let parent = appendNode($root, filePath, false);
     let $ul = document.createElement("ul");
     parent.appendChild($ul);
     unfoldDir($ul, filePath);
   } else {
-    appendNode($el, filePath, true);
+    appendNode($root, filePath, true);
   }
 };
 
