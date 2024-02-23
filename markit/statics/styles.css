@@ -5,15 +5,23 @@ body {
   display: flex;
 }
 
-textarea {
+#project-pane {
   flex: 1;
+  height: 100vh;
+  padding: 10px;
+  overflow-y: auto;
+  border-left: 1px solid #ccc;
+}
+
+textarea {
+  flex: 3;
   height: 100vh;
   padding: 10px;
   font-size: 16px;
 }
 
 #preview-pane {
-  flex: 1;
+  flex: 3;
   height: 100vh;
   padding: 10px;
   overflow-y: auto;
