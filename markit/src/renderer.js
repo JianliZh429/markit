@@ -36,37 +36,49 @@ const loadFile = (filePath) => {
   });
 };
 
-const appendNode = (parentElement, name, isFile) => {
-  let li = document.createElement("li");
-  li.appendChild(document.createTextNode(name));
-  parentElement.appendChild(li);
-  if (isFile) {
-    li.className += "file";
-  } else {
-    li.className += "folder";
-  }
-  return li;
-};
+const appendNode = ($parenEl, filePath, isFile) => {
+  let pasedPath = path.parse(filePath);
+  let $li = document.createElement("li");
+  $li.appendChild(document.createTextNode(pasedPath.base));
+  $parenEl.appendChild($li);
 
-const showFileTree = (filePath, $root) => {
-  let state = fs.statSync(filePath);
-  if (state.isDirectory()) {
-    let name = path.parse(filePath).base;
-    parent = appendNode($root, name, false);
-    let ul = document.createElement("ul");
-    parent.appendChild(ul);
-    fs.readdirSync(filePath).forEach((f) => {
-      let fPath = path.join(filePath, f);
-      let pasedPath = path.parse(f);
-      if (fs.statSync(fPath).isDirectory()) {
-        let el = appendNode(ul, pasedPath.base, false);
-      } else if (pasedPath.ext.toLowerCase() == ".md") {
-        let el = appendNode(ul, pasedPath.base, true);
-      }
+  if (isFile) {
+    $li.className += "file";
+    $li.addEventListener("dblclick", () => {
+      loadFile(filePath);
     });
   } else {
-    let name = path.parse(filePath).base;
-    parent = appendNode($root, name, true);
+    $li.className += "folder";
+    $li.addEventListener("dblclick", () => {
+      let $ul = document.createElement("ul");
+      $li.appendChild($ul);
+      unfoldDir($ul, filePath);
+    });
+  }
+  return $li;
+}
+
+
+const unfoldDir = ($el, filePath) => {
+  fs.readdirSync(filePath).forEach((f) => {
+    let fPath = path.join(filePath, f);
+    let parsedPath = path.parse(fPath);
+    if (fs.statSync(fPath).isDirectory()) {
+      appendNode($el, fPath, false);
+    } else if (parsedPath.ext.toLowerCase() == ".md") {
+      appendNode($el, fPath, true);
+    }
+  });
+};
+const showFileTree = ($el, filePath) => {
+  let state = fs.statSync(filePath);
+  if (state.isDirectory()) {
+    let parent = appendNode($el, filePath, false);
+    let $ul = document.createElement("ul");
+    parent.appendChild($ul);
+    unfoldDir($ul, filePath);
+  } else {
+    appendNode($el, filePath, true);
   }
 };
 
@@ -89,5 +101,5 @@ ipcRenderer.on("file-opened", (event, args) => {
   if (fs.statSync(filePath).isFile()) {
     loadFile(filePath);
   }
-  showFileTree(filePath, tree);
+  showFileTree(tree, filePath);
 });
