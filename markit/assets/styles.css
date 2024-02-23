@@ -8,12 +8,16 @@ body {
 #explorer {
   flex: 1;
   height: 100vh;
-  padding: 10px;
   overflow-y: auto;
   border-left: 1px solid #ccc;
+  overflow: scroll;
   ul {
     list-style-type: none;
     padding-inline-start: 1em;
+    li {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 
@@ -33,19 +37,21 @@ body {
 }
 
 .folder {
-  &::after {
-    content: url('./images/folder.svg');
-    display: block;
-    height: 1em;
+  &::before {
+    content: url("./images/folder.svg");
+    display: inline-block;
     width: 1em;
+    height: 1em;
+    margin-right: 0.2em;
   }
 }
 
 .file {
-  &::after {
-    content: url('./images/file.svg');
-    display: block;
-    height: 1em;
+  &::before {
+    content: url("./images/file.svg");
+    display: inline-block;
     width: 1em;
+    height: 1em;
+    margin-right: 0.2em;
   }
 }

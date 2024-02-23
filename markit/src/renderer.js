@@ -35,37 +35,41 @@ const loadFile = (filePath) => {
     }
   });
 };
-const appendNode = (parentElement, name) => {
+
+const appendNode = (parentElement, name, isFile) => {
   let li = document.createElement("li");
   li.appendChild(document.createTextNode(name));
   parentElement.appendChild(li);
+  if (isFile) {
+    li.className += "file";
+  } else {
+    li.className += "folder";
+  }
   return li;
 };
 
-const showFileTree = (filePath) => {
-  let name = path.parse(filePath).base;
-  parent = appendNode(tree, name);
-
+const showFileTree = (filePath, $root) => {
   let state = fs.statSync(filePath);
   if (state.isDirectory()) {
-    parent.className += "folder";
+    let name = path.parse(filePath).base;
+    parent = appendNode($root, name, false);
     let ul = document.createElement("ul");
     parent.appendChild(ul);
-
     fs.readdirSync(filePath).forEach((f) => {
-      let name = path.parse(f).base;
-      let el = appendNode(ul, name);
-
-      if (fs.statSync(f).isDirectory()) {
-        el.className = "folder"
-      }else{
-        el.className = "file"
+      let fPath = path.join(filePath, f);
+      let pasedPath = path.parse(f);
+      if (fs.statSync(fPath).isDirectory()) {
+        let el = appendNode(ul, pasedPath.base, false);
+      } else if (pasedPath.ext.toLowerCase() == ".md") {
+        let el = appendNode(ul, pasedPath.base, true);
       }
     });
-  }else{
-    parent.className += "file";
+  } else {
+    let name = path.parse(filePath).base;
+    parent = appendNode($root, name, true);
   }
 };
+
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
   if (isEditMode) {
@@ -85,5 +89,5 @@ ipcRenderer.on("file-opened", (event, args) => {
   if (fs.statSync(filePath).isFile()) {
     loadFile(filePath);
   }
-  showFileTree(filePath);
+  showFileTree(filePath, tree);
 });

@@ -34,7 +34,7 @@ app.on("will-quit", () => {
 ipcMain.on("open-file-directory-dialog", (event) => {
   dialog
     .showOpenDialog({
-      properties: ["openFile", "openDirectory", "multiSelections"],
+      properties: ["openFile", "openDirectory"],
       filters: [{ name: "Markdown Files", extensions: ["md"] }],
     })
     .then((result) => {
