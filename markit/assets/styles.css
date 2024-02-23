@@ -13,6 +13,7 @@ body {
   border-left: 1px solid #ccc;
   ul {
     list-style-type: none;
+    padding-inline-start: 1em;
   }
 }
 
@@ -29,4 +30,22 @@ body {
   padding: 10px;
   overflow-y: auto;
   border-left: 1px solid #ccc;
+}
+
+.folder {
+  &::after {
+    content: url('./images/folder.svg');
+    display: block;
+    height: 1em;
+    width: 1em;
+  }
+}
+
+.file {
+  &::after {
+    content: url('./images/file.svg');
+    display: block;
+    height: 1em;
+    width: 1em;
+  }
 }

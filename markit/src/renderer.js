@@ -35,7 +35,37 @@ const loadFile = (filePath) => {
     }
   });
 };
+const appendNode = (parentElement, name) => {
+  let li = document.createElement("li");
+  li.appendChild(document.createTextNode(name));
+  parentElement.appendChild(li);
+  return li;
+};
 
+const showFileTree = (filePath) => {
+  let name = path.parse(filePath).base;
+  parent = appendNode(tree, name);
+
+  let state = fs.statSync(filePath);
+  if (state.isDirectory()) {
+    parent.className += "folder";
+    let ul = document.createElement("ul");
+    parent.appendChild(ul);
+
+    fs.readdirSync(filePath).forEach((f) => {
+      let name = path.parse(f).base;
+      let el = appendNode(ul, name);
+
+      if (fs.statSync(f).isDirectory()) {
+        el.className = "folder"
+      }else{
+        el.className = "file"
+      }
+    });
+  }else{
+    parent.className += "file";
+  }
+};
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
   if (isEditMode) {
@@ -50,10 +80,10 @@ ipcRenderer.on("open-file-directory-dialog", (event) => {
 });
 
 ipcRenderer.on("file-opened", (event, args) => {
+  tree.innerHTML = "";
   let filePath = args[0];
-  let name = path.parse(filePath).name;
-  let li = document.createElement("li");
-  li.appendChild(document.createTextNode(name));
-  tree.appendChild(li);
-  loadFile(filePath);
+  if (fs.statSync(filePath).isFile()) {
+    loadFile(filePath);
+  }
+  showFileTree(filePath);
 });
