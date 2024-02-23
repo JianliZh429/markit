@@ -1,26 +1,26 @@
 const { Menu } = require("electron");
-
 const isMac = process.platform === "darwin";
-const template = [
-  ...(isMac
-    ? [
-        {
-          label: "MarkIt",
-          submenu: [
-            { role: "about" },
-            { type: "separator" },
-            { role: "services" },
-            { type: "separator" },
-            { role: "hide" },
-            { role: "hideOthers" },
-            { role: "unhide" },
-            { type: "separator" },
-            { role: "quit" },
-          ],
-        },
-      ]
-    : []),
-  {
+const appMenu = () => {
+  if (isMac) {
+    return {
+      label: "MarkIt",
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { role: "services" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    };
+  }
+  return {};
+};
+const fileMenu = (win) => {
+  return {
     label: "File",
     submenu: [
       {
@@ -36,13 +36,9 @@ const template = [
         type: "separator",
       },
       {
-        label: "Open File",
-        click: openFile,
-      },
-      {
-        label: "Open Project",
+        label: "Open...",
         click: () => {
-          win?.webContents.send("open-directory-dialog");
+          win.webContents.send("open-file-directory-dialog");
         },
       },
       {
@@ -59,8 +55,10 @@ const template = [
       },
       isMac ? { role: "close" } : { role: "quit" },
     ],
-  },
-  {
+  };
+};
+const editMenu = () => {
+  return {
     label: "Edit",
     submenu: [
       {
@@ -82,9 +80,10 @@ const template = [
         role: "paste",
       },
     ],
-  },
-
-  {
+  };
+};
+const viewMenu = () => {
+  return {
     label: "View",
     submenu: [
       {
@@ -112,9 +111,10 @@ const template = [
         role: "togglefullscreen",
       },
     ],
-  },
-
-  {
+  };
+};
+const winMenu = () => {
+  return {
     role: "window",
     submenu: [
       {
@@ -124,17 +124,30 @@ const template = [
         role: "close",
       },
     ],
-  },
-
-  {
+  };
+};
+const helpMenu = () => {
+  return {
     role: "help",
     submenu: [
       {
         label: "Learn More",
       },
     ],
-  },
-];
-
-const menu = Menu.buildFromTemplate(template);
-Menu.setApplicationMenu(menu);
+  };
+};
+const buildTemplate = (win) => {
+  return [
+    appMenu(),
+    fileMenu(win),
+    editMenu(),
+    viewMenu(),
+    winMenu(),
+    helpMenu(),
+  ];
+};
+const init = (win) => {
+  const menu = Menu.buildFromTemplate(buildTemplate(win));
+  Menu.setApplicationMenu(menu);
+};
+module.exports = { init };

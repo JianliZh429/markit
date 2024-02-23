@@ -1,22 +1,41 @@
 const { marked } = require("marked");
 const { ipcRenderer } = require("electron");
+const path = require("path");
+const fs = require("fs");
 
-const projectPane = document.getElementById("project-pane");
-const markdownInput = document.getElementById("markdown-input");
-const previewPane = document.getElementById("preview-pane");
+let isEditMode = true;
+
+const explorer = document.getElementById("explorer");
+const editor = document.getElementById("editor");
+const previewer = document.getElementById("previewer");
+const tree = document.getElementById("tree");
 
 const previewMode = () => {
-  const markdownContent = markdownInput.value;
+  const markdownContent = editor.value;
   const htmlContent = marked(markdownContent);
-  previewPane.innerHTML = htmlContent;
-  previewPane.style.display = "block";
-  markdownInput.style.display = "none";
+  previewer.innerHTML = htmlContent;
+  previewer.style.display = "block";
+  editor.style.display = "none";
 };
+
 const editMode = () => {
-  previewPane.style.display = "none";
-  markdownInput.style.display = "block";
+  previewer.style.display = "none";
+  editor.style.display = "block";
 };
-let isEditMode = true;
+
+const loadFile = (filePath) => {
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    editor.value = data;
+    if (!isEditMode) {
+      previewMode();
+    }
+  });
+};
+
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
   if (isEditMode) {
@@ -24,4 +43,17 @@ ipcRenderer.on("toggle-mode", () => {
   } else {
     previewMode();
   }
+});
+
+ipcRenderer.on("open-file-directory-dialog", (event) => {
+  ipcRenderer.send("open-file-directory-dialog");
+});
+
+ipcRenderer.on("file-opened", (event, args) => {
+  let filePath = args[0];
+  let name = path.parse(filePath).name;
+  let li = document.createElement("li");
+  li.appendChild(document.createTextNode(name));
+  tree.appendChild(li);
+  loadFile(filePath);
 });

@@ -5,22 +5,25 @@ body {
   display: flex;
 }
 
-#project-pane {
+#explorer {
   flex: 1;
   height: 100vh;
   padding: 10px;
   overflow-y: auto;
   border-left: 1px solid #ccc;
+  ul {
+    list-style-type: none;
+  }
 }
 
-textarea {
+#editor {
   flex: 3;
   height: 100vh;
   padding: 10px;
   font-size: 16px;
 }
 
-#preview-pane {
+#previewer {
   flex: 3;
   height: 100vh;
   padding: 10px;
