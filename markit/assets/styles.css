@@ -18,6 +18,9 @@ body {
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: pointer;
+      .selected {
+        background-color: #74a4f3;
+      }
     }
   }
 }
@@ -40,6 +43,16 @@ body {
 .folder {
   &::before {
     content: url("./images/folder.svg");
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 0.2em;
+  }
+}
+
+.folder-open {
+  &::before {
+    content: url("./images/folder-open.svg");
     display: inline-block;
     width: 1em;
     height: 1em;

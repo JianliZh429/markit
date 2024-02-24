@@ -36,6 +36,16 @@ const loadFile = (filePath) => {
   });
 };
 
+const switchFolderState = ($li) => {
+  if ($li.classList.contains("folder-open")) {
+    $li.classList.remove("folder-open");
+    $li.className += " folder";
+  } else {
+    $li.classList.remove("folder");
+    $li.className += " folder-open";
+  }
+};
+
 const appendNode = ($ul, filePath, isFile) => {
   let pasedPath = path.parse(filePath);
   let $li = document.createElement("li");
@@ -43,16 +53,17 @@ const appendNode = ($ul, filePath, isFile) => {
   $ul.appendChild($li);
 
   if (isFile) {
-    $li.className += "file";
+    $li.className += " file";
     $li.addEventListener("dblclick", (event) => {
       loadFile(filePath);
       event.stopPropagation();
     });
   } else {
-    $li.className += "folder";
+    $li.className += " folder";
     $li.addEventListener("dblclick", (event) => {
       let $target = event.target;
-      let $ul = $target.getElementsByTagName('ul');
+      switchFolderState($target);
+      let $ul = $target.getElementsByTagName("ul");
       if ($ul.length > 0) {
         $target.removeChild($ul[0]);
       } else {
@@ -81,10 +92,11 @@ const unfoldDir = ($ul, filePath) => {
 const showFileTree = ($root, filePath) => {
   let state = fs.statSync(filePath);
   if (state.isDirectory()) {
-    let parent = appendNode($root, filePath, false);
+    let $parent = appendNode($root, filePath, false);
     let $ul = document.createElement("ul");
-    parent.appendChild($ul);
+    $parent.appendChild($ul);
     unfoldDir($ul, filePath);
+    switchFolderState($parent);
   } else {
     appendNode($root, filePath, true);
   }
