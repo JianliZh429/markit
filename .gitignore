@@ -129,3 +129,15 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+markit-darwin-arm64
+markit-darwin-x64
+markit-darwin-universal
+markit-linux-arm64
+markit-linux-armv7l
+markit-linux-x64
+markit-mas-arm64
+markit-mas-x64
+markit-mas-universal
+markit-win32-arm64
+markit-win32-ia32
+markit-win32-x64

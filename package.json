@@ -1,26 +1,25 @@
 {
   "name": "MarkIt",
   "version": "1.0.0",
-  "main": "app.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "main": "./markit/src/app.js",
   "scripts": {
     "format": "prettier --write markit/src/*.js",
     "build": "mkdir -p dist && cp -R markit/* dist/",
     "start": "npm run build && electron dist/src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "npx electron-packager .  markit --all --icon markit/assets/images/markit.icns",
+    "clear": "rm -rf dist markit-*"
   },
   "author": "",
   "license": "ISC",
   "keywords": [],
   "dependencies": {
-    "electron": "^29.0.0",
     "marked": "^12.0.0"
   },
   "description": "",
   "devDependencies": {
     "@electron/packager": "^18.1.3",
+    "electron": "^29.0.1",
     "electron-reload": "^2.0.0-alpha.1",
     "prettier": "3.2.5"
   }
