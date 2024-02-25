@@ -5,9 +5,11 @@ const {
   globalShortcut,
   ipcMain,
 } = require("electron");
+const path = require("path");
 
 const shortcuts = require("./shortcuts.js");
 const appMenu = require("./app-menu");
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 960,
@@ -20,7 +22,7 @@ function createWindow() {
     },
   });
 
-  win.loadFile("../index.html");
+  win.loadFile(path.join(__dirname, "../index.html"));
   shortcuts.register(globalShortcut, win, ipcMain);
   appMenu.init(win);
 }
