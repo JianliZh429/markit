@@ -16,7 +16,7 @@
   "dependencies": {
     "marked": "^12.0.0"
   },
-  "description": "",
+  "description": "Markdown Editor",
   "devDependencies": {
     "@electron/packager": "^18.1.3",
     "electron": "^29.0.1",
