@@ -6,6 +6,7 @@ const {
   ipcMain,
 } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 const shortcuts = require("./shortcuts.js");
 const appMenu = require("./app-menu");
@@ -45,4 +46,27 @@ ipcMain.on("open-file-directory-dialog", (event) => {
       }
     })
     .catch((err) => console.log(err));
+});
+
+ipcMain.on("save-file-dialog", async (event) => {
+  await dialog
+    .showSaveDialog({
+      defaultPath: "untitled.md",
+      filters: [{ name: "Markdown Files", extensions: ["md"] }],
+    })
+    .then((result) => {
+      if (result) {
+        event.reply("save-file", result.filePath);
+      }
+    })
+    .catch((err) => console.log(err));
+});
+
+ipcMain.on("save-file", async (event, filePath, content) => {
+  try {
+    await fs.promises.writeFile(filePath, content);
+    event.reply("file-saved", filePath);
+  } catch (error) {
+    event.reply("file-save-error", error.message);
+  }
 });

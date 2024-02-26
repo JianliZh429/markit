@@ -5,22 +5,22 @@ const fs = require("fs");
 
 let isEditMode = true;
 
-const explorer = document.getElementById("explorer");
-const editor = document.getElementById("editor");
-const previewer = document.getElementById("previewer");
-const tree = document.getElementById("tree");
+// const $explorer = document.getElementById("explorer");
+const $editor = document.getElementById("editor");
+const $previewer = document.getElementById("previewer");
+const $tree = document.getElementById("tree");
 
 const previewMode = () => {
-  const markdownContent = editor.value;
+  const markdownContent = $editor.value;
   const htmlContent = marked(markdownContent);
-  previewer.innerHTML = htmlContent;
-  previewer.style.display = "block";
-  editor.style.display = "none";
+  $previewer.innerHTML = htmlContent;
+  $previewer.style.display = "block";
+  $editor.style.display = "none";
 };
 
 const editMode = () => {
-  previewer.style.display = "none";
-  editor.style.display = "block";
+  $previewer.style.display = "none";
+  $editor.style.display = "block";
 };
 
 const loadFile = (filePath) => {
@@ -29,7 +29,7 @@ const loadFile = (filePath) => {
       console.error(err);
       return;
     }
-    editor.value = data;
+    $editor.value = data;
     if (!isEditMode) {
       previewMode();
     }
@@ -102,6 +102,14 @@ const showFileTree = ($root, filePath) => {
   }
 };
 
+const loadFileOrFolderToExplorer = ($tree, filePath) => {
+  $tree.innerHTML = "";
+  if (fs.statSync(filePath).isFile()) {
+    loadFile(filePath);
+  }
+  showFileTree($tree, filePath);
+};
+
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
   if (isEditMode) {
@@ -116,10 +124,27 @@ ipcRenderer.on("open-file-directory-dialog", (event) => {
 });
 
 ipcRenderer.on("file-opened", (event, args) => {
-  tree.innerHTML = "";
   let filePath = args[0];
-  if (fs.statSync(filePath).isFile()) {
-    loadFile(filePath);
-  }
-  showFileTree(tree, filePath);
+  loadFileOrFolderToExplorer($tree, filePath);
+});
+
+ipcRenderer.on("save-file-dialog", (event) => {
+  ipcRenderer.send("save-file-dialog");
+});
+
+// Listen for save-file event
+ipcRenderer.on("save-file", (event, filePath) => {
+  // Handle the file save response from the main process
+  ipcRenderer.send("save-file", filePath, $editor.value);
+});
+
+// Listen for file-saved event
+ipcRenderer.on("file-saved", (event, filePath) => {
+  // Handle the file saved response from the main process
+  loadFileOrFolderToExplorer($tree, filePath);
+});
+
+// Listen for file-save-error event
+ipcRenderer.on("file-save-error", (event, errorMessage) => {
+  console.log("Save file failed, ", errorMessage);
 });
