@@ -25,12 +25,7 @@ const fileMenu = (win) => {
     submenu: [
       {
         label: "New File",
-      },
-      {
-        label: "New Tab",
-      },
-      {
-        label: "New Window",
+        accelerator: "CommandOrControl+N",
       },
       {
         type: "separator",
@@ -40,6 +35,7 @@ const fileMenu = (win) => {
         click: () => {
           win.webContents.send("open-file-directory-dialog");
         },
+        accelerator: "CommandOrControl+O",
       },
       {
         label: "Open Recent",
@@ -49,9 +45,7 @@ const fileMenu = (win) => {
       },
       {
         label: "Save...",
-      },
-      {
-        label: "Save All...",
+        accelerator: "CommandOrControl+S",
       },
       isMac ? { role: "close" } : { role: "quit" },
     ],
