@@ -25,6 +25,9 @@ const fileMenu = (win) => {
     submenu: [
       {
         label: "New File",
+        click: () => {
+          win.webContents.send("new-file");
+        },
         accelerator: "CommandOrControl+N",
       },
       {

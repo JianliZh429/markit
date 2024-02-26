@@ -9,6 +9,7 @@ let isEditMode = true;
 const $editor = document.getElementById("editor");
 const $previewer = document.getElementById("previewer");
 const $tree = document.getElementById("tree");
+const $title = document.querySelector("title");
 
 const previewMode = () => {
   const markdownContent = $editor.value;
@@ -33,6 +34,7 @@ const loadFile = (filePath) => {
     if (!isEditMode) {
       previewMode();
     }
+    $title.textContent = filePath;
   });
 };
 

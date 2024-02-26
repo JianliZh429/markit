@@ -34,8 +34,8 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-ipcMain.on("open-file-directory-dialog", (event) => {
-  dialog
+ipcMain.on("open-file-directory-dialog", async (event) => {
+  await dialog
     .showOpenDialog({
       properties: ["openFile", "openDirectory"],
       filters: [{ name: "Markdown Files", extensions: ["md"] }],
