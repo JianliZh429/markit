@@ -1,4 +1,5 @@
-const { Menu } = require("electron");
+const { Menu, MenuItem } = require("electron");
+
 const isMac = process.platform === "darwin";
 const appMenu = () => {
   if (isMac) {
@@ -146,8 +147,8 @@ const buildTemplate = (win) => {
     helpMenu(),
   ];
 };
-const init = (win) => {
+const initAppMenu = (win) => {
   const menu = Menu.buildFromTemplate(buildTemplate(win));
   Menu.setApplicationMenu(menu);
 };
-module.exports = { init };
+module.exports = { initAppMenu };

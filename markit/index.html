@@ -15,5 +15,32 @@
     <div id="previewer" style="display: none"></div>
 
     <script src="./src/renderer.js"></script>
+    <script nonce="nonce-d3adbe3fed">
+      const { remote } = require("electron");
+      const { Menu, MenuItem } = remote;
+
+      const menu = new Menu();
+      menu.append(
+        new MenuItem({
+          label: "MenuItem1",
+          click() {
+            console.log("item 1 clicked");
+          },
+        })
+      );
+      menu.append(new MenuItem({ type: "separator" }));
+      menu.append(
+        new MenuItem({ label: "MenuItem2", type: "checkbox", checked: true })
+      );
+
+      window.addEventListener(
+        "contextmenu",
+        (e) => {
+          e.preventDefault();
+          menu.popup(remote.getCurrentWindow());
+        },
+        false
+      );
+    </script>
   </body>
 </html>

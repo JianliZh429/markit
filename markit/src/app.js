@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs");
 
 const shortcuts = require("./shortcuts.js");
-const appMenu = require("./app-menu");
+const menu = require("./menu.js");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -25,7 +25,7 @@ function createWindow() {
 
   win.loadFile(path.join(__dirname, "../index.html"));
   shortcuts.register(globalShortcut, win, ipcMain);
-  appMenu.init(win);
+  menu.initAppMenu(win);
 }
 
 app.whenReady().then(createWindow);
