@@ -52,6 +52,7 @@ const appendNode = ($ul, filePath, isFile) => {
   let pasedPath = path.parse(filePath);
   let $li = document.createElement("li");
   $li.appendChild(document.createTextNode(pasedPath.base));
+  $li.dataset.fullPath = filePath;
   $ul.appendChild($li);
 
   if (isFile) {
@@ -74,7 +75,7 @@ const appendNode = ($ul, filePath, isFile) => {
         unfoldDir($ul2, filePath);
       }
       event.stopPropagation();
-        });
+    });
   }
   return $li;
 };

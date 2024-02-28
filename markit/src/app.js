@@ -71,3 +71,11 @@ ipcMain.on("save-file", async (event, filePath, content) => {
     event.reply("file-save-error", error.message);
   }
 });
+
+ipcMain.on("renamed", async (event, filePath, fname) => {
+  const parsedPath = path.parse(filePath);
+  const newPath = path.join(parsedPath.dir, fname);
+  fs.rename(filePath, newPath, () => {
+    console.log(`File Renamed:\n ${filePath} renamed to ${newPath}`);
+  });
+});

@@ -49,11 +49,18 @@
             const curValue = $li.innerHTML;
             if (curValue != preValue) {
               $li.className += " renamed";
-              ipcRenderer.send("renamed");
+              ipcRenderer.send("renamed", $li.dataset.fullPath, curValue);
             }
           },
           { once: true }
         );
+        $li.addEventListener("keypress", function (event) {
+          const activeElement = document.activeElement;
+          if (event.key === "Enter" && activeElement == $li) {
+            $li.blur();
+            event.preventDefault();
+          }
+        });
       };
 
       const popupMenu = ($li) => {
