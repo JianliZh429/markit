@@ -1,16 +1,16 @@
 const {
   app,
-  BrowserWindow,
   dialog,
   globalShortcut,
   ipcMain,
+  BrowserWindow,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
 const shortcuts = require("./shortcuts.js");
 const menu = require("./menu.js");
-
+require("@electron/remote/main").initialize();
 function createWindow() {
   const win = new BrowserWindow({
     width: 960,
@@ -26,6 +26,7 @@ function createWindow() {
   win.loadFile(path.join(__dirname, "../index.html"));
   shortcuts.register(globalShortcut, win, ipcMain);
   menu.initAppMenu(win);
+  require("@electron/remote/main").enable(win.webContents);
 }
 
 app.whenReady().then(createWindow);

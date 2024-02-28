@@ -74,7 +74,7 @@ const appendNode = ($ul, filePath, isFile) => {
         unfoldDir($ul2, filePath);
       }
       event.stopPropagation();
-    });
+        });
   }
   return $li;
 };
