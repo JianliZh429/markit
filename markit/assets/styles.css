@@ -69,3 +69,23 @@ body {
     margin-right: 0.2em;
   }
 }
+
+code {
+  background-color: #f4f4f4;
+  padding: 2px;
+}
+pre {
+  margin: 10px 0;
+  white-space: pre-wrap;
+  & code {
+    display: block;
+    padding: 10px;
+    background-color: #f4f4f4;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: auto;
+  }
+}
