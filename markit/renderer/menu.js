@@ -44,9 +44,32 @@ const renaming = ($li) => {
   });
 };
 
+const isFolder = ($el) => {
+  return (
+    $el.classList.contains("folder") || $el.classList.contains("folder-open")
+  );
+};
 const deleting = ($li) => {
+  const filePath = $li.dataset.fullPath;
+  if (isFolder($li)) {
+    fs.rmdir(filePath, { recursive: true, force: true }, (err) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(`Directory "${filePath}" is deleted.`);
+      }
+    });
+  } else {
+    fs.unlink(filePath, (err) => {
+      console.log(`Deleting "${filePath}"`);
+      if (err) {
+        console.error(err);
+      } else {
+        console.log(`File "${filePath}" is deleted.`);
+      }
+    });
+  }
   $li.remove();
-  ipcRenderer.send("deleted", $li.dataset.fullPath);
 };
 
 const popupMenu = ($li) => {

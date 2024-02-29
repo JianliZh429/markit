@@ -83,13 +83,3 @@ ipcMain.on("renamed", async (event, filePath, fname) => {
     }
   });
 });
-
-ipcMain.on("deleted", async (event, filePath) => {
-  await fs.unlink(filePath, (err) => {
-    if (err) {
-      console.error(err);
-    } else {
-      console.log(`File "${filePath}" is deleted.`);
-    }
-  });
-});
