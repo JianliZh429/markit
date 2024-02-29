@@ -1,5 +1,6 @@
 const remote = require("@electron/remote");
 const { Menu, MenuItem } = remote;
+
 const moveCursorToEnd = ($li) => {
   const length = $li.innerHTML.length;
   const range = document.createRange();
@@ -65,6 +66,7 @@ const deleting = ($li) => {
       if (err) {
         console.error(err);
       } else {
+        unloadFile(filePath);
         console.log(`File "${filePath}" is deleted.`);
       }
     });

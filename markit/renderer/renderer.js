@@ -37,7 +37,15 @@ const loadFile = (filePath) => {
     $title.textContent = filePath;
   });
 };
-
+const unloadFile = (filePath) => {
+  if ($title.textContent === filePath) {
+    $title.textContent = "Markdown Editor";
+    $editor.value = "";
+    if (!isEditMode) {
+      previewMode();
+    }
+  }
+};
 const switchFolderState = ($li) => {
   if ($li.classList.contains("folder-open")) {
     $li.classList.remove("folder-open");
