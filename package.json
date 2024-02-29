@@ -15,7 +15,10 @@
   "keywords": [],
   "dependencies": {
     "@electron/remote": "^2.1.2",
-    "marked": "^12.0.0"
+    "@octokit/rest": "^20.0.2",
+    "marked": "^12.0.0",
+    "marked-code-preview": "^1.3.6",
+    "marked-emoji": "^1.3.2"
   },
   "description": "Markdown Editor",
   "devDependencies": {

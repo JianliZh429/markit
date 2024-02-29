@@ -1,19 +1,34 @@
 const { marked } = require("marked");
+const markedCodePreview = require("marked-code-preview");
+const { markedEmoji } = require("marked-emoji");
+const { Octokit } = require("@octokit/rest");
+
 const { ipcRenderer } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
 let isEditMode = true;
 
+new Octokit().rest.emojis.get().then((res) => {
+  marked
+    .use({ gfm: true })
+    .use(markedCodePreview())
+    .use(
+      markedEmoji({
+        emojis: res.data,
+        unicode: false,
+      }),
+    );
+});
+
 // const $explorer = document.getElementById("explorer");
 const $editor = document.getElementById("editor");
 const $previewer = document.getElementById("previewer");
 const $tree = document.getElementById("tree");
 const $title = document.querySelector("title");
-
 const previewMode = () => {
   const markdownContent = $editor.value;
-  const htmlContent = marked(markdownContent);
+  const htmlContent = marked.parse(markdownContent);
   $previewer.innerHTML = htmlContent;
   $previewer.style.display = "block";
   $editor.style.display = "none";
