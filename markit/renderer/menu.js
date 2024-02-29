@@ -33,7 +33,7 @@ const renaming = ($li) => {
         ipcRenderer.send("renamed", $li.dataset.fullPath, curValue);
       }
     },
-    { once: true }
+    { once: true },
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
@@ -42,6 +42,11 @@ const renaming = ($li) => {
       event.preventDefault();
     }
   });
+};
+
+const deleting = ($li) => {
+  $li.remove();
+  ipcRenderer.send("deleted", $li.dataset.fullPath);
 };
 
 const popupMenu = ($li) => {
@@ -58,7 +63,7 @@ const popupMenu = ($li) => {
     const menuDelete = new MenuItem({
       label: "Delete",
       click: (event) => {
-        console.log(event);
+        deleting($li);
       },
     });
     menu.append(menuDelete);
@@ -72,5 +77,5 @@ window.addEventListener(
     popupMenu(e.target);
     e.preventDefault();
   },
-  false
+  false,
 );

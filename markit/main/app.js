@@ -75,7 +75,21 @@ ipcMain.on("save-file", async (event, filePath, content) => {
 ipcMain.on("renamed", async (event, filePath, fname) => {
   const parsedPath = path.parse(filePath);
   const newPath = path.join(parsedPath.dir, fname);
-  fs.rename(filePath, newPath, () => {
-    console.log(`File Renamed:\n ${filePath} renamed to ${newPath}`);
+  fs.rename(filePath, newPath, (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log(`File "${filePath}" is renamed to "${newPath}"`);
+    }
+  });
+});
+
+ipcMain.on("deleted", async (event, filePath) => {
+  await fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log(`File "${filePath}" is deleted.`);
+    }
   });
 });
