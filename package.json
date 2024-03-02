@@ -1,7 +1,7 @@
 {
   "name": "MarkIt",
-  "version": "1.0.0",
-  "main": "./markit/src/app.js",
+  "version": "0.0.1",
+  "main": "./markit/main/app.js",
   "scripts": {
     "format": "prettier --write markit/",
     "build": "mkdir -p dist && cp -R markit/* dist/",
@@ -10,9 +10,12 @@
     "package": "npx electron-packager .  markit --all --icon markit/assets/images/markit.icns",
     "clear": "rm -rf dist markit-*"
   },
-  "author": "",
-  "license": "ISC",
-  "keywords": [],
+  "author": "Jianli Zhang",
+  "license": "MIT",
+  "keywords": [
+    "Markdown",
+    "Markdown Editor"
+  ],
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "@octokit/rest": "^20.0.2",
