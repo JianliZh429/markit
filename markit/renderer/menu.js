@@ -36,11 +36,20 @@ const newFile = ($li) => {
 
     const $ul = getOrCreateChildUl($li);
     $ul.appendChild($newLi);
-    renaming($newLi);
+    renaming($newLi, (renamedFilePath) => {
+      changeSelected($newLi);
+      loadFile(renamedFilePath);
+    });
+
+    $newLi.addEventListener("dblclick", (event) => {
+      changeSelected(event.target);
+      loadFile(newFilePath);
+      event.stopPropagation();
+    });
   }
 };
 
-const renaming = ($li) => {
+const renaming = ($li, renamedCallback) => {
   $li.contentEditable = true;
   moveCursorToEnd($li);
   const preValue = $li.innerHTML;
@@ -48,16 +57,18 @@ const renaming = ($li) => {
     "blur",
     (event) => {
       $li.contentEditable = false;
-      event.preventDefault();
-
       const curValue = $li.innerHTML;
+
       if (curValue != preValue) {
-        $li.className += " renamed";
         const preFilePath = $li.dataset.fullPath;
         const curFilePath = path.join(path.parse(preFilePath).dir, curValue);
         $li.dataset.fullPath = curFilePath;
         ipcRenderer.send("renamed", preFilePath, curFilePath);
+        if (renamedCallback instanceof Function) {
+          renamedCallback(curFilePath);
+        }
       }
+      event.preventDefault();
     },
     { once: true },
   );
