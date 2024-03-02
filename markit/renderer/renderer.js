@@ -8,6 +8,7 @@ const path = require("path");
 const fs = require("fs");
 
 let isEditMode = true;
+let $selected = null;
 
 new Octokit().rest.emojis.get().then((res) => {
   marked
@@ -17,7 +18,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      }),
+      })
     );
 });
 
@@ -71,6 +72,14 @@ const switchFolderState = ($li) => {
   }
 };
 
+const changeSelected = ($target) => {
+  if ($selected) {
+    $selected.classList.remove("selected");
+  }
+  $target.className += " selected";
+  $selected = $target;
+};
+
 const appendNode = ($ul, filePath, isFile) => {
   let pasedPath = path.parse(filePath);
   let $li = document.createElement("li");
@@ -80,7 +89,9 @@ const appendNode = ($ul, filePath, isFile) => {
 
   if (isFile) {
     $li.className += " file";
+
     $li.addEventListener("dblclick", (event) => {
+      changeSelected(event.target);
       loadFile(filePath);
       event.stopPropagation();
     });
