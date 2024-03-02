@@ -66,9 +66,9 @@ ipcMain.on("save-file-dialog", async (event) => {
 ipcMain.on("save-file", async (event, filePath, content) => {
   try {
     await fs.promises.writeFile(filePath, content);
-    event.reply("file-saved", filePath);
+    console.log(`File saved to ${filePath}`);
   } catch (error) {
-    event.reply("file-save-error", error.message);
+    console.log(`File failed to save to ${filePath}`);
   }
 });
 

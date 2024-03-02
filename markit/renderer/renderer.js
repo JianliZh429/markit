@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      }),
+      })
     );
 });
 
@@ -191,15 +191,4 @@ ipcRenderer.on("save-file-dialog", (event) => {
 ipcRenderer.on("save-file", (event, filePath) => {
   // Handle the file save response from the main process
   ipcRenderer.send("save-file", filePath, $editor.value);
-});
-
-// Listen for file-saved event
-ipcRenderer.on("file-saved", (event, filePath) => {
-  // Handle the file saved response from the main process
-  loadFileOrFolderToExplorer($tree, filePath);
-});
-
-// Listen for file-save-error event
-ipcRenderer.on("file-save-error", (event, errorMessage) => {
-  console.log("Save file failed, ", errorMessage);
 });
