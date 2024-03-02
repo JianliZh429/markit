@@ -166,6 +166,11 @@ ipcRenderer.on("toggle-mode", () => {
   }
 });
 
+ipcRenderer.on("select-all", () => {
+  $editor.focus();
+  $editor.select();
+});
+
 ipcRenderer.on("open-file-directory-dialog", (event) => {
   ipcRenderer.send("open-file-directory-dialog");
 });

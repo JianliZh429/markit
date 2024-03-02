@@ -65,7 +65,7 @@ const fileMenu = (win) => {
     ],
   };
 };
-const editMenu = () => {
+const editMenu = (win) => {
   return {
     label: "Edit",
     submenu: [
@@ -74,6 +74,16 @@ const editMenu = () => {
       },
       {
         role: "redo",
+      },
+      {
+        type: "separator",
+      },
+      {
+        label: "Select All",
+        click: () => {
+          win.webContents.send("select-all");
+        },
+        accelerator: "CommandOrControl+A",
       },
       {
         type: "separator",
@@ -148,7 +158,7 @@ const buildTemplate = (win) => {
   return [
     appMenu(),
     fileMenu(win),
-    editMenu(),
+    editMenu(win),
     viewMenu(),
     winMenu(),
     helpMenu(),
