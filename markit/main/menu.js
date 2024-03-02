@@ -50,9 +50,16 @@ const fileMenu = (win) => {
       {
         label: "Save...",
         click: () => {
-          win.webContents.send("save-file-dialog");
+          win.webContents.send("save-opened-file");
         },
         accelerator: "CommandOrControl+S",
+      },
+      {
+        label: "Save As",
+        click: () => {
+          win.webContents.send("save-file-dialog");
+        },
+        accelerator: "Shift+CommandOrControl+S",
       },
       isMac ? { role: "close" } : { role: "quit" },
     ],

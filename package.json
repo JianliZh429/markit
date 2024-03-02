@@ -5,7 +5,7 @@
   "scripts": {
     "format": "prettier --write markit/",
     "build": "mkdir -p dist && cp -R markit/* dist/",
-    "start": "npm run build && electron dist/src/app.js",
+    "start": "npm run build && electron dist/main/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "package": "npx electron-packager .  markit --all --icon markit/assets/images/markit.icns",
     "clear": "rm -rf dist markit-*"

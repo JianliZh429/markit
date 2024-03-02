@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      })
+      }),
     );
 });
 
@@ -165,6 +165,22 @@ ipcRenderer.on("open-file-directory-dialog", (event) => {
 ipcRenderer.on("file-opened", (event, args) => {
   let filePath = args[0];
   loadFileOrFolderToExplorer($tree, filePath);
+});
+
+ipcRenderer.on("save-opened-file", (event) => {
+  const openedFilePath = $title.textContent;
+  content = $editor.value;
+  fs.stat(openedFilePath, (err, stat) => {
+    if (!err) {
+      fs.writeFile(openedFilePath, content, (err) => {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log(`File ${openedFilePath} saved successfully`);
+        }
+      });
+    }
+  });
 });
 
 ipcRenderer.on("save-file-dialog", (event) => {
