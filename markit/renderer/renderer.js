@@ -1,6 +1,7 @@
 const { marked } = require("marked");
 const markedCodePreview = require("marked-code-preview");
 const { markedEmoji } = require("marked-emoji");
+const { baseUrl } = require("marked-base-url");
 const { Octokit } = require("@octokit/rest");
 
 const { ipcRenderer } = require("electron");
@@ -41,6 +42,7 @@ const editMode = () => {
 };
 
 const loadFile = (filePath) => {
+  marked.use(baseUrl(filePath));
   fs.readFile(filePath, "utf8", (err, data) => {
     if (err) {
       console.error(err);
