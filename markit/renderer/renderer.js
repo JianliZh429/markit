@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      }),
+      })
     );
 });
 
@@ -93,6 +93,27 @@ const getOrCreateChildUl = ($li) => {
   return $ul;
 };
 
+const fileDblClickListener = (event) => {
+  const $li = event.target;
+  const filePath = $li.dataset.fullPath;
+  changeSelected($li);
+  loadFile(filePath);
+  event.stopPropagation();
+};
+
+const folderDblClickListener = (event) => {
+  let $li = event.target;
+  const filePath = $li.dataset.fullPath;
+  switchFolderState($li);
+  let $ul = $li.getElementsByTagName("ul");
+  if ($ul.length > 0) {
+    $li.removeChild($ul[0]);
+  } else {
+    unfoldDir($li, filePath);
+  }
+  event.stopPropagation();
+};
+
 const appendNode = ($ul, filePath, isFile) => {
   let pasedPath = path.parse(filePath);
   let $li = document.createElement("li");
@@ -102,25 +123,10 @@ const appendNode = ($ul, filePath, isFile) => {
 
   if (isFile) {
     $li.className += " file";
-
-    $li.addEventListener("dblclick", (event) => {
-      changeSelected(event.target);
-      loadFile(filePath);
-      event.stopPropagation();
-    });
+    $li.addEventListener("dblclick", fileDblClickListener);
   } else {
     $li.className += " folder";
-    $li.addEventListener("dblclick", (event) => {
-      let $target = event.target;
-      switchFolderState($target);
-      let $ul = $target.getElementsByTagName("ul");
-      if ($ul.length > 0) {
-        $target.removeChild($ul[0]);
-      } else {
-        unfoldDir($target, filePath);
-      }
-      event.stopPropagation();
-    });
+    $li.addEventListener("dblclick", folderDblClickListener);
   }
   return $li;
 };

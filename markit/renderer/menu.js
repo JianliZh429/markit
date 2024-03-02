@@ -36,15 +36,15 @@ const newFile = ($li) => {
 
     const $ul = getOrCreateChildUl($li);
     $ul.appendChild($newLi);
-    renaming($newLi, (renamedFilePath) => {
+    renaming($newLi, (originalPath, renamedFilePath) => {
       changeSelected($newLi);
       loadFile(renamedFilePath);
-    });
 
-    $newLi.addEventListener("dblclick", (event) => {
-      changeSelected(event.target);
-      loadFile(newFilePath);
-      event.stopPropagation();
+      $newLi.addEventListener("dblclick", (event) => {
+        changeSelected(event.target);
+        loadFile(renamedFilePath);
+        event.stopPropagation();
+      });
     });
   }
 };
@@ -63,14 +63,11 @@ const renaming = ($li, renamedCallback) => {
         const preFilePath = $li.dataset.fullPath;
         const curFilePath = path.join(path.parse(preFilePath).dir, curValue);
         $li.dataset.fullPath = curFilePath;
-        ipcRenderer.send("renamed", preFilePath, curFilePath);
-        if (renamedCallback instanceof Function) {
-          renamedCallback(curFilePath);
-        }
+        renamed(preFilePath, curFilePath, renamedCallback);
       }
       event.preventDefault();
     },
-    { once: true },
+    { once: true }
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
@@ -80,7 +77,33 @@ const renaming = ($li, renamedCallback) => {
     }
   });
 };
-
+const renamed = (filePath, newPath, renamedCallback) => {
+  fs.stat(filePath, (err, stat) => {
+    if (err) {
+      fs.open(newPath, "w", (err, file) => {
+        if (err) {
+          console.error(err);
+        } else {
+          if (renamedCallback instanceof Function) {
+            renamedCallback(filePath, newPath);
+          }
+          console.log(`File "${newPath}" created`);
+        }
+      });
+    } else {
+      fs.rename(filePath, newPath, (err) => {
+        if (err) {
+          console.error(err);
+        } else {
+          if (renamedCallback instanceof Function) {
+            renamedCallback(filePath, newPath);
+          }
+          console.log(`File "${filePath}" is renamed to "${newPath}"`);
+        }
+      });
+    }
+  });
+};
 const deleting = ($li) => {
   const filePath = $li.dataset.fullPath;
   if (isFolder($li)) {
@@ -119,7 +142,13 @@ const popupMenu = ($li) => {
     const menuRename = new MenuItem({
       label: "Rename",
       click: (event) => {
-        renaming($li);
+        renaming($li, (originalPath, newPath) => {
+          // $li.removeEventListener("dbclick", fileDblClickListener);
+          // $li.addEventListener("dblclick", fileDblClickListener);
+          if (originalPath == $title.textContent) {
+            $title.textContent = newPath;
+          }
+        });
       },
     });
     menu.append(menuRename);
@@ -141,5 +170,5 @@ window.addEventListener(
     popupMenu(e.target);
     e.preventDefault();
   },
-  false,
+  false
 );

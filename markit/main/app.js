@@ -85,25 +85,3 @@ ipcMain.on("save-file", async (event, filePath, content) => {
     console.log(`File failed to save to ${filePath}`);
   }
 });
-
-ipcMain.on("renamed", (event, filePath, newPath) => {
-  fs.stat(filePath, (err, stat) => {
-    if (err) {
-      fs.open(newPath, "w", (err, file) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(`File "${newPath}" created`);
-        }
-      });
-    } else {
-      fs.rename(filePath, newPath, (err) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(`File "${filePath}" is renamed to "${newPath}"`);
-        }
-      });
-    }
-  });
-});
