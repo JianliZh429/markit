@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      })
+      }),
     );
 });
 

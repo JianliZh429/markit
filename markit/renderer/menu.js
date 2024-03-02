@@ -21,28 +21,29 @@ const isFolder = ($el) => {
 };
 
 const newFile = ($li) => {
-  if (isFolder($li)) {
-    const filePath = $li.dataset.fullPath;
-    if (!$li.classList.contains("folder-open")) {
-      unfoldDir($li, filePath);
-      switchFolderState($li);
-    }
-
-    const $newLi = document.createElement("li");
-    $newLi.className += " file";
-    $newLi.appendChild(document.createTextNode("untitled.md"));
-    const newFilePath = path.join(filePath, "untitled.md");
-    $newLi.dataset.fullPath = newFilePath;
-    createFile(newFilePath);
-    $newLi.addEventListener("dblclick", fileDblClickListener);
-
-    const $ul = getOrCreateChildUl($li);
-    $ul.appendChild($newLi);
-    renaming($newLi, (originalPath, renamedFilePath) => {
-      changeSelected($newLi);
-      loadFile(renamedFilePath);
-    });
+  if (!isFolder($li)) {
+    $li = $li.parentNode.parentNode;
   }
+  const filePath = $li.dataset.fullPath;
+  if (!$li.classList.contains("folder-open")) {
+    unfoldDir($li, filePath);
+    switchFolderState($li);
+  }
+
+  const $newLi = document.createElement("li");
+  $newLi.className += " file";
+  $newLi.appendChild(document.createTextNode("untitled.md"));
+  const newFilePath = path.join(filePath, "untitled.md");
+  $newLi.dataset.fullPath = newFilePath;
+  createFile(newFilePath);
+  $newLi.addEventListener("dblclick", fileDblClickListener);
+
+  const $ul = getOrCreateChildUl($li);
+  $ul.appendChild($newLi);
+  renaming($newLi, (originalPath, renamedFilePath) => {
+    changeSelected($newLi);
+    loadFile(renamedFilePath);
+  });
 };
 
 const renaming = ($li, renamedCallback) => {
@@ -63,7 +64,7 @@ const renaming = ($li, renamedCallback) => {
       }
       event.preventDefault();
     },
-    { once: true }
+    { once: true },
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
@@ -164,5 +165,5 @@ window.addEventListener(
     popupMenu(e.target);
     e.preventDefault();
   },
-  false
+  false,
 );
