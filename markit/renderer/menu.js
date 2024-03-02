@@ -17,15 +17,12 @@ const moveCursorToEnd = ($li) => {
 
 const renaming = ($li) => {
   $li.contentEditable = true;
-  $li.style.border = "1px solid black";
-  $li.style.cursor = "text";
   moveCursorToEnd($li);
   const preValue = $li.innerHTML;
   $li.addEventListener(
     "blur",
     (event) => {
       $li.contentEditable = false;
-      $li.style.border = "none";
       event.preventDefault();
 
       const curValue = $li.innerHTML;

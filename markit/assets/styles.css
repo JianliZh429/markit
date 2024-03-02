@@ -25,6 +25,13 @@ body {
         background-color: #c1d4f3;
       }
     }
+    li[contenteditable="true"] {
+      border: "1px solid black";
+      cursor: "text";
+    }
+    li[contenteditable="false"] {
+      border: none;
+    }
   }
 }
 
