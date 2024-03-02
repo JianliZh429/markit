@@ -14,6 +14,31 @@ const moveCursorToEnd = ($li) => {
   $li.selectionStart = $li.selectionEnd = length;
   $li.focus();
 };
+const isFolder = ($el) => {
+  return (
+    $el.classList.contains("folder") || $el.classList.contains("folder-open")
+  );
+};
+
+const newFile = ($li) => {
+  if (isFolder($li)) {
+    const filePath = $li.dataset.fullPath;
+    if (!$li.classList.contains("folder-open")) {
+      unfoldDir($li, filePath);
+      switchFolderState($li);
+    }
+
+    const $newLi = document.createElement("li");
+    $newLi.className += " file";
+    $newLi.appendChild(document.createTextNode("untitled.md"));
+    const newFilePath = path.join(filePath, "untitled.md");
+    $newLi.dataset.fullPath = newFilePath;
+
+    const $ul = getOrCreateChildUl($li);
+    $ul.appendChild($newLi);
+    renaming($newLi);
+  }
+};
 
 const renaming = ($li) => {
   $li.contentEditable = true;
@@ -28,10 +53,13 @@ const renaming = ($li) => {
       const curValue = $li.innerHTML;
       if (curValue != preValue) {
         $li.className += " renamed";
-        ipcRenderer.send("renamed", $li.dataset.fullPath, curValue);
+        const preFilePath = $li.dataset.fullPath;
+        const curFilePath = path.join(path.parse(preFilePath).dir, curValue);
+        $li.dataset.fullPath = curFilePath;
+        ipcRenderer.send("renamed", preFilePath, curFilePath);
       }
     },
-    { once: true },
+    { once: true }
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
@@ -42,11 +70,6 @@ const renaming = ($li) => {
   });
 };
 
-const isFolder = ($el) => {
-  return (
-    $el.classList.contains("folder") || $el.classList.contains("folder-open")
-  );
-};
 const deleting = ($li) => {
   const filePath = $li.dataset.fullPath;
   if (isFolder($li)) {
@@ -74,6 +97,14 @@ const deleting = ($li) => {
 const popupMenu = ($li) => {
   if ($li.tagName.toLowerCase() === "li") {
     const menu = new Menu();
+    const menuNewFile = new MenuItem({
+      label: "New File",
+      click: (event) => {
+        newFile($li);
+      },
+    });
+    menu.append(menuNewFile);
+
     const menuRename = new MenuItem({
       label: "Rename",
       click: (event) => {
@@ -99,5 +130,5 @@ window.addEventListener(
     popupMenu(e.target);
     e.preventDefault();
   },
-  false,
+  false
 );

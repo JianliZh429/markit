@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      }),
+      })
     );
 });
 
@@ -82,6 +82,16 @@ const changeSelected = ($target) => {
   $selected = $target;
 };
 
+const getOrCreateChildUl = ($li) => {
+  $ul = $li.getElementsByTagName("ul");
+  if ($ul.length > 0) {
+    return $ul[0];
+  }
+  $ul = document.createElement("ul");
+  $li.appendChild($ul);
+  return $ul;
+};
+
 const appendNode = ($ul, filePath, isFile) => {
   let pasedPath = path.parse(filePath);
   let $li = document.createElement("li");
@@ -106,9 +116,7 @@ const appendNode = ($ul, filePath, isFile) => {
       if ($ul.length > 0) {
         $target.removeChild($ul[0]);
       } else {
-        let $ul2 = document.createElement("ul");
-        $target.appendChild($ul2);
-        unfoldDir($ul2, filePath);
+        unfoldDir($target, filePath);
       }
       event.stopPropagation();
     });
@@ -116,7 +124,8 @@ const appendNode = ($ul, filePath, isFile) => {
   return $li;
 };
 
-const unfoldDir = ($ul, filePath) => {
+const unfoldDir = ($li, filePath) => {
+  $ul = getOrCreateChildUl($li);
   fs.readdirSync(filePath).forEach((f) => {
     let fPath = path.join(filePath, f);
     let parsedPath = path.parse(fPath);
@@ -132,9 +141,7 @@ const showFileTree = ($root, filePath) => {
   let state = fs.statSync(filePath);
   if (state.isDirectory()) {
     let $parent = appendNode($root, filePath, false);
-    let $ul = document.createElement("ul");
-    $parent.appendChild($ul);
-    unfoldDir($ul, filePath);
+    unfoldDir($parent, filePath);
     switchFolderState($parent);
   } else {
     appendNode($root, filePath, true);
