@@ -23,7 +23,7 @@ new Octokit().rest.emojis.get().then((res) => {
     );
 });
 
-// const $explorer = document.getElementById("explorer");
+const $explorer = document.getElementById("explorer");
 const $editor = document.getElementById("editor");
 const $previewer = document.getElementById("previewer");
 const $tree = document.getElementById("tree");
@@ -219,4 +219,12 @@ ipcRenderer.on("new-file-created", (event, filePath) => {
       console.log(`File ${filePath} saved successfully`);
     }
   });
+});
+
+ipcRenderer.on("toggle-explorer", () => {
+  if ($explorer.style.display == "none") {
+    $explorer.style.display = "block";
+  } else {
+    $explorer.style.display = "none";
+  }
 });
