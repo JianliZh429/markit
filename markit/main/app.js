@@ -35,6 +35,20 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
+ipcMain.on("new-file-dialog", async (event) => {
+  await dialog
+    .showSaveDialog({
+      defaultPath: "untitled.md",
+      filters: [{ name: "Markdown Files", extensions: ["md"] }],
+    })
+    .then((result) => {
+      if (result) {
+        event.reply("new-file-created", result.filePath);
+      }
+    })
+    .catch((err) => console.log(err));
+});
+
 ipcMain.on("open-file-directory-dialog", async (event) => {
   await dialog
     .showOpenDialog({
@@ -72,7 +86,7 @@ ipcMain.on("save-file", async (event, filePath, content) => {
   }
 });
 
-ipcMain.on("renamed", async (event, filePath, newPath) => {
+ipcMain.on("renamed", (event, filePath, newPath) => {
   fs.stat(filePath, (err, stat) => {
     if (err) {
       fs.open(newPath, "w", (err, file) => {

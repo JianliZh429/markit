@@ -59,7 +59,7 @@ const renaming = ($li) => {
         ipcRenderer.send("renamed", preFilePath, curFilePath);
       }
     },
-    { once: true }
+    { once: true },
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
@@ -130,5 +130,5 @@ window.addEventListener(
     popupMenu(e.target);
     e.preventDefault();
   },
-  false
+  false,
 );

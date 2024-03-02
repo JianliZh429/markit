@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      })
+      }),
     );
 });
 
@@ -55,6 +55,7 @@ const loadFile = (filePath) => {
     $title.textContent = filePath;
   });
 };
+
 const unloadFile = (filePath) => {
   if ($title.textContent === filePath) {
     $title.textContent = "Markdown Editor";
@@ -198,4 +199,19 @@ ipcRenderer.on("save-file-dialog", (event) => {
 ipcRenderer.on("save-file", (event, filePath) => {
   // Handle the file save response from the main process
   ipcRenderer.send("save-file", filePath, $editor.value);
+});
+
+ipcRenderer.on("new-file-dialog", (event) => {
+  ipcRenderer.send("new-file-dialog");
+});
+
+ipcRenderer.on("new-file-created", (event, filePath) => {
+  fs.open(filePath, "w", (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      loadFile(filePath);
+      console.log(`File ${filePath} saved successfully`);
+    }
+  });
 });

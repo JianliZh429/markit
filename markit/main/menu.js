@@ -27,7 +27,7 @@ const fileMenu = (win) => {
       {
         label: "New File",
         click: () => {
-          win.webContents.send("new-file");
+          win.webContents.send("new-file-dialog");
         },
         accelerator: "CommandOrControl+N",
       },
