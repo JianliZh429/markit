@@ -163,6 +163,18 @@ const loadFileOrFolderToExplorer = ($tree, filePath) => {
   showFileTree($tree, filePath);
 };
 
+const createFile = (filePath, fileCreated) => {
+  fs.open(filePath, "w", (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      if (fileCreated instanceof Function) {
+        loadFile(filePath);
+      }
+      console.log(`File ${filePath} saved successfully`);
+    }
+  });
+};
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
   if (isEditMode) {
@@ -217,13 +229,8 @@ ipcRenderer.on("new-file-dialog", (event) => {
 });
 
 ipcRenderer.on("new-file-created", (event, filePath) => {
-  fs.open(filePath, "w", (err) => {
-    if (err) {
-      console.error(err);
-    } else {
-      loadFile(filePath);
-      console.log(`File ${filePath} saved successfully`);
-    }
+  createFile(filePath, (filePath) => {
+    loadFile(filePath);
   });
 });
 

@@ -33,18 +33,14 @@ const newFile = ($li) => {
     $newLi.appendChild(document.createTextNode("untitled.md"));
     const newFilePath = path.join(filePath, "untitled.md");
     $newLi.dataset.fullPath = newFilePath;
+    createFile(newFilePath);
+    $newLi.addEventListener("dblclick", fileDblClickListener);
 
     const $ul = getOrCreateChildUl($li);
     $ul.appendChild($newLi);
     renaming($newLi, (originalPath, renamedFilePath) => {
       changeSelected($newLi);
       loadFile(renamedFilePath);
-
-      $newLi.addEventListener("dblclick", (event) => {
-        changeSelected(event.target);
-        loadFile(renamedFilePath);
-        event.stopPropagation();
-      });
     });
   }
 };
@@ -143,8 +139,6 @@ const popupMenu = ($li) => {
       label: "Rename",
       click: (event) => {
         renaming($li, (originalPath, newPath) => {
-          // $li.removeEventListener("dbclick", fileDblClickListener);
-          // $li.addEventListener("dblclick", fileDblClickListener);
           if (originalPath == $title.textContent) {
             $title.textContent = newPath;
           }
