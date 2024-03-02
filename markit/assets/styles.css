@@ -36,14 +36,14 @@ body {
 }
 
 #editor {
-  flex: 3;
+  flex: 4;
   height: 100vh;
   padding: 10px;
   font-size: 16px;
 }
 
 #previewer {
-  flex: 3;
+  flex: 4;
   height: 100vh;
   padding: 10px;
   overflow-y: auto;
