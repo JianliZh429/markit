@@ -2,23 +2,20 @@ const { Menu, MenuItem } = require("electron");
 
 const isMac = process.platform === "darwin";
 const appMenu = () => {
-  if (isMac) {
-    return {
-      label: "MarkIt",
-      submenu: [
-        { role: "about" },
-        { type: "separator" },
-        { role: "services" },
-        { type: "separator" },
-        { role: "hide" },
-        { role: "hideOthers" },
-        { role: "unhide" },
-        { type: "separator" },
-        { role: "quit" },
-      ],
-    };
-  }
-  return {};
+  return {
+    label: "MarkIt",
+    submenu: [
+      { role: "about" },
+      { type: "separator" },
+      { role: "services" },
+      { type: "separator" },
+      { role: "hide" },
+      { role: "hideOthers" },
+      { role: "unhide" },
+      { type: "separator" },
+      { role: "quit" },
+    ],
+  };
 };
 const fileMenu = (win) => {
   return {
@@ -155,14 +152,11 @@ const helpMenu = () => {
   };
 };
 const buildTemplate = (win) => {
-  return [
-    appMenu(),
-    fileMenu(win),
-    editMenu(win),
-    viewMenu(),
-    winMenu(),
-    helpMenu(),
-  ];
+  let menus = [fileMenu(win), editMenu(win), viewMenu(), winMenu(), helpMenu()];
+  if (isMac) {
+    menus = [appMenu()].concat(menus);
+  }
+  return menus;
 };
 const initAppMenu = (win) => {
   const menu = Menu.buildFromTemplate(buildTemplate(win));
