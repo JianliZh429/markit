@@ -50,10 +50,10 @@ ipcMain.on("new-file-dialog", async (event) => {
     .catch((err) => console.log(err));
 });
 
-ipcMain.on("open-file-directory-dialog", async (event) => {
+ipcMain.on("open-file-dialog", async (event) => {
   await dialog
     .showOpenDialog({
-      properties: ["openFile", "openDirectory"],
+      properties: ["openFile"],
       filters: [{ name: "Markdown Files", extensions: ["md"] }],
     })
     .then((result) => {

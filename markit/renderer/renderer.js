@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      }),
+      })
     );
 });
 
@@ -189,8 +189,8 @@ ipcRenderer.on("select-all", () => {
   $editor.select();
 });
 
-ipcRenderer.on("open-file-directory-dialog", (event) => {
-  ipcRenderer.send("open-file-directory-dialog");
+ipcRenderer.on("open-file-dialog", (event) => {
+  ipcRenderer.send("open-file-dialog");
 });
 
 ipcRenderer.on("file-opened", (event, args) => {

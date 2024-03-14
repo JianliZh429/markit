@@ -32,9 +32,9 @@ const fileMenu = (win) => {
         type: "separator",
       },
       {
-        label: "Open...",
+        label: "Open File",
         click: () => {
-          win.webContents.send("open-file-directory-dialog");
+          win.webContents.send("open-file-dialog");
         },
         accelerator: "CommandOrControl+O",
       },
