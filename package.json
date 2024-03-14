@@ -1,17 +1,17 @@
 {
-  "name": "MarkIt",
+  "name": "markit",
+  "productName": "Markit",
   "version": "0.0.1",
   "main": "./markit/main/app.js",
   "scripts": {
+    "start": "npm run build && electron dist/main/app.js",
     "format": "prettier --write markit/",
     "build": "mkdir -p dist && cp -R markit/* dist/",
-    "start": "npm run build && electron dist/main/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "package": "npx electron-packager .  markit --all --icon markit/assets/images/markit.icns --out build/",
-    "dmg": "electron-installer-dmg build/markit-darwin-x64/markit.app --icon markit/assets/images/markit.icns --out build/installer MarkIt",
-    "debian": "electron-installer-debian --src build/markit-linux-x64/ --platform linux --arch x64 --icon markit/assets/images/markit.icns --dest build/installer MarkIt",
     "clean": "rm -rf build dist",
-    "release": "npm run clean && npm run build && npm run package && npm run dmg && npm run debian"
+    "package": "npx electron-packager .  Markit --platform=linux,darwin --arch=x64 --icon markit/assets/images/markit.icns --out build/",
+    "dmg": "electron-installer-dmg build/markit-darwin-x64/Markit.app --icon markit/assets/images/markit.icns --out build/installer Markit",
+    "deb": "electron-installer-debian --src build/markit-linux-x64/ --platform linux --arch amd64 --icon markit/assets/images/markit.icns --dest build/installer Markit",
+    "installer": "npm run clean && npm run build && npm run package && npm run dmg && npm run deb"
   },
   "author": "Jianli Zhang",
   "license": "MIT",
