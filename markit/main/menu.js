@@ -32,11 +32,21 @@ const fileMenu = (win) => {
         type: "separator",
       },
       {
-        label: "Open File",
+        label: "Open...",
         click: () => {
           win.webContents.send("open-file-dialog");
         },
         accelerator: "CommandOrControl+O",
+      },
+      {
+        label: "Open Folder...",
+        click: () => {
+          win.webContents.send("open-folder-dialog");
+        },
+        accelerator: "CommandOrControl+D",
+      },
+      {
+        type: "separator",
       },
       {
         label: "Open Recent",

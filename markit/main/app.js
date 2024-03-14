@@ -64,6 +64,19 @@ ipcMain.on("open-file-dialog", async (event) => {
     .catch((err) => console.log(err));
 });
 
+ipcMain.on("open-folder-dialog", async (event) => {
+  await dialog
+    .showOpenDialog({
+      properties: ["openDirectory"],
+    })
+    .then((result) => {
+      if (!result.canceled) {
+        event.reply("file-opened", result.filePaths);
+      }
+    })
+    .catch((err) => console.log(err));
+});
+
 ipcMain.on("save-file-dialog", async (event) => {
   await dialog
     .showSaveDialog({

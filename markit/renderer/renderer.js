@@ -193,6 +193,10 @@ ipcRenderer.on("open-file-dialog", (event) => {
   ipcRenderer.send("open-file-dialog");
 });
 
+ipcRenderer.on("open-folder-dialog", (event) => {
+  ipcRenderer.send("open-folder-dialog");
+});
+
 ipcRenderer.on("file-opened", (event, args) => {
   let filePath = args[0];
   loadFileOrFolderToExplorer($tree, filePath);
