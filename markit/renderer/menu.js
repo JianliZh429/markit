@@ -77,7 +77,7 @@ const renaming = ($li, renamedCallback) => {
       }
       event.preventDefault();
     },
-    { once: true }
+    { once: true },
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
@@ -178,5 +178,5 @@ window.addEventListener(
     popupMenu(e.target);
     e.preventDefault();
   },
-  false
+  false,
 );

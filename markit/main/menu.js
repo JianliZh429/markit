@@ -1,6 +1,16 @@
 const { Menu, MenuItem } = require("electron");
+const recentFiles = require("./recent-files.js");
 
 const isMac = process.platform === "darwin";
+
+const recentFilesMenu = (win) => {
+  const files = recentFiles.load();
+  return files.map((filePath, index) => ({
+    label: filePath,
+    click: () => win.webContents.send("file-opened", filePath),
+  }));
+};
+
 const appMenu = () => {
   return {
     label: "MarkIt",
@@ -50,6 +60,7 @@ const fileMenu = (win) => {
       },
       {
         label: "Open Recent",
+        submenu: recentFilesMenu(win),
       },
       {
         type: "separator",
@@ -170,7 +181,6 @@ const buildTemplate = (win) => {
 };
 const initAppMenu = (win) => {
   const menu = Menu.buildFromTemplate(buildTemplate(win));
-  console.log("menu: " + menu);
   Menu.setApplicationMenu(menu);
 };
 module.exports = { initAppMenu };

@@ -11,6 +11,7 @@ const path = require("path");
 const fs = require("fs");
 const shortcuts = require("./shortcuts.js");
 const menu = require("./menu.js");
+const recentFiles = require("./recent-files.js");
 let win;
 
 function createWindow() {
@@ -60,6 +61,8 @@ ipcMain.on("open-file-dialog", async (event) => {
     .then((result) => {
       if (!result.canceled) {
         event.reply("file-opened", result.filePaths);
+        recentFiles.add(result.filePaths[0]);
+        menu.initAppMenu(win);
       }
     })
     .catch((err) => console.log(err));
@@ -73,6 +76,8 @@ ipcMain.on("open-folder-dialog", async (event) => {
     .then((result) => {
       if (!result.canceled) {
         event.reply("file-opened", result.filePaths);
+        recentFiles.add(result.filePaths[0]);
+        menu.initAppMenu(win);
       }
     })
     .catch((err) => console.log(err));

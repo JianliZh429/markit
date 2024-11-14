@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      })
+      }),
     );
 });
 
@@ -198,7 +198,8 @@ ipcRenderer.on("open-folder-dialog", (event) => {
 });
 
 ipcRenderer.on("file-opened", (event, args) => {
-  let filePath = args[0];
+  console.log("file-opened: ", args);
+  let filePath = typeof args === "string" ? args : args[0];
   loadFileOrFolderToExplorer($tree, filePath);
 });
 
