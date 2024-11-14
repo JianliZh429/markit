@@ -8,7 +8,7 @@ const { ipcRenderer } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
-let isEditMode = true;
+let isEditMode = false;
 let $selected = null;
 
 new Octokit().rest.emojis.get().then((res) => {
@@ -28,6 +28,14 @@ const $editor = document.getElementById("editor");
 const $previewer = document.getElementById("previewer");
 const $tree = document.getElementById("tree");
 const $title = document.querySelector("title");
+const $searchInFile = document.getElementById("search");
+const $searchInput = document.getElementById("search-input");
+const $searchResult = document.getElementById("search-result");
+
+const currentContent = () => {
+  return isEditMode ? $editor.value : $previewer.innerHTML;
+};
+
 const previewMode = () => {
   const markdownContent = $editor.value;
   const htmlContent = marked.parse(markdownContent);
@@ -65,6 +73,7 @@ const unloadFile = (filePath) => {
     }
   }
 };
+
 const switchFolderState = ($li) => {
   if ($li.classList.contains("folder-open")) {
     $li.classList.remove("folder-open");
@@ -175,8 +184,33 @@ const createFile = (filePath, fileCreated) => {
     }
   });
 };
+
+const findInFile = (searchTerm) => {
+  const content = currentContent();
+  const regex = new RegExp(searchTerm, "gi");
+  const matches = content.match(regex);
+  if (matches) {
+    console.log(`Found ${matches.length} matches for "${searchTerm}"`);
+    // Highlight matches in the editor
+    const highlightedContent = content.replace(
+      regex,
+      (match) => `<mark>${match}</mark>`,
+    );
+    $searchResult.innerHTML = highlightedContent;
+    console.log("content: " + highlightedContent);
+  } else {
+    console.log(`No matches found for "${searchTerm}"`);
+  }
+};
+
+$searchInput.addEventListener("keydown", (event) => {
+  if (event.code !== "Enter") return;
+  const searchTerm = event.target.value;
+  findInFile(searchTerm);
+});
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
+  $searchInFile.style.display = "none";
   if (isEditMode) {
     editMode();
   } else {
@@ -244,5 +278,19 @@ ipcRenderer.on("toggle-explorer", () => {
     $explorer.style.display = "block";
   } else {
     $explorer.style.display = "none";
+  }
+});
+
+ipcRenderer.on("search-in-file", () => {
+  if ($searchInFile.style.display == "none") {
+    $searchInFile.style.display = "block";
+    $searchInput.focus();
+    $searchResult.innerHTML = currentContent();
+    $previewer.style.display = "none";
+    $editor.style.display = "none";
+  } else {
+    $searchInFile.style.display = "none";
+    $previewer.style.display = "block";
+    $editor.style.display = "none";
   }
 });

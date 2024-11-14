@@ -11,5 +11,8 @@ function register(shortcut, win, ipcMain) {
   shortcut.register("CommandOrControl+E", () => {
     win.webContents.send("toggle-explorer");
   });
+  shortcut.register("CommandOrControl+F", () => {
+    win.webContents.send("search-in-file");
+  });
 }
 module.exports = { register };
