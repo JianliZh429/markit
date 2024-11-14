@@ -105,3 +105,10 @@ ipcMain.on("save-file", async (event, filePath, content) => {
     console.log(`File failed to save to ${filePath}`);
   }
 });
+
+ipcMain.on("open-recent-file", async (event) => {
+  const recentOpenFiles = recentFiles.load();
+  if (recentOpenFiles.length > 0) {
+    event.reply("file-opened", recentOpenFiles[0]);
+  }
+});

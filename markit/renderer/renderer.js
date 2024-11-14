@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      }),
+      })
     );
 });
 
@@ -194,7 +194,7 @@ const findInFile = (searchTerm) => {
     // Highlight matches in the editor
     const highlightedContent = content.replace(
       regex,
-      (match) => `<mark>${match}</mark>`,
+      (match) => `<mark>${match}</mark>`
     );
     $searchResult.innerHTML = highlightedContent;
     console.log("content: " + highlightedContent);
@@ -294,3 +294,5 @@ ipcRenderer.on("search-in-file", () => {
     $editor.style.display = "none";
   }
 });
+
+ipcRenderer.send("open-recent-file");
