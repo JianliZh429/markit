@@ -170,6 +170,7 @@ const buildTemplate = (win) => {
 };
 const initAppMenu = (win) => {
   const menu = Menu.buildFromTemplate(buildTemplate(win));
+  console.log("menu: " + menu);
   Menu.setApplicationMenu(menu);
 };
 module.exports = { initAppMenu };

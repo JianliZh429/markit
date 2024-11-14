@@ -1,2 +1,3 @@
-# markit
+# Markit
+
 Markdown editor

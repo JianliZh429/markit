@@ -2,16 +2,29 @@ const remote = require("@electron/remote");
 const { Menu, MenuItem } = remote;
 
 const moveCursorToEnd = ($li) => {
-  const length = $li.innerHTML.length;
+  // Get the text node inside $li, if it exists
+  const textNode = $li.firstChild;
+
+  // If there is no text node or text is empty, return early
+  if (!textNode || !textNode.textContent) return;
+
+  const textContent = textNode.textContent;
+  const textLength = textContent.length;
+
+  // Check if the text ends with ".md", and set the position accordingly
+  const position = textContent.endsWith(".md") ? textLength - 3 : textLength;
+
+  // Create a new range and set it from the start to the calculated position
   const range = document.createRange();
-  range.selectNode($li);
-  range.setStart($li, 1);
-  range.setEnd($li, 1);
+  range.setStart(textNode, 0); // Start at the beginning of the text node
+  range.setEnd(textNode, position); // End at the calculated position
+
+  // Get the current selection and update it
   const selection = window.getSelection();
   selection.removeAllRanges();
   selection.addRange(range);
 
-  $li.selectionStart = $li.selectionEnd = length;
+  // Focus on the element to make the cursor visible
   $li.focus();
 };
 const isFolder = ($el) => {
@@ -64,7 +77,7 @@ const renaming = ($li, renamedCallback) => {
       }
       event.preventDefault();
     },
-    { once: true },
+    { once: true }
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
@@ -165,5 +178,5 @@ window.addEventListener(
     popupMenu(e.target);
     e.preventDefault();
   },
-  false,
+  false
 );

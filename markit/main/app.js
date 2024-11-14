@@ -11,9 +11,10 @@ const path = require("path");
 const fs = require("fs");
 const shortcuts = require("./shortcuts.js");
 const menu = require("./menu.js");
+let win;
 
 function createWindow() {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 960,
     height: 720,
     title: "MarkIt",
