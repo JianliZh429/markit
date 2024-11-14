@@ -23,13 +23,16 @@ function save(recentFiles) {
 function add(filePath) {
   const recentFiles = load();
   const index = recentFiles.indexOf(filePath);
+  console.log("index: ", index);
   if (index !== -1) {
     recentFiles.splice(index, 1);
   }
+  console.log("recentFiels: ", recentFiles);
   recentFiles.unshift(filePath);
   if (recentFiles.length > 10) {
     recentFiles.pop();
   }
+  console.log("recentFiels: ", recentFiles);
   save(recentFiles);
 }
 

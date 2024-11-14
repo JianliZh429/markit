@@ -7,7 +7,10 @@ const recentFilesMenu = (win) => {
   const files = recentFiles.load();
   return files.map((filePath, index) => ({
     label: filePath,
-    click: () => win.webContents.send("file-opened", filePath),
+    click: () => {
+      win.webContents.send("file-opened", filePath);
+      recentFiles.add(filePath);
+    },
   }));
 };
 
