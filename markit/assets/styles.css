@@ -59,6 +59,9 @@ body {
   overflow-y: auto;
   border-left: 1px solid #ccc;
 }
+p img {
+  width: 100%;
+}
 
 #search-input {
   width: 100%;

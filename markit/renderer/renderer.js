@@ -19,7 +19,7 @@ new Octokit().rest.emojis.get().then((res) => {
       markedEmoji({
         emojis: res.data,
         unicode: false,
-      })
+      }),
     );
 });
 
@@ -47,6 +47,9 @@ const previewMode = () => {
 const editMode = () => {
   $previewer.style.display = "none";
   $editor.style.display = "block";
+};
+const offSearch = () => {
+  $searchInFile.style.display = "none";
 };
 
 const loadFile = (filePath) => {
@@ -105,6 +108,7 @@ const getOrCreateChildUl = ($li) => {
 const fileDblClickListener = (event) => {
   const $li = event.target;
   const filePath = $li.dataset.fullPath;
+  offSearch();
   changeSelected($li);
   loadFile(filePath);
   event.stopPropagation();
@@ -194,7 +198,7 @@ const findInFile = (searchTerm) => {
     // Highlight matches in the editor
     const highlightedContent = content.replace(
       regex,
-      (match) => `<mark>${match}</mark>`
+      (match) => `<mark>${match}</mark>`,
     );
     $searchResult.innerHTML = highlightedContent;
     console.log("content: " + highlightedContent);
