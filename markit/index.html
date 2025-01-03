@@ -8,20 +8,22 @@
     <link rel="stylesheet" href="./assets/styles.css" />
   </head>
   <body>
-    <div id="explorer">
-      <ul id="tree"></ul>
-    </div>
-    <div id="main">
-      <div id="search" style="display: none">
-        <input
-          id="search-input"
-          type="text"
-          placeholder="Input the keyworks you want to search"
-        />
-        <div id="search-result"></div>
+    <div class="container">
+      <div id="explorer">
+        <ul id="tree"></ul>
       </div>
-      <textarea id="editor" placeholder="Please input here"></textarea>
-      <div id="previewer" style="display: none"></div>
+      <div id="main">
+        <div id="search" style="display: none">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Input the keyworks you want to search"
+          />
+          <div id="search-result"></div>
+        </div>
+        <textarea id="editor" placeholder="Please input here"></textarea>
+        <div id="previewer" style="display: none"></div>
+      </div>
     </div>
     <script src="./renderer/renderer.js"></script>
     <script src="./renderer/menu.js"></script>
