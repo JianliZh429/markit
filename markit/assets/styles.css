@@ -7,6 +7,8 @@ body {
 .container {
   display: flex;
   flex-wrap: nowrap;
+  flex-flow: row;
+  flex-direction: flex-start;
 }
 
 #explorer {
@@ -58,9 +60,17 @@ body {
   padding: 10px;
   overflow-y: auto;
   border-left: 1px solid #ccc;
-}
-p img {
-  width: 100%;
+  p {
+    width: 100%;
+    img {
+      width: 100vb;
+    }
+  }
+  pre code {
+    width: 100vb;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
 }
 
 #search-input {
