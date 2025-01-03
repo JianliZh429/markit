@@ -28,9 +28,9 @@ const $editor = document.getElementById("editor");
 const $previewer = document.getElementById("previewer");
 const $tree = document.getElementById("tree");
 const $title = document.querySelector("title");
-const $searchInFile = document.getElementById("search");
-const $searchInput = document.getElementById("search-input");
-const $searchResult = document.getElementById("search-result");
+const $localSearch = document.getElementById("local-search");
+const $localSearchInput = document.getElementById("local-search-input");
+const $localSearchResult = document.getElementById("local-search-result");
 
 const currentContent = () => {
   return isEditMode ? $editor.value : $previewer.innerHTML;
@@ -49,7 +49,7 @@ const editMode = () => {
   $editor.style.display = "block";
 };
 const offSearch = () => {
-  $searchInFile.style.display = "none";
+  $localSearch.style.display = "none";
 };
 
 const loadFile = (filePath) => {
@@ -200,21 +200,21 @@ const findInFile = (searchTerm) => {
       regex,
       (match) => `<mark>${match}</mark>`,
     );
-    $searchResult.innerHTML = highlightedContent;
+    $localSearchResult.innerHTML = highlightedContent;
     console.log("content: " + highlightedContent);
   } else {
     console.log(`No matches found for "${searchTerm}"`);
   }
 };
 
-$searchInput.addEventListener("keydown", (event) => {
+$localSearchInput.addEventListener("keydown", (event) => {
   if (event.code !== "Enter") return;
   const searchTerm = event.target.value;
   findInFile(searchTerm);
 });
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
-  $searchInFile.style.display = "none";
+  $localSearch.style.display = "none";
   if (isEditMode) {
     editMode();
   } else {
@@ -286,14 +286,14 @@ ipcRenderer.on("toggle-explorer", () => {
 });
 
 ipcRenderer.on("search-in-file", () => {
-  if ($searchInFile.style.display == "none") {
-    $searchInFile.style.display = "block";
-    $searchInput.focus();
-    $searchResult.innerHTML = currentContent();
+  if ($localSearch.style.display == "none") {
+    $localSearch.style.display = "block";
+    $localSearchInput.focus();
+    $localSearchResult.innerHTML = currentContent();
     $previewer.style.display = "none";
     $editor.style.display = "none";
   } else {
-    $searchInFile.style.display = "none";
+    $localSearch.style.display = "none";
     $previewer.style.display = "block";
     $editor.style.display = "none";
   }

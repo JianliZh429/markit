@@ -2,13 +2,13 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+  min-width: 960px;
 }
 
 .container {
   display: flex;
-  flex-wrap: nowrap;
-  flex-flow: row;
-  flex-direction: flex-start;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
 }
 
 #explorer {
@@ -16,7 +16,8 @@ body {
   height: 100vh;
   overflow-y: auto;
   border-left: 1px solid #ccc;
-  overflow: scroll;
+  overflow: auto;
+  min-width: 180px;
   ul {
     list-style-type: none;
     padding-inline-start: 1em;
@@ -60,20 +61,29 @@ body {
   padding: 10px;
   overflow-y: auto;
   border-left: 1px solid #ccc;
+  word-wrap: break-word; /* Break long words to fit within the container */
+  word-break: break-word; /* Ensure breaking for extremely long words */
+  white-space: normal; /* Allow text to wrap onto the next line */
   p {
     width: 100%;
+    word-wrap: break-word; /* Break long words to fit within the container */
+    word-break: break-word; /* Ensure breaking for extremely long words */
+    white-space: normal; /* Allow text to wrap onto the next line */
     img {
       width: 100vb;
     }
   }
-  pre code {
-    width: 100vb;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
 }
 
-#search-input {
+code {
+  display: inline;
+  width: 100vb;
+  white-space: pre-wrap;
+  word-break: break-word; /* Ensure breaking for extremely long */
+  word-wrap: break-word;
+}
+
+#local-search-input {
   width: 100%;
   padding: 5px;
   font-size: 16px;
