@@ -42,6 +42,14 @@ body {
   }
 }
 
+#global-search-input {
+  width: 100%;
+  margin-top: 2px;
+  padding: 2px;
+  border-left: 0;
+  border-right: 0;
+}
+
 #main {
   flex: 4;
   padding: 0, 10px;
