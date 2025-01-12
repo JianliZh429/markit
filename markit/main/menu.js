@@ -118,10 +118,20 @@ const editMenu = (win) => {
       {
         role: "paste",
       },
+      {
+        type: "separator",
+      },
+      {
+        label: "Find",
+        click: () => {
+          win.webContents.send("search-in-file");
+        },
+        accelerator: "CommandOrControl+F",
+      },
     ],
   };
 };
-const viewMenu = () => {
+const viewMenu = (win) => {
   return {
     label: "View",
     submenu: [
@@ -148,6 +158,20 @@ const viewMenu = () => {
       },
       {
         role: "togglefullscreen",
+      },
+      {
+        label: "Show / Hide Explorer",
+        click: () => {
+          win.webContents.send("toggle-explorer");
+        },
+        accelerator: "CommandOrControl+E",
+      },
+      {
+        label: "View / Edit Mode",
+        click: () => {
+          win.webContents.send("toggle-mode");
+        },
+        accelerator: "CommandOrControl+/",
       },
     ],
   };
@@ -176,7 +200,13 @@ const helpMenu = () => {
   };
 };
 const buildTemplate = (win) => {
-  let menus = [fileMenu(win), editMenu(win), viewMenu(), winMenu(), helpMenu()];
+  let menus = [
+    fileMenu(win),
+    editMenu(win),
+    viewMenu(win),
+    winMenu(),
+    helpMenu(),
+  ];
   if (isMac) {
     menus = [appMenu()].concat(menus);
   }
