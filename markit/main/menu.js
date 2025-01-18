@@ -124,9 +124,16 @@ const editMenu = (win) => {
       {
         label: "Find",
         click: () => {
-          win.webContents.send("search-in-file");
+          win.webContents.send("local-search");
         },
         accelerator: "CommandOrControl+F",
+      },
+      {
+        label: "Find in Files",
+        click: () => {
+          win.webContents.send("global-search");
+        },
+        accelerator: "Alt+CommandOrControl+F",
       },
     ],
   };

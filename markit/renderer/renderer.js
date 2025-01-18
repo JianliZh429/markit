@@ -6,7 +6,7 @@ const { Octokit } = require("@octokit/rest");
 
 const { ipcRenderer } = require("electron");
 const path = require("path");
-const fs = require("fs");
+// const fs = require("fs");
 
 let isEditMode = false;
 let $selected = null;
@@ -31,6 +31,13 @@ const $title = document.querySelector("title");
 const $localSearch = document.getElementById("local-search");
 const $localSearchInput = document.getElementById("local-search-input");
 const $localSearchResult = document.getElementById("local-search-result");
+const $globalSearch = document.getElementById("global-search");
+const $globalSearchInput = document.getElementById("global-search-input");
+const $globalSearchResult = document.getElementById("global-search-result");
+
+const rootDirectory = () => {
+  return $tree.firstElementChild.dataset.fullPath;
+};
 
 const currentContent = () => {
   return isEditMode ? $editor.value : $previewer.innerHTML;
@@ -48,8 +55,20 @@ const editMode = () => {
   $previewer.style.display = "none";
   $editor.style.display = "block";
 };
-const offSearch = () => {
+const hideLocalSearch = () => {
   $localSearch.style.display = "none";
+};
+
+const hideGlobalSearch = () => {
+  $globalSearch.style.display = "none";
+  $globalSearchResult.style.display = "none";
+};
+
+const isGlobalSearchOn = () => {
+  return (
+    $globalSearch.style.display !== "none" ||
+    $globalSearchResult.style.display !== "none"
+  );
 };
 
 const loadFile = (filePath) => {
@@ -108,7 +127,8 @@ const getOrCreateChildUl = ($li) => {
 const fileDblClickListener = (event) => {
   const $li = event.target;
   const filePath = $li.dataset.fullPath;
-  offSearch();
+  hideLocalSearch();
+  hideGlobalSearch();
   changeSelected($li);
   loadFile(filePath);
   event.stopPropagation();
@@ -189,7 +209,8 @@ const createFile = (filePath, fileCreated) => {
   });
 };
 
-const findInFile = (searchTerm) => {
+const localSearch = (searchTerm) => {
+  hideGlobalSearch();
   const content = currentContent();
   const regex = new RegExp(searchTerm, "gi");
   const matches = content.match(regex);
@@ -210,8 +231,32 @@ const findInFile = (searchTerm) => {
 $localSearchInput.addEventListener("keydown", (event) => {
   if (event.code !== "Enter") return;
   const searchTerm = event.target.value;
-  findInFile(searchTerm);
+  localSearch(searchTerm);
 });
+
+const globalSearch = async (keyword) => {
+  hideLocalSearch();
+  const results = await searchInFiles(rootDirectory(), keyword);
+  console.log("results: ", results);
+  $globalSearchResult.innerHTML = results
+    .map(
+      (result) => `
+        <div>
+            <h3>${result.file}</h3>
+            ${result.matches.map((match) => `<p>...${match.snippet}...</p>`).join("")}
+        </div>
+    `,
+    )
+    .join("");
+  $globalSearchResult.style.display = "block";
+};
+
+$globalSearchInput.addEventListener("keydown", async (event) => {
+  if (event.code !== "Enter") return;
+  const keyword = event.target.value;
+  await globalSearch(keyword);
+});
+
 ipcRenderer.on("toggle-mode", () => {
   isEditMode = !isEditMode;
   $localSearch.style.display = "none";
@@ -285,16 +330,31 @@ ipcRenderer.on("toggle-explorer", () => {
   }
 });
 
-ipcRenderer.on("search-in-file", () => {
+ipcRenderer.on("local-search", () => {
   if ($localSearch.style.display == "none") {
     $localSearch.style.display = "block";
     $localSearchInput.focus();
     $localSearchResult.innerHTML = currentContent();
     $previewer.style.display = "none";
     $editor.style.display = "none";
+    hideGlobalSearch();
   } else {
     $localSearch.style.display = "none";
     $previewer.style.display = "block";
+    $editor.style.display = "none";
+  }
+});
+
+ipcRenderer.on("global-search", () => {
+  if (isGlobalSearchOn()) {
+    hideGlobalSearch();
+    $previewer.style.display = "block";
+    $editor.style.display = "none";
+  } else {
+    $globalSearch.style.display = "block";
+    $globalSearchInput.focus();
+    $globalSearchResult.innerHTML = currentContent();
+    $previewer.style.display = "none";
     $editor.style.display = "none";
   }
 });
