@@ -1,3 +1,5 @@
+
+![Build Status](https://github.com/JianliZh429/markit/actions/workflows/build.yml/badge.svg?branch=main)
 # Markit
 
 Markdown editor
