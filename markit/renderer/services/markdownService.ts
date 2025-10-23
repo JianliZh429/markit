@@ -3,19 +3,42 @@
  * Handles markdown parsing and conversion
  */
 
+import { LRUCache } from '../utils/performance';
+
 export interface MarkdownAPI {
   parseMarkdown: (content: string) => string;
   setMarkdownBaseUrl: (url: string) => void;
 }
 
 export class MarkdownService {
-  constructor(private markdownAPI: MarkdownAPI) {}
+  private renderCache: LRUCache<string, string>;
+
+  constructor(private markdownAPI: MarkdownAPI) {
+    // Cache up to 100 rendered markdown documents
+    this.renderCache = new LRUCache<string, string>(100);
+  }
 
   /**
-   * Parse markdown to HTML
+   * Parse markdown to HTML with caching
    */
   parse(content: string): string {
-    return this.markdownAPI.parseMarkdown(content);
+    // Check cache first
+    const cached = this.renderCache.get(content);
+    if (cached) {
+      return cached;
+    }
+
+    // Parse and cache the result
+    const html = this.markdownAPI.parseMarkdown(content);
+    this.renderCache.set(content, html);
+    return html;
+  }
+
+  /**
+   * Clear the render cache
+   */
+  clearCache(): void {
+    this.renderCache.clear();
   }
 
   /**

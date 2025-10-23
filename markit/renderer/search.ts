@@ -1,6 +1,10 @@
 import * as fs from "fs-extra";
 import fg from "fast-glob";
 import { SearchResult, SearchMatch } from "../../types";
+import { LRUCache } from "./utils/performance";
+
+// Cache for search results to avoid re-searching same queries
+const searchCache = new LRUCache<string, SearchResult[]>(50);
 
 /**
  * Search for a keyword in `.md` files within a directory.
@@ -14,6 +18,16 @@ export async function searchInFiles(
   keyword: string,
   fileExtension: string = "md",
 ): Promise<SearchResult[]> {
+  // Create cache key
+  const cacheKey = `${directory}:${keyword}:${fileExtension}`;
+  
+  // Check cache first
+  const cached = searchCache.get(cacheKey);
+  if (cached) {
+    console.log("Returning cached search results for:", keyword);
+    return cached;
+  }
+
   console.log("Searching in files...", directory, keyword);
   // Define the pattern to match only files with specified extension
   const pattern = `${directory}/**/*.${fileExtension}`;
@@ -66,6 +80,9 @@ export async function searchInFiles(
       }
     }
   }
+
+  // Cache the results
+  searchCache.set(cacheKey, results);
 
   return results;
 }
