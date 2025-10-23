@@ -1,0 +1,117 @@
+import * as path from 'path';
+import { app, dialog } from 'electron';
+import * as os from 'os';
+
+/**
+ * Security utility for path validation and sanitization
+ */
+
+// Lazy-initialize safe base directories to work in both main and preload contexts
+let SAFE_BASE_PATHS: string[] | null = null;
+
+function getSafeBasePaths(): string[] {
+  if (SAFE_BASE_PATHS === null) {
+    // Try to use app.getPath if available (main process), otherwise use os module (preload)
+    try {
+      if (app && typeof app.getPath === 'function') {
+        SAFE_BASE_PATHS = [
+          app.getPath('home'),
+          app.getPath('documents'),
+          app.getPath('desktop'),
+          app.getPath('downloads'),
+          app.getPath('userData'),
+        ];
+      } else {
+        // Fallback for preload context
+        const homeDir = os.homedir();
+        SAFE_BASE_PATHS = [
+          homeDir,
+          path.join(homeDir, 'Documents'),
+          path.join(homeDir, 'Desktop'),
+          path.join(homeDir, 'Downloads'),
+        ];
+      }
+    } catch (error) {
+      // Last resort fallback
+      const homeDir = os.homedir();
+      SAFE_BASE_PATHS = [homeDir];
+    }
+  }
+  return SAFE_BASE_PATHS;
+}
+
+/**
+ * Validates if a path is safe to access
+ * Prevents directory traversal attacks and restricts to safe directories
+ */
+export function isPathSafe(filePath: string): boolean {
+  try {
+    // Resolve to absolute path to handle relative paths and symlinks
+    const resolvedPath = path.resolve(filePath);
+    
+    // Check if path is within any safe base directory
+    const safePaths = getSafeBasePaths();
+    const isSafe = safePaths.some(basePath => {
+      const relativePath = path.relative(basePath, resolvedPath);
+      // Path is safe if it doesn't start with '..' (not going up from base)
+      return relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+    });
+    
+    return isSafe;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Validates and sanitizes a file path
+ * @throws Error if path is unsafe
+ */
+export function validatePath(filePath: string): string {
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('Invalid file path: Path must be a non-empty string');
+  }
+  
+  // Remove any null bytes
+  const sanitized = filePath.replace(/\0/g, '');
+  
+  if (!isPathSafe(sanitized)) {
+    throw new Error(`Access denied: Path is outside allowed directories: ${sanitized}`);
+  }
+  
+  return sanitized;
+}
+
+/**
+ * Validates that a path only contains markdown files
+ */
+export function isMarkdownFile(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase();
+  return ext === '.md' || ext === '.markdown';
+}
+
+/**
+ * Shows an error dialog to the user
+ */
+export async function showErrorDialog(message: string, detail?: string): Promise<void> {
+  await dialog.showMessageBox({
+    type: 'error',
+    title: 'Error',
+    message: message,
+    detail: detail,
+    buttons: ['OK'],
+  });
+}
+
+/**
+ * Shows a warning dialog to the user
+ */
+export async function showWarningDialog(message: string, detail?: string): Promise<void> {
+  await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Warning',
+    message: message,
+    detail: detail,
+    buttons: ['OK'],
+  });
+}

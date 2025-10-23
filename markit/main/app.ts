@@ -13,6 +13,7 @@ import * as shortcuts from './shortcuts';
 import * as menu from './menu';
 import * as recentFiles from './recent-files';
 import { MenuItem } from '../../types';
+import { showErrorDialog, validatePath } from './security';
 
 let win: BrowserWindow | null = null;
 
@@ -50,9 +51,8 @@ ipcMain.on('new-file-dialog', async (event: IpcMainEvent) => {
       event.reply('new-file-created', result.filePath);
     }
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      console.log(err.message);
-    }
+    const message = err instanceof Error ? err.message : 'Unknown error occurred';
+    await showErrorDialog('Failed to create new file', message);
   }
 });
 
@@ -70,9 +70,8 @@ ipcMain.on('open-file-dialog', async (event: IpcMainEvent) => {
       menu.initAppMenu(win);
     }
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      console.log(err.message);
-    }
+    const message = err instanceof Error ? err.message : 'Unknown error occurred';
+    await showErrorDialog('Failed to open file', message);
   }
 });
 
@@ -89,9 +88,8 @@ ipcMain.on('open-folder-dialog', async (event: IpcMainEvent) => {
       menu.initAppMenu(win);
     }
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      console.log(err.message);
-    }
+    const message = err instanceof Error ? err.message : 'Unknown error occurred';
+    await showErrorDialog('Failed to open folder', message);
   }
 });
 
@@ -105,22 +103,18 @@ ipcMain.on('save-file-dialog', async (event: IpcMainEvent) => {
       event.reply('save-file', result.filePath);
     }
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      console.log(err.message);
-    }
+    const message = err instanceof Error ? err.message : 'Unknown error occurred';
+    await showErrorDialog('Failed to open save dialog', message);
   }
 });
 
 ipcMain.on('save-file', async (_event: IpcMainEvent, filePath: string, content: string) => {
   try {
-    await fs.promises.writeFile(filePath, content);
-    console.log(`File saved to ${filePath}`);
+    const validatedPath = validatePath(filePath);
+    await fs.promises.writeFile(validatedPath, content);
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.log(`File failed to save to ${filePath}: ${error.message}`);
-    } else {
-      console.log(`File failed to save to ${filePath}`);
-    }
+    const message = error instanceof Error ? error.message : 'Unknown error occurred';
+    await showErrorDialog('Failed to save file', message);
   }
 });
 

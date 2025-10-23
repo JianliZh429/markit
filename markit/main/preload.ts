@@ -9,6 +9,7 @@ import { markedEmoji } from 'marked-emoji';
 import { baseUrl } from 'marked-base-url';
 import { Octokit } from '@octokit/rest';
 import { MenuItem } from '../../types';
+import { validatePath, showErrorDialog } from './security';
 
 // Create Octokit instance here instead of passing the class
 const octokit = new Octokit();
@@ -38,7 +39,7 @@ initializeMarked();
 // ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
   // IPC communication
-  send: (channel: string, ...args: any[]): void => {
+  send: (channel: string, ...args: unknown[]): void => {
     // Whitelist channels
     const validChannels = [
       'open-file-dialog',
@@ -53,7 +54,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
 
-  on: (channel: string, func: (...args: any[]) => void): void => {
+  on: (channel: string, func: (...args: unknown[]) => void): void => {
     const validChannels = [
       'toggle-mode',
       'select-all',
@@ -85,7 +86,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     directory: string,
     keyword: string,
     fileExtension?: string
-  ): Promise<any> => {
+  ): Promise<unknown> => {
     return await searchInFiles(directory, keyword, fileExtension);
   },
 
@@ -96,10 +97,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       encoding: string,
       callback: (err: Error | null, data: string) => void
     ): void => {
-      fs.readFile(filePath, encoding as BufferEncoding, callback);
+      try {
+        const validatedPath = validatePath(filePath);
+        fs.readFile(validatedPath, encoding as BufferEncoding, callback);
+      } catch (error) {
+        callback(error as Error, '');
+      }
     },
     readdirSync: (dirPath: string): string[] => {
-      return fs.readdirSync(dirPath);
+      const validatedPath = validatePath(dirPath);
+      return fs.readdirSync(validatedPath);
     },
     statSync: (filePath: string): {
       isFile: () => boolean;
@@ -107,7 +114,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       size: number;
       mtime: Date;
     } => {
-      const stats = fs.statSync(filePath);
+      const validatedPath = validatePath(filePath);
+      const stats = fs.statSync(validatedPath);
       return {
         isFile: () => stats.isFile(),
         isDirectory: () => stats.isDirectory(),
@@ -127,49 +135,80 @@ contextBridge.exposeInMainWorld('electronAPI', {
         }
       ) => void
     ): void => {
-      fs.stat(filePath, (err, stats) => {
-        if (err) {
-          callback(err);
-        } else {
-          callback(null, {
-            isFile: () => stats.isFile(),
-            isDirectory: () => stats.isDirectory(),
-            size: stats.size,
-            mtime: stats.mtime,
-          });
-        }
-      });
+      try {
+        const validatedPath = validatePath(filePath);
+        fs.stat(validatedPath, (err, stats) => {
+          if (err) {
+            callback(err);
+          } else {
+            callback(null, {
+              isFile: () => stats.isFile(),
+              isDirectory: () => stats.isDirectory(),
+              size: stats.size,
+              mtime: stats.mtime,
+            });
+          }
+        });
+      } catch (error) {
+        callback(error as Error);
+      }
     },
     writeFile: (
       filePath: string,
       content: string,
       callback: (err: Error | null) => void
     ): void => {
-      fs.writeFile(filePath, content, callback);
+      try {
+        const validatedPath = validatePath(filePath);
+        fs.writeFile(validatedPath, content, callback);
+      } catch (error) {
+        callback(error as Error);
+      }
     },
     open: (
       filePath: string,
       flags: string,
       callback: (err: Error | null) => void
     ): void => {
-      fs.open(filePath, flags, callback);
+      try {
+        const validatedPath = validatePath(filePath);
+        fs.open(validatedPath, flags, callback);
+      } catch (error) {
+        callback(error as Error);
+      }
     },
     rename: (
       oldPath: string,
       newPath: string,
       callback: (err: Error | null) => void
     ): void => {
-      fs.rename(oldPath, newPath, callback);
+      try {
+        const validatedOldPath = validatePath(oldPath);
+        const validatedNewPath = validatePath(newPath);
+        fs.rename(validatedOldPath, validatedNewPath, callback);
+      } catch (error) {
+        callback(error as Error);
+      }
     },
     rmdir: (
       dirPath: string,
-      options: any,
+      options: fs.RmDirOptions,
       callback: (err: Error | null) => void
     ): void => {
-      fs.rmdir(dirPath, options, callback);
+      try {
+        const validatedPath = validatePath(dirPath);
+        fs.rmdir(validatedPath, options, callback);
+      } catch (error) {
+        callback(error as Error);
+      }
     },
     unlink: (filePath: string, callback: (err: Error | null) => void): void => {
-      fs.unlink(filePath, callback);
+      try {
+        const validatedPath = validatePath(filePath);
+        fs.unlink(validatedPath, callback);
+      } catch (error) {
+        callback(error as Error);
+      }
     },
   },
 

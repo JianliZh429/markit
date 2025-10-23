@@ -7,8 +7,11 @@
     "outDir": "./dist/renderer",
     "rootDir": "./markit/renderer",
     "types": ["node"],
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true
   },
   "include": ["markit/renderer/**/*"],
-  "exclude": ["markit/renderer/menu.ts", "markit/renderer/renderer.js", "markit/renderer/menu.js"]
+  "exclude": ["markit/renderer/renderer.js", "markit/renderer/menu.js"]
 }
