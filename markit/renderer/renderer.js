@@ -361,8 +361,28 @@ ipcOn("toggle-mode", () => {
 });
 
 ipcOn("select-all", () => {
-  $editor.focus();
-  $editor.select();
+  // Check if a search input is focused
+  const activeElement = document.activeElement;
+
+  if (
+    activeElement === $localSearchInput ||
+    activeElement === $globalSearchInput
+  ) {
+    // Select all in the active search input
+    activeElement.select();
+  } else if (isEditMode) {
+    // In edit mode, select all in the editor
+    $editor.focus();
+    $editor.select();
+  } else {
+    // In view mode, select all in the previewer
+    $previewer.focus();
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents($previewer);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
 });
 
 ipcOn("open-file-dialog", () => {
