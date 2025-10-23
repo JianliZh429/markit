@@ -9,7 +9,7 @@ function load() {
   try {
     const data = fs.readFileSync(recentFilesPath, "utf-8");
     return JSON.parse(data);
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }

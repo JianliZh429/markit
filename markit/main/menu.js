@@ -1,11 +1,11 @@
-const { Menu, MenuItem } = require("electron");
+const { Menu } = require("electron");
 const recentFiles = require("./recent-files.js");
 
 const isMac = process.platform === "darwin";
 
 const recentFilesMenu = (win) => {
   const files = recentFiles.load();
-  return files.map((filePath, index) => ({
+  return files.map((filePath, _index) => ({
     label: filePath,
     click: () => {
       win.webContents.send("file-opened", filePath);

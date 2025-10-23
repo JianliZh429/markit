@@ -72,6 +72,10 @@ body {
   word-wrap: break-word; /* Break long words to fit within the container */
   word-break: break-word; /* Ensure breaking for extremely long words */
   white-space: normal; /* Allow text to wrap onto the next line */
+  cursor: text; /* Show text cursor in preview mode */
+  user-select: text; /* Allow text selection */
+  -webkit-user-select: text; /* Safari */
+  -ms-user-select: text; /* IE 10 and IE 11 */
   p {
     width: 100%;
     word-wrap: break-word; /* Break long words to fit within the container */

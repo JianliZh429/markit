@@ -1,6 +1,6 @@
 // Register global shortcuts
 
-function register(shortcut, win, ipcMain) {
+function register(_shortcut, _win, _ipcMain) {
   // shortcut.register("CommandOrControl+/", () => {
   //   win.webContents.send("toggle-mode");
   // });
