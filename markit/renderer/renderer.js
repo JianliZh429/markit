@@ -1,8 +1,19 @@
-// Use the secure electronAPI exposed via preload script  
-const { send: ipcSend, on: ipcOn, fs, path, searchInFiles, parseMarkdown, setMarkdownBaseUrl } = window.electronAPI;
+// Use the secure electronAPI exposed via preload script
+const {
+  send: ipcSend,
+  on: ipcOn,
+  fs,
+  path,
+  searchInFiles,
+  parseMarkdown,
+  setMarkdownBaseUrl,
+} = window.electronAPI;
 
 let isEditMode = false;
 let $selected = null;
+let editorScrollTop = 0;
+let editorSelectionStart = 0;
+let editorSelectionEnd = 0;
 
 const $explorer = document.getElementById("explorer");
 const $editor = document.getElementById("editor");
@@ -25,16 +36,34 @@ const currentContent = () => {
 };
 
 const previewMode = () => {
+  // Save editor state before switching
+  editorScrollTop = $editor.scrollTop;
+  editorSelectionStart = $editor.selectionStart;
+  editorSelectionEnd = $editor.selectionEnd;
+
   const markdownContent = $editor.value;
   const htmlContent = parseMarkdown(markdownContent);
   $previewer.innerHTML = htmlContent;
   $previewer.style.display = "block";
   $editor.style.display = "none";
+  
+  // Make previewer editable
+  $previewer.contentEditable = "true";
 };
 
 const editMode = () => {
+  // Disable previewer editing when switching to edit mode
+  $previewer.contentEditable = "false";
+  
   $previewer.style.display = "none";
   $editor.style.display = "block";
+
+  // Restore editor state after switching
+  setTimeout(() => {
+    $editor.scrollTop = editorScrollTop;
+    $editor.setSelectionRange(editorSelectionStart, editorSelectionEnd);
+    $editor.focus();
+  }, 0);
 };
 const hideLocalSearch = () => {
   $localSearch.style.display = "none";
@@ -96,7 +125,7 @@ const changeSelected = ($target) => {
 };
 
 const getOrCreateChildUl = ($li) => {
-  $ul = $li.getElementsByTagName("ul");
+  let $ul = $li.getElementsByTagName("ul");
   if ($ul.length > 0) {
     return $ul[0];
   }
@@ -146,7 +175,7 @@ const appendNode = ($ul, filePath, isFile) => {
 };
 
 const unfoldDir = ($li, filePath) => {
-  $ul = getOrCreateChildUl($li);
+  const $ul = getOrCreateChildUl($li);
   fs.readdirSync(filePath).forEach((f) => {
     const fPath = path.join(filePath, f);
     const parsedPath = path.parse(fPath);
@@ -269,8 +298,8 @@ ipcOn("file-opened", (args) => {
 
 ipcOn("save-opened-file", () => {
   const openedFilePath = $title.textContent;
-  content = $editor.value;
-  fs.stat(openedFilePath, (err, stat) => {
+  const content = $editor.value;
+  fs.stat(openedFilePath, (err, _stat) => {
     if (!err) {
       fs.writeFile(openedFilePath, content, (err) => {
         if (err) {
@@ -337,6 +366,345 @@ ipcOn("global-search", () => {
     $globalSearchResult.innerHTML = currentContent();
     $previewer.style.display = "none";
     $editor.style.display = "none";
+  }
+});
+
+// Handle paste with styles - convert HTML to Markdown (for editor)
+$editor.addEventListener("paste", (event) => {
+  // Get clipboard data
+  const clipboardData = event.clipboardData || window.clipboardData;
+  const htmlData = clipboardData.getData("text/html");
+  const plainText = clipboardData.getData("text/plain");
+  
+  // If there's HTML data, convert it to Markdown
+  if (htmlData) {
+    event.preventDefault();
+    
+    // Convert HTML to Markdown
+    const markdown = htmlToMarkdown(htmlData);
+    
+    // Insert at cursor position
+    const start = $editor.selectionStart;
+    const end = $editor.selectionEnd;
+    const text = $editor.value;
+    
+    $editor.value = text.substring(0, start) + markdown + text.substring(end);
+    
+    // Set cursor position after inserted text
+    const newPosition = start + markdown.length;
+    $editor.setSelectionRange(newPosition, newPosition);
+    
+    // Update preview if in preview mode
+    if (!isEditMode) {
+      previewMode();
+    }
+  }
+  // Otherwise, let the default paste behavior handle plain text
+});
+
+// Handle paste in preview mode
+$previewer.addEventListener("paste", (event) => {
+  event.preventDefault();
+  
+  // Get clipboard data
+  const clipboardData = event.clipboardData || window.clipboardData;
+  const htmlData = clipboardData.getData("text/html");
+  const plainText = clipboardData.getData("text/plain");
+  
+  // Convert HTML to Markdown or use plain text
+  const markdown = htmlData ? htmlToMarkdown(htmlData) : plainText;
+  
+  // Append to editor content
+  $editor.value += "\n\n" + markdown;
+  
+  // Update preview to show the new content
+  previewMode();
+  
+  // Scroll to bottom to show the newly pasted content
+  setTimeout(() => {
+    $previewer.scrollTop = $previewer.scrollHeight;
+  }, 0);
+});
+
+// Convert HTML to Markdown
+function htmlToMarkdown(html) {
+  // Create a temporary div to parse HTML
+  const temp = document.createElement("div");
+  temp.innerHTML = html;
+  
+  return processNode(temp);
+}
+
+function processNode(node) {
+  let markdown = "";
+  
+  for (const child of node.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE) {
+      markdown += child.textContent;
+    } else if (child.nodeType === Node.ELEMENT_NODE) {
+      const tag = child.tagName.toLowerCase();
+      
+      switch (tag) {
+      case "table":
+        markdown += convertTableToMarkdown(child);
+        break;
+      case "h1":
+        markdown += `# ${processNode(child)}\n\n`;
+        break;
+      case "h2":
+        markdown += `## ${processNode(child)}\n\n`;
+        break;
+      case "h3":
+        markdown += `### ${processNode(child)}\n\n`;
+        break;
+      case "h4":
+        markdown += `#### ${processNode(child)}\n\n`;
+        break;
+      case "h5":
+        markdown += `##### ${processNode(child)}\n\n`;
+        break;
+      case "h6":
+        markdown += `###### ${processNode(child)}\n\n`;
+        break;
+      case "strong":
+      case "b":
+        markdown += `**${processNode(child)}**`;
+        break;
+      case "em":
+      case "i":
+        markdown += `*${processNode(child)}*`;
+        break;
+      case "code":
+        markdown += `\`${processNode(child)}\``;
+        break;
+      case "pre":
+        markdown += `\n\`\`\`\n${processNode(child)}\n\`\`\`\n\n`;
+        break;
+      case "a":
+        const href = child.getAttribute("href") || "";
+        markdown += `[${processNode(child)}](${href})`;
+        break;
+      case "img":
+        const src = child.getAttribute("src") || "";
+        const alt = child.getAttribute("alt") || "";
+        markdown += `![${alt}](${src})`;
+        break;
+      case "ul":
+        markdown += `\n${processNode(child)}\n`;
+        break;
+      case "ol":
+        markdown += `\n${processNode(child)}\n`;
+        break;
+      case "li":
+        // Check if parent is ul or ol
+        const parentTag = child.parentElement?.tagName.toLowerCase();
+        if (parentTag === "ol") {
+          markdown += `1. ${processNode(child)}\n`;
+        } else {
+          markdown += `- ${processNode(child)}\n`;
+        }
+        break;
+      case "blockquote":
+        markdown += `> ${processNode(child).split("\n").join("\n> ")}\n\n`;
+        break;
+      case "p":
+        markdown += `${processNode(child)}\n\n`;
+        break;
+      case "br":
+        markdown += "\n";
+        break;
+      case "hr":
+        markdown += "\n---\n\n";
+        break;
+      case "del":
+      case "s":
+      case "strike":
+        markdown += `~~${processNode(child)}~~`;
+        break;
+      default:
+        markdown += processNode(child);
+      }
+    }
+  }
+  
+  return markdown;
+}
+
+// Convert HTML table to Markdown table
+function convertTableToMarkdown(tableElement) {
+  const rows = [];
+  let maxColumns = 0;
+  
+  // Process all rows (thead, tbody, or direct tr elements)
+  const allRows = tableElement.querySelectorAll("tr");
+  
+  allRows.forEach((tr, rowIndex) => {
+    const cells = [];
+    const cellElements = tr.querySelectorAll("th, td");
+    
+    cellElements.forEach(cell => {
+      // Get cell content and clean it up
+      const content = processNode(cell).trim().replace(/\n/g, " ");
+      cells.push(content);
+    });
+    
+    if (cells.length > maxColumns) {
+      maxColumns = cells.length;
+    }
+    
+    rows.push(cells);
+  });
+  
+  if (rows.length === 0) {
+    return "";
+  }
+  
+  // Build markdown table
+  let markdown = "\n";
+  
+  // Add header row (first row becomes header)
+  const headerRow = rows[0];
+  while (headerRow.length < maxColumns) {
+    headerRow.push("");
+  }
+  markdown += "| " + headerRow.join(" | ") + " |\n";
+  
+  // Add separator row
+  markdown += "|" + " --- |".repeat(maxColumns) + "\n";
+  
+  // Add data rows
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    while (row.length < maxColumns) {
+      row.push("");
+    }
+    markdown += "| " + row.join(" | ") + " |\n";
+  }
+  
+  markdown += "\n";
+  
+  return markdown;
+}
+
+// Real-time markdown preview in editable preview mode
+let previewUpdateTimeout;
+$previewer.addEventListener("input", () => {
+  if (!isEditMode) {
+    // Clear existing timeout
+    clearTimeout(previewUpdateTimeout);
+    
+    // Save cursor position
+    const selection = window.getSelection();
+    const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    const cursorOffset = range ? range.startOffset : 0;
+    const cursorNode = range ? range.startContainer : null;
+    
+    // Get the plain text content from previewer
+    const plainText = $previewer.innerText || $previewer.textContent;
+    
+    // Update the underlying editor
+    $editor.value = plainText;
+    
+    // Debounce the markdown parsing to avoid excessive re-renders
+    previewUpdateTimeout = setTimeout(() => {
+      const htmlContent = parseMarkdown(plainText);
+      
+      // Only update if content actually changed
+      if ($previewer.innerHTML !== htmlContent) {
+        $previewer.innerHTML = htmlContent;
+        
+        // Try to restore cursor position
+        try {
+          if (cursorNode && selection) {
+            // Find the text node at similar position
+            const walker = document.createTreeWalker(
+              $previewer,
+              NodeFilter.SHOW_TEXT,
+              null,
+              false
+            );
+            
+            let currentOffset = 0;
+            let targetNode = null;
+            let targetOffset = 0;
+            
+            // Calculate total offset to cursor
+            const totalOffset = getTextOffset($previewer, cursorNode, cursorOffset);
+            
+            // Find the node at that offset
+            while (walker.nextNode()) {
+              const node = walker.currentNode;
+              const nodeLength = node.textContent.length;
+              
+              if (currentOffset + nodeLength >= totalOffset) {
+                targetNode = node;
+                targetOffset = totalOffset - currentOffset;
+                break;
+              }
+              
+              currentOffset += nodeLength;
+            }
+            
+            // Restore cursor if target found
+            if (targetNode) {
+              const newRange = document.createRange();
+              newRange.setStart(targetNode, Math.min(targetOffset, targetNode.textContent.length));
+              newRange.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+            }
+          }
+        } catch (e) {
+          console.error("Error restoring cursor:", e);
+        }
+      }
+    }, 300); // 300ms debounce
+  }
+});
+
+// Helper function to get text offset from container to node
+function getTextOffset(container, targetNode, offset) {
+  const walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  let totalOffset = 0;
+  let node;
+  
+  while ((node = walker.nextNode())) {
+    if (node === targetNode) {
+      return totalOffset + offset;
+    }
+    totalOffset += node.textContent.length;
+  }
+  
+  return totalOffset;
+}
+
+// Handle Enter key in preview mode to maintain formatting
+$previewer.addEventListener("keydown", (event) => {
+  if (!isEditMode && event.key === "Enter") {
+    event.preventDefault();
+    
+    // Insert line break and trigger input event
+    const selection = window.getSelection();
+    const range = selection.getRangeAt(0);
+    
+    const br = document.createTextNode("\n");
+    range.deleteContents();
+    range.insertNode(br);
+    
+    // Move cursor after the line break
+    range.setStartAfter(br);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    // Trigger input event for update
+    $previewer.dispatchEvent(new Event("input"));
   }
 });
 

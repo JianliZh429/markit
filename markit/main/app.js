@@ -100,7 +100,7 @@ ipcMain.on("save-file", async (event, filePath, content) => {
   try {
     await fs.promises.writeFile(filePath, content);
     console.log(`File saved to ${filePath}`);
-  } catch (error) {
+  } catch (_error) {
     console.log(`File failed to save to ${filePath}`);
   }
 });
@@ -114,14 +114,14 @@ ipcMain.on("open-recent-file", async (event) => {
 
 ipcMain.on("show-context-menu", async (event, menuItems) => {
   const { Menu } = require("electron");
-  
+
   const template = menuItems.map((item) => ({
     label: item.label,
     click: () => {
       event.reply("context-menu-command", item.id);
     },
   }));
-  
+
   const menu = Menu.buildFromTemplate(template);
   menu.popup({ window: win });
 });

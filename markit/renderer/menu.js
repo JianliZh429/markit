@@ -1,5 +1,10 @@
 // Access electronAPI without redeclaring variables to avoid conflicts with renderer.js
-const { showContextMenu: showMenu, on: onIpc, fs: fileSystem, path: pathUtil } = window.electronAPI;
+const {
+  showContextMenu: showMenu,
+  on: onIpc,
+  fs: fileSystem,
+  path: pathUtil,
+} = window.electronAPI;
 
 const moveCursorToEnd = ($li) => {
   // Get the text node inside $li, if it exists
@@ -54,6 +59,10 @@ const newFile = ($li) => {
 
   const $ul = getOrCreateChildUl($li);
   $ul.appendChild($newLi);
+
+  // Scroll the new file into view
+  $newLi.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
   renaming($newLi, (originalPath, renamedFilePath) => {
     changeSelected($newLi);
     loadFile(renamedFilePath);
@@ -72,9 +81,14 @@ const renaming = ($li, renamedCallback) => {
 
       if (curValue != preValue) {
         const preFilePath = $li.dataset.fullPath;
-        const curFilePath = pathUtil.join(pathUtil.parse(preFilePath).dir, curValue);
+        const curFilePath = pathUtil.join(
+          pathUtil.parse(preFilePath).dir,
+          curValue,
+        );
         $li.dataset.fullPath = curFilePath;
         renamed(preFilePath, curFilePath, renamedCallback);
+        // Reorder files after rename
+        reorderSiblings($li);
       }
       event.preventDefault();
     },
@@ -89,10 +103,31 @@ const renaming = ($li, renamedCallback) => {
   });
 };
 
+const reorderSiblings = ($li) => {
+  const $parent = $li.parentElement;
+  if (!$parent) return;
+
+  // Get all file siblings
+  const $siblings = Array.from($parent.children);
+
+  // Sort siblings alphabetically by their text content
+  $siblings.sort((a, b) => {
+    const aText = a.textContent.toLowerCase();
+    const bText = b.textContent.toLowerCase();
+    return aText.localeCompare(bText);
+  });
+
+  // Re-append in sorted order
+  $siblings.forEach(($sibling) => $parent.appendChild($sibling));
+
+  // Scroll the renamed file into view
+  $li.scrollIntoView({ behavior: "smooth", block: "nearest" });
+};
+
 const renamed = (filePath, newPath, renamedCallback) => {
-  fileSystem.stat(filePath, (err, stat) => {
+  fileSystem.stat(filePath, (err, _stat) => {
     if (err) {
-      fileSystem.open(newPath, "w", (err, file) => {
+      fileSystem.open(newPath, "w", (err, _file) => {
         if (err) {
           console.error(err);
         } else {
@@ -147,13 +182,13 @@ let contextMenuTarget = null;
 const popupMenu = ($li) => {
   if ($li.tagName.toLowerCase() === "li") {
     contextMenuTarget = $li;
-    
+
     const menuItems = [
       { id: "new-file", label: "New File" },
       { id: "rename", label: "Rename" },
       { id: "delete", label: "Delete" },
     ];
-    
+
     showMenu(menuItems);
   }
 };
@@ -161,25 +196,25 @@ const popupMenu = ($li) => {
 // Listen for context menu command responses from main process
 onIpc("context-menu-command", (commandId) => {
   if (!contextMenuTarget) return;
-  
+
   const $li = contextMenuTarget;
-  
+
   switch (commandId) {
-  case "new-file":
-    newFile($li);
-    break;
-  case "rename":
-    renaming($li, (originalPath, newPath) => {
-      if (originalPath == $title.textContent) {
-        $title.textContent = newPath;
-      }
-    });
-    break;
-  case "delete":
-    deleting($li);
-    break;
+    case "new-file":
+      newFile($li);
+      break;
+    case "rename":
+      renaming($li, (originalPath, newPath) => {
+        if (originalPath == $title.textContent) {
+          $title.textContent = newPath;
+        }
+      });
+      break;
+    case "delete":
+      deleting($li);
+      break;
   }
-  
+
   contextMenuTarget = null;
 });
 

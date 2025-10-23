@@ -50,7 +50,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.send(channel, ...args);
     }
   },
-  
+
   on: (channel, func) => {
     const validChannels = [
       "toggle-mode",
@@ -145,7 +145,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   parseMarkdown: (content) => {
     return marked.parse(content);
   },
-  
+
   setMarkdownBaseUrl: (url) => {
     marked.use(baseUrl(url));
   },
