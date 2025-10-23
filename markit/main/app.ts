@@ -31,7 +31,7 @@ function createWindow(): void {
   });
 
   win.loadFile(path.join(__dirname, "../index.html"));
-  shortcuts.register(globalShortcut, win, ipcMain);
+  shortcuts.register(globalShortcut, win);
   menu.initAppMenu(win);
 }
 

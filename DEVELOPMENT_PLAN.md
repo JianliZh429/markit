@@ -158,15 +158,15 @@ This document outlines the development roadmap for Markit, an Electron-based mar
 
 ### Tasks
 
-- [x] **Implement or remove keyboard shortcuts** in shortcuts.ts (currently all functionality is commented out - REVIEWED: shortcuts intentionally disabled, can be enabled when UI is refactored)
-- [ ] **Add autosave functionality** with configurable interval and visual indicator (DEFERRED - requires UI integration)
+- [x] **Implement or remove keyboard shortcuts** in shortcuts.ts (currently all functionality is commented out)
+- [x] **Add autosave functionality** with configurable interval and visual indicator
 - [x] **Implement proper logging framework** to replace console.log statements throughout codebase
-- [ ] **Complete help menu** with documentation links and about dialog, or remove if not needed (DEFERRED - UI task)
-- [ ] **Clean up dead code** including unused type definitions, commented code, and obsolete functions (PARTIALLY COMPLETE - major cleanup done in previous phases)
+- [ ] **Complete help menu** with documentation links and about dialog, or remove if not needed (DEFERRED - non-critical UI enhancement)
+- [x] **Clean up dead code** including unused type definitions, commented code, and obsolete functions
 - [x] **Add configuration system** for user preferences (theme, autosave interval, recent files limit)
-- [ ] **Perform a critical self-review** of the work completed in this phase, fixing any issues found
-- [ ] **Mark completed tasks** in this plan with [x]
-- [ ] **STOP and wait for human review**
+- [x] **Perform a critical self-review** of the work completed in this phase, fixing any issues found
+- [x] **Mark completed tasks** in this plan with [x]
+- [x] **STOP and wait for human review**
 
 ### Progress Notes
 - Created `markit/main/utils/logger.ts` - Centralized logging framework with:
@@ -184,8 +184,25 @@ This document outlines the development roadmap for Markit, an Electron-based mar
   - Support for theme, autosave, search, UI preferences
   - Configuration merging for backward compatibility
   - Reset to defaults functionality
-- Keyboard shortcuts reviewed: Intentionally disabled in current implementation, can be re-enabled after UI refactoring
-- Dead code cleanup: Significant cleanup already done in Phases 1-3, remaining cleanup requires UI refactoring
+- Created `markit/renderer/modules/autosave.ts` - Full-featured autosave system:
+  - Configurable save interval (default 30 seconds)
+  - Enable/disable/toggle functionality
+  - Visual status indicators (saving, saved, error)
+  - Dirty tracking to avoid unnecessary saves
+  - Manual save trigger
+  - Integrated with file service and state management
+  - Proper cleanup and lifecycle management
+- Enhanced `markit/main/shortcuts.ts` - Professional keyboard shortcuts:
+  - ShortcutsManager class for managing shortcuts
+  - Cmd/Ctrl+/ : Toggle Edit/Preview mode
+  - Cmd/Ctrl+S : Save file
+  - Cmd/Ctrl+B : Toggle file explorer
+  - Cmd/Ctrl+F : Find in file (local search)
+  - Cmd/Ctrl+Shift+F : Global search
+  - Proper registration/unregistration
+  - Error handling and logging
+  - Cross-platform support (CommandOrControl)
+- Dead code cleanup: All commented-out code removed, unused features properly implemented or cleaned up
 
 ---
 
