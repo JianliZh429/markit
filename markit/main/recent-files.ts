@@ -1,14 +1,14 @@
-import { app } from 'electron';
-import * as path from 'path';
-import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
+import { app } from "electron";
+import * as path from "path";
+import * as fs from "fs/promises";
+import * as fsSync from "fs";
 
-const recentFilesPath = path.join(app.getPath('userData'), 'recent-files.json');
+const recentFilesPath = path.join(app.getPath("userData"), "recent-files.json");
 
 // Load recent files from JSON (async version)
 export async function loadAsync(): Promise<string[]> {
   try {
-    const data = await fs.readFile(recentFilesPath, 'utf-8');
+    const data = await fs.readFile(recentFilesPath, "utf-8");
     return JSON.parse(data) as string[];
   } catch (_error: unknown) {
     return [];
@@ -18,7 +18,7 @@ export async function loadAsync(): Promise<string[]> {
 // Load recent files from JSON (sync version for backward compatibility)
 export function load(): string[] {
   try {
-    const data = fsSync.readFileSync(recentFilesPath, 'utf-8');
+    const data = fsSync.readFileSync(recentFilesPath, "utf-8");
     return JSON.parse(data) as string[];
   } catch (_error: unknown) {
     return [];

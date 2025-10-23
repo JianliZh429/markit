@@ -1,15 +1,15 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import * as fs from 'fs';
-import * as path from 'path';
+import { contextBridge, ipcRenderer } from "electron";
+import * as fs from "fs";
+import * as path from "path";
 // Note: search module will be converted to TS later
-const { searchInFiles } = require('../renderer/search.js');
-import { marked } from 'marked';
-import markedCodePreview from 'marked-code-preview';
-import { markedEmoji } from 'marked-emoji';
-import { baseUrl } from 'marked-base-url';
-import { Octokit } from '@octokit/rest';
-import { MenuItem } from '../../types';
-import { validatePath, showErrorDialog } from './security';
+const { searchInFiles } = require("../renderer/search.js");
+import { marked } from "marked";
+import markedCodePreview from "marked-code-preview";
+import { markedEmoji } from "marked-emoji";
+import { baseUrl } from "marked-base-url";
+import { Octokit } from "@octokit/rest";
+import { MenuItem } from "../../types";
+import { validatePath, showErrorDialog } from "./security";
 
 // Create Octokit instance here instead of passing the class
 const octokit = new Octokit();
@@ -36,17 +36,17 @@ initializeMarked();
 
 // Expose protected methods that allow the renderer process to use
 // ipcRenderer without exposing the entire object
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld("electronAPI", {
   // IPC communication
   send: (channel: string, ...args: unknown[]): void => {
     // Whitelist channels
     const validChannels = [
-      'open-file-dialog',
-      'open-folder-dialog',
-      'save-file-dialog',
-      'save-file',
-      'new-file-dialog',
-      'open-recent-file',
+      "open-file-dialog",
+      "open-folder-dialog",
+      "save-file-dialog",
+      "save-file",
+      "new-file-dialog",
+      "open-recent-file",
     ];
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, ...args);
@@ -55,20 +55,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   on: (channel: string, func: (...args: unknown[]) => void): void => {
     const validChannels = [
-      'toggle-mode',
-      'select-all',
-      'open-file-dialog',
-      'open-folder-dialog',
-      'file-opened',
-      'save-opened-file',
-      'save-file-dialog',
-      'save-file',
-      'new-file-dialog',
-      'new-file-created',
-      'toggle-explorer',
-      'local-search',
-      'global-search',
-      'context-menu-command',
+      "toggle-mode",
+      "select-all",
+      "open-file-dialog",
+      "open-folder-dialog",
+      "file-opened",
+      "save-opened-file",
+      "save-file-dialog",
+      "save-file",
+      "new-file-dialog",
+      "new-file-created",
+      "toggle-explorer",
+      "local-search",
+      "global-search",
+      "context-menu-command",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
@@ -77,14 +77,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   showContextMenu: (menuItems: MenuItem[]): void => {
-    ipcRenderer.send('show-context-menu', menuItems);
+    ipcRenderer.send("show-context-menu", menuItems);
   },
 
   // Search functionality
   searchInFiles: async (
     directory: string,
     keyword: string,
-    fileExtension?: string
+    fileExtension?: string,
   ): Promise<unknown> => {
     return await searchInFiles(directory, keyword, fileExtension);
   },
@@ -94,20 +94,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     readFile: (
       filePath: string,
       encoding: string,
-      callback: (err: Error | null, data: string) => void
+      callback: (err: Error | null, data: string) => void,
     ): void => {
       try {
         const validatedPath = validatePath(filePath);
         fs.readFile(validatedPath, encoding as BufferEncoding, callback);
       } catch (error) {
-        callback(error as Error, '');
+        callback(error as Error, "");
       }
     },
     readdirSync: (dirPath: string): string[] => {
       const validatedPath = validatePath(dirPath);
       return fs.readdirSync(validatedPath);
     },
-    statSync: (filePath: string): {
+    statSync: (
+      filePath: string,
+    ): {
       isFile: () => boolean;
       isDirectory: () => boolean;
       size: number;
@@ -131,8 +133,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
           isDirectory: () => boolean;
           size: number;
           mtime: Date;
-        }
-      ) => void
+        },
+      ) => void,
     ): void => {
       try {
         const validatedPath = validatePath(filePath);
@@ -155,7 +157,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     writeFile: (
       filePath: string,
       content: string,
-      callback: (err: Error | null) => void
+      callback: (err: Error | null) => void,
     ): void => {
       try {
         const validatedPath = validatePath(filePath);
@@ -167,7 +169,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     open: (
       filePath: string,
       flags: string,
-      callback: (err: Error | null) => void
+      callback: (err: Error | null) => void,
     ): void => {
       try {
         const validatedPath = validatePath(filePath);
@@ -179,7 +181,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     rename: (
       oldPath: string,
       newPath: string,
-      callback: (err: Error | null) => void
+      callback: (err: Error | null) => void,
     ): void => {
       try {
         const validatedOldPath = validatePath(oldPath);
@@ -192,7 +194,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     rmdir: (
       dirPath: string,
       options: fs.RmDirOptions,
-      callback: (err: Error | null) => void
+      callback: (err: Error | null) => void,
     ): void => {
       try {
         const validatedPath = validatePath(dirPath);

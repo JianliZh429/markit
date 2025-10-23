@@ -1,14 +1,14 @@
-import { Menu, BrowserWindow, MenuItemConstructorOptions } from 'electron';
-import * as recentFiles from './recent-files';
+import { Menu, BrowserWindow, MenuItemConstructorOptions } from "electron";
+import * as recentFiles from "./recent-files";
 
-const isMac = process.platform === 'darwin';
+const isMac = process.platform === "darwin";
 
 const recentFilesMenu = (win: BrowserWindow): MenuItemConstructorOptions[] => {
   const files = recentFiles.load();
   return files.map((filePath: string, _index: number) => ({
     label: filePath,
     click: () => {
-      win.webContents.send('file-opened', filePath);
+      win.webContents.send("file-opened", filePath);
       recentFiles.add(filePath);
     },
   }));
@@ -16,126 +16,126 @@ const recentFilesMenu = (win: BrowserWindow): MenuItemConstructorOptions[] => {
 
 const appMenu = (): MenuItemConstructorOptions => {
   return {
-    label: 'MarkIt',
+    label: "MarkIt",
     submenu: [
-      { role: 'about' },
-      { type: 'separator' },
-      { role: 'services' },
-      { type: 'separator' },
-      { role: 'hide' },
-      { role: 'hideOthers' },
-      { role: 'unhide' },
-      { type: 'separator' },
-      { role: 'quit' },
+      { role: "about" },
+      { type: "separator" },
+      { role: "services" },
+      { type: "separator" },
+      { role: "hide" },
+      { role: "hideOthers" },
+      { role: "unhide" },
+      { type: "separator" },
+      { role: "quit" },
     ],
   };
 };
 
 const fileMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
   return {
-    label: 'File',
+    label: "File",
     submenu: [
       {
-        label: 'New File',
+        label: "New File",
         click: () => {
-          win.webContents.send('new-file-dialog');
+          win.webContents.send("new-file-dialog");
         },
-        accelerator: 'CommandOrControl+N',
+        accelerator: "CommandOrControl+N",
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        label: 'Open...',
+        label: "Open...",
         click: () => {
-          win.webContents.send('open-file-dialog');
+          win.webContents.send("open-file-dialog");
         },
-        accelerator: 'CommandOrControl+O',
+        accelerator: "CommandOrControl+O",
       },
       {
-        label: 'Open Folder...',
+        label: "Open Folder...",
         click: () => {
-          win.webContents.send('open-folder-dialog');
+          win.webContents.send("open-folder-dialog");
         },
-        accelerator: 'CommandOrControl+D',
+        accelerator: "CommandOrControl+D",
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        label: 'Open Recent',
+        label: "Open Recent",
         submenu: recentFilesMenu(win),
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        label: 'Save...',
+        label: "Save...",
         click: () => {
-          win.webContents.send('save-opened-file');
+          win.webContents.send("save-opened-file");
         },
-        accelerator: 'CommandOrControl+S',
+        accelerator: "CommandOrControl+S",
       },
       {
-        label: 'Save As',
+        label: "Save As",
         click: () => {
-          win.webContents.send('save-file-dialog');
+          win.webContents.send("save-file-dialog");
         },
-        accelerator: 'Shift+CommandOrControl+S',
+        accelerator: "Shift+CommandOrControl+S",
       },
-      isMac ? { role: 'close' } : { role: 'quit' },
+      isMac ? { role: "close" } : { role: "quit" },
     ],
   };
 };
 
 const editMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
   return {
-    label: 'Edit',
+    label: "Edit",
     submenu: [
       {
-        role: 'undo',
+        role: "undo",
       },
       {
-        role: 'redo',
+        role: "redo",
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        label: 'Select All',
+        label: "Select All",
         click: () => {
-          win.webContents.send('select-all');
+          win.webContents.send("select-all");
         },
-        accelerator: 'CommandOrControl+A',
+        accelerator: "CommandOrControl+A",
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        role: 'cut',
+        role: "cut",
       },
       {
-        role: 'copy',
+        role: "copy",
       },
       {
-        role: 'paste',
+        role: "paste",
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        label: 'Find',
+        label: "Find",
         click: () => {
-          win.webContents.send('local-search');
+          win.webContents.send("local-search");
         },
-        accelerator: 'CommandOrControl+F',
+        accelerator: "CommandOrControl+F",
       },
       {
-        label: 'Find in Files',
+        label: "Find in Files",
         click: () => {
-          win.webContents.send('global-search');
+          win.webContents.send("global-search");
         },
-        accelerator: 'Alt+CommandOrControl+F',
+        accelerator: "Alt+CommandOrControl+F",
       },
     ],
   };
@@ -143,45 +143,45 @@ const editMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
 
 const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
   return {
-    label: 'View',
+    label: "View",
     submenu: [
       {
-        role: 'reload',
+        role: "reload",
       },
       {
-        role: 'toggleDevTools',
+        role: "toggleDevTools",
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        role: 'resetZoom',
+        role: "resetZoom",
       },
       {
-        role: 'zoomIn',
+        role: "zoomIn",
       },
       {
-        role: 'zoomOut',
+        role: "zoomOut",
       },
       {
-        type: 'separator',
+        type: "separator",
       },
       {
-        role: 'togglefullscreen',
+        role: "togglefullscreen",
       },
       {
-        label: 'Show / Hide Explorer',
+        label: "Show / Hide Explorer",
         click: () => {
-          win.webContents.send('toggle-explorer');
+          win.webContents.send("toggle-explorer");
         },
-        accelerator: 'CommandOrControl+E',
+        accelerator: "CommandOrControl+E",
       },
       {
-        label: 'View / Edit Mode',
+        label: "View / Edit Mode",
         click: () => {
-          win.webContents.send('toggle-mode');
+          win.webContents.send("toggle-mode");
         },
-        accelerator: 'CommandOrControl+/',
+        accelerator: "CommandOrControl+/",
       },
     ],
   };
@@ -189,13 +189,13 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
 
 const winMenu = (): MenuItemConstructorOptions => {
   return {
-    role: 'window',
+    role: "window",
     submenu: [
       {
-        role: 'minimize',
+        role: "minimize",
       },
       {
-        role: 'close',
+        role: "close",
       },
     ],
   };
@@ -203,10 +203,10 @@ const winMenu = (): MenuItemConstructorOptions => {
 
 const helpMenu = (): MenuItemConstructorOptions => {
   return {
-    role: 'help',
+    role: "help",
     submenu: [
       {
-        label: 'Learn More',
+        label: "Learn More",
       },
     ],
   };

@@ -1,6 +1,6 @@
-import * as fs from 'fs-extra';
-import fg from 'fast-glob';
-import { SearchResult, SearchMatch } from '../../types';
+import * as fs from "fs-extra";
+import fg from "fast-glob";
+import { SearchResult, SearchMatch } from "../../types";
 
 /**
  * Search for a keyword in `.md` files within a directory.
@@ -12,9 +12,9 @@ import { SearchResult, SearchMatch } from '../../types';
 export async function searchInFiles(
   directory: string,
   keyword: string,
-  fileExtension: string = 'md'
+  fileExtension: string = "md",
 ): Promise<SearchResult[]> {
-  console.log('Searching in files...', directory, keyword);
+  console.log("Searching in files...", directory, keyword);
   // Define the pattern to match only files with specified extension
   const pattern = `${directory}/**/*.${fileExtension}`;
 
@@ -24,10 +24,10 @@ export async function searchInFiles(
   for (const file of files) {
     try {
       // Read the content of the file
-      const content = await fs.readFile(file, 'utf-8');
+      const content = await fs.readFile(file, "utf-8");
 
       // Find all matches for the keyword
-      const regex = new RegExp(keyword, 'gi');
+      const regex = new RegExp(keyword, "gi");
       const matches = [...content.matchAll(regex)];
 
       if (matches.length > 0) {
@@ -38,14 +38,14 @@ export async function searchInFiles(
             const snippetStart = Math.max(0, matchIndex - 20);
             const snippetEnd = Math.min(
               content.length,
-              matchIndex + keyword.length + 20
+              matchIndex + keyword.length + 20,
             );
             const snippet = content.substring(snippetStart, snippetEnd);
 
             // Highlight the keyword in the snippet
             const highlightedSnippet = snippet.replace(
               regex,
-              `<mark>${keyword}</mark>`
+              `<mark>${keyword}</mark>`,
             );
 
             return {
@@ -56,7 +56,7 @@ export async function searchInFiles(
           }),
         });
       } else {
-        console.log('Could not find any matches.');
+        console.log("Could not find any matches.");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

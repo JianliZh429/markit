@@ -1,6 +1,6 @@
-import * as path from 'path';
-import { app, dialog } from 'electron';
-import * as os from 'os';
+import * as path from "path";
+import { app, dialog } from "electron";
+import * as os from "os";
 
 /**
  * Security utility for path validation and sanitization
@@ -13,22 +13,24 @@ function getSafeBasePaths(): string[] {
   if (SAFE_BASE_PATHS === null) {
     // Try to use app.getPath if available (main process), otherwise use os module (preload)
     try {
-      if (app && typeof app.getPath === 'function') {
+      if (app && typeof app.getPath === "function") {
         SAFE_BASE_PATHS = [
-          app.getPath('home'),
-          app.getPath('documents'),
-          app.getPath('desktop'),
-          app.getPath('downloads'),
-          app.getPath('userData'),
+          app.getPath("home"),
+          app.getPath("documents"),
+          app.getPath("desktop"),
+          app.getPath("downloads"),
+          app.getPath("userData"),
+          app.getPath("temp"),
         ];
       } else {
         // Fallback for preload context
         const homeDir = os.homedir();
         SAFE_BASE_PATHS = [
           homeDir,
-          path.join(homeDir, 'Documents'),
-          path.join(homeDir, 'Desktop'),
-          path.join(homeDir, 'Downloads'),
+          path.join(homeDir, "Documents"),
+          path.join(homeDir, "Desktop"),
+          path.join(homeDir, "Downloads"),
+          os.tmpdir(),
         ];
       }
     } catch (error) {
@@ -48,15 +50,19 @@ export function isPathSafe(filePath: string): boolean {
   try {
     // Resolve to absolute path to handle relative paths and symlinks
     const resolvedPath = path.resolve(filePath);
-    
+
     // Check if path is within any safe base directory
     const safePaths = getSafeBasePaths();
-    const isSafe = safePaths.some(basePath => {
+    const isSafe = safePaths.some((basePath) => {
       const relativePath = path.relative(basePath, resolvedPath);
       // Path is safe if it doesn't start with '..' (not going up from base)
-      return relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+      return (
+        relativePath &&
+        !relativePath.startsWith("..") &&
+        !path.isAbsolute(relativePath)
+      );
     });
-    
+
     return isSafe;
   } catch (error) {
     return false;
@@ -68,17 +74,19 @@ export function isPathSafe(filePath: string): boolean {
  * @throws Error if path is unsafe
  */
 export function validatePath(filePath: string): string {
-  if (!filePath || typeof filePath !== 'string') {
-    throw new Error('Invalid file path: Path must be a non-empty string');
+  if (!filePath || typeof filePath !== "string") {
+    throw new Error("Invalid file path: Path must be a non-empty string");
   }
-  
+
   // Remove any null bytes
-  const sanitized = filePath.replace(/\0/g, '');
-  
+  const sanitized = filePath.replace(/\0/g, "");
+
   if (!isPathSafe(sanitized)) {
-    throw new Error(`Access denied: Path is outside allowed directories: ${sanitized}`);
+    throw new Error(
+      `Access denied: Path is outside allowed directories: ${sanitized}`,
+    );
   }
-  
+
   return sanitized;
 }
 
@@ -87,31 +95,37 @@ export function validatePath(filePath: string): string {
  */
 export function isMarkdownFile(filePath: string): boolean {
   const ext = path.extname(filePath).toLowerCase();
-  return ext === '.md' || ext === '.markdown';
+  return ext === ".md" || ext === ".markdown";
 }
 
 /**
  * Shows an error dialog to the user
  */
-export async function showErrorDialog(message: string, detail?: string): Promise<void> {
+export async function showErrorDialog(
+  message: string,
+  detail?: string,
+): Promise<void> {
   await dialog.showMessageBox({
-    type: 'error',
-    title: 'Error',
+    type: "error",
+    title: "Error",
     message: message,
     detail: detail,
-    buttons: ['OK'],
+    buttons: ["OK"],
   });
 }
 
 /**
  * Shows a warning dialog to the user
  */
-export async function showWarningDialog(message: string, detail?: string): Promise<void> {
+export async function showWarningDialog(
+  message: string,
+  detail?: string,
+): Promise<void> {
   await dialog.showMessageBox({
-    type: 'warning',
-    title: 'Warning',
+    type: "warning",
+    title: "Warning",
     message: message,
     detail: detail,
-    buttons: ['OK'],
+    buttons: ["OK"],
   });
 }

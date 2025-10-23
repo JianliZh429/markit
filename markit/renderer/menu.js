@@ -21,7 +21,7 @@ const moveCursorToEnd = ($li) => {
   const textLength = textContent.length;
 
   // Check if the text ends with ".md", and set the position accordingly
-  const position = textContent.endsWith('.md') ? textLength - 3 : textLength;
+  const position = textContent.endsWith(".md") ? textLength - 3 : textLength;
 
   // Create a new range and set it from the start to the calculated position
   const range = document.createRange();
@@ -41,7 +41,7 @@ const moveCursorToEnd = ($li) => {
 
 const isFolder = ($el) => {
   return (
-    $el.classList.contains('folder') || $el.classList.contains('folder-open')
+    $el.classList.contains("folder") || $el.classList.contains("folder-open")
   );
 };
 
@@ -55,24 +55,24 @@ const newFile = ($li) => {
   const filePath = targetLi.dataset.fullPath;
   if (!filePath) return;
 
-  if (!targetLi.classList.contains('folder-open')) {
+  if (!targetLi.classList.contains("folder-open")) {
     unfoldDir(targetLi, filePath);
     switchFolderState(targetLi);
   }
 
-  const $newLi = document.createElement('li');
-  $newLi.className += ' file';
-  $newLi.appendChild(document.createTextNode('untitled.md'));
-  const newFilePath = pathUtil.join(filePath, 'untitled.md');
+  const $newLi = document.createElement("li");
+  $newLi.className += " file";
+  $newLi.appendChild(document.createTextNode("untitled.md"));
+  const newFilePath = pathUtil.join(filePath, "untitled.md");
   $newLi.dataset.fullPath = newFilePath;
   createFile(newFilePath);
-  $newLi.addEventListener('dblclick', fileDblClickListener);
+  $newLi.addEventListener("dblclick", fileDblClickListener);
 
   const $ul = getOrCreateChildUl(targetLi);
   $ul.appendChild($newLi);
 
   // Scroll the new file into view
-  $newLi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $newLi.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
   renaming($newLi, (originalPath, renamedFilePath) => {
     changeSelected($newLi);
@@ -81,13 +81,13 @@ const newFile = ($li) => {
 };
 
 const renaming = ($li, renamedCallback) => {
-  $li.contentEditable = 'true';
+  $li.contentEditable = "true";
   moveCursorToEnd($li);
   const preValue = $li.innerHTML;
   $li.addEventListener(
-    'blur',
+    "blur",
     (event) => {
-      $li.contentEditable = 'false';
+      $li.contentEditable = "false";
       const curValue = $li.innerHTML;
 
       if (curValue !== preValue) {
@@ -96,7 +96,7 @@ const renaming = ($li, renamedCallback) => {
 
         const curFilePath = pathUtil.join(
           pathUtil.parse(preFilePath).dir,
-          curValue
+          curValue,
         );
         $li.dataset.fullPath = curFilePath;
         renamed(preFilePath, curFilePath, renamedCallback);
@@ -105,11 +105,11 @@ const renaming = ($li, renamedCallback) => {
       }
       event.preventDefault();
     },
-    { once: true }
+    { once: true },
   );
-  $li.addEventListener('keypress', function (event) {
+  $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
-    if (event.key === 'Enter' && activeElement === $li) {
+    if (event.key === "Enter" && activeElement === $li) {
       $li.blur();
       event.preventDefault();
     }
@@ -125,8 +125,8 @@ const reorderSiblings = ($li) => {
 
   // Sort siblings alphabetically by their text content
   $siblings.sort((a, b) => {
-    const aText = (a.textContent || '').toLowerCase();
-    const bText = (b.textContent || '').toLowerCase();
+    const aText = (a.textContent || "").toLowerCase();
+    const bText = (b.textContent || "").toLowerCase();
     return aText.localeCompare(bText);
   });
 
@@ -134,13 +134,13 @@ const reorderSiblings = ($li) => {
   $siblings.forEach(($sibling) => $parent.appendChild($sibling));
 
   // Scroll the renamed file into view
-  $li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  $li.scrollIntoView({ behavior: "smooth", block: "nearest" });
 };
 
 const renamed = (filePath, newPath, renamedCallback) => {
   fileSystem.stat(filePath, (err, _stat) => {
     if (err) {
-      fileSystem.open(newPath, 'w', (err) => {
+      fileSystem.open(newPath, "w", (err) => {
         if (err) {
           console.error(err);
         } else {
@@ -199,9 +199,9 @@ const popupMenu = ($li) => {
     contextMenuTarget = $li;
 
     const menuItems = [
-      { id: 'new-file', label: 'New File' },
-      { id: 'rename', label: 'Rename' },
-      { id: 'delete', label: 'Delete' },
+      { id: "new-file", label: "New File" },
+      { id: "rename", label: "Rename" },
+      { id: "delete", label: "Delete" },
     ];
 
     showMenu(menuItems);
@@ -209,23 +209,23 @@ const popupMenu = ($li) => {
 };
 
 // Listen for context menu command responses from main process
-onIpc('context-menu-command', (commandId) => {
+onIpc("context-menu-command", (commandId) => {
   if (!contextMenuTarget) return;
 
   const $li = contextMenuTarget;
 
   switch (commandId) {
-    case 'new-file':
+    case "new-file":
       newFile($li);
       break;
-    case 'rename':
+    case "rename":
       renaming($li, (originalPath, newPath) => {
         if (originalPath === $title.textContent) {
           $title.textContent = newPath;
         }
       });
       break;
-    case 'delete':
+    case "delete":
       deleting($li);
       break;
   }
@@ -234,10 +234,10 @@ onIpc('context-menu-command', (commandId) => {
 });
 
 window.addEventListener(
-  'contextmenu',
+  "contextmenu",
   (e) => {
     popupMenu(e.target);
     e.preventDefault();
   },
-  false
+  false,
 );
