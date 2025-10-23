@@ -14,7 +14,9 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "types": ["node"]
+    "types": ["node"],
+    "sourceMap": true,
+    "inlineSources": true
   },
   "include": ["markit/main/**/*"],
   "exclude": ["node_modules", "dist", "build"]

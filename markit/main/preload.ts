@@ -25,7 +25,6 @@ async function initializeMarked(): Promise<void> {
       .use(
         markedEmoji({
           emojis: response.data,
-          unicode: false,
         }),
       );
     markedInitialized = true;

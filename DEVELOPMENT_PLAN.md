@@ -63,12 +63,12 @@ This document outlines the development roadmap for Markit, an Electron-based mar
 
 ### Tasks
 
-- [ ] **Update marked library** from 12.0.0 to 16.4.0, testing all markdown rendering features for breaking changes
-- [ ] **Update @octokit/rest** from 20.0.2 to 22.0.0, adjusting API calls for breaking changes in emoji fetching
-- [ ] **Update all marked plugins** (marked-emoji, marked-base-url, marked-code-preview, marked-highlight) to latest versions
-- [ ] **Update remaining dev dependencies** (prettier, electron-installer-dmg, fs-extra) to latest stable versions
-- [ ] **Add source maps** to tsconfig files for better debugging experience in development
-- [ ] **Create separate development and production configurations** in package.json with different optimization levels
+- [x] **Update marked library** from 12.0.0 to 16.4.0, testing all markdown rendering features for breaking changes
+- [x] **Update @octokit/rest** from 20.0.2 to 22.0.0, adjusting API calls for breaking changes in emoji fetching
+- [x] **Update all marked plugins** (marked-emoji, marked-base-url, marked-code-preview, marked-highlight) to latest versions
+- [x] **Update remaining dev dependencies** (prettier, electron-installer-dmg, fs-extra) to latest stable versions
+- [x] **Add source maps** to tsconfig files for better debugging experience in development
+- [x] **Create separate development and production configurations** in package.json with different optimization levels
 - [ ] **Perform a critical self-review** of the work completed in this phase, fixing any issues found
 - [ ] **Mark completed tasks** in this plan with [x]
 - [ ] **STOP and wait for human review**
