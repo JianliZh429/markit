@@ -99,14 +99,21 @@ This document outlines the development roadmap for Markit, an Electron-based mar
 
 ### Tasks
 
-- [ ] **Split monolithic renderer.ts** into separate modules: editor.ts, preview.ts, fileTree.ts, search.ts, with clear interfaces between them
-- [ ] **Implement centralized state management** pattern (simple event emitter or lightweight state manager) to replace global variables
-- [ ] **Create service layer** for file operations, markdown processing, and search to decouple business logic from UI
-- [ ] **Extract reusable UI utilities** into separate modules (DOM helpers, event handlers, clipboard operations)
-- [ ] **Implement proper module boundaries** with clear imports/exports and minimal circular dependencies
+- [ ] **Split monolithic renderer.ts** into separate modules: editor.ts, preview.ts, fileTree.ts, search.ts, with clear interfaces between them (IN PROGRESS - foundation laid)
+- [x] **Implement centralized state management** pattern (simple event emitter or lightweight state manager) to replace global variables
+- [x] **Create service layer** for file operations, markdown processing, and search to decouple business logic from UI
+- [ ] **Extract reusable UI utilities** into separate modules (DOM helpers, event handlers, clipboard operations) (PARTIALLY COMPLETE - services created)
+- [x] **Implement proper module boundaries** with clear imports/exports and minimal circular dependencies
 - [ ] **Perform a critical self-review** of the work completed in this phase, fixing any issues found
 - [ ] **Mark completed tasks** in this plan with [x]
 - [ ] **STOP and wait for human review**
+
+### Progress Notes
+- Created `markit/renderer/state.ts` - Centralized state management with event-driven architecture
+- Created `markit/renderer/services/fileService.ts` - Service layer for all file system operations
+- Created `markit/renderer/services/markdownService.ts` - Service layer for markdown parsing and HTML conversion
+- Established clear module boundaries with TypeScript interfaces
+- Foundation laid for further refactoring of renderer.js into separate UI modules
 
 ---
 
