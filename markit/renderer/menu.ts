@@ -1,3 +1,6 @@
+import { MenuItem } from '../../types';
+import '../../types/preload';
+
 // Access electronAPI without redeclaring variables to avoid conflicts with renderer.js
 const {
   showContextMenu: showMenu,
@@ -6,13 +9,20 @@ const {
   path: pathUtil,
 } = window.electronAPI;
 
-// These functions are defined in renderer.js and will be available at runtime
-// unfoldDir, switchFolderState, fileDblClickListener, getOrCreateChildUl,
-// createFile, changeSelected, loadFile, unloadFile, $title
+// These functions are defined in renderer.ts and will be available at runtime
+declare function unfoldDir($li: HTMLLIElement, filePath: string): void;
+declare function switchFolderState($li: HTMLLIElement): void;
+declare function fileDblClickListener(event: MouseEvent): void;
+declare function getOrCreateChildUl($li: HTMLLIElement): HTMLUListElement;
+declare function createFile(filePath: string, callback?: (filePath: string) => void): void;
+declare function changeSelected($target: HTMLLIElement): void;
+declare function loadFile(filePath: string): void;
+declare function unloadFile(filePath: string): void;
+declare const $title: HTMLTitleElement;
 
-const moveCursorToEnd = ($li) => {
+const moveCursorToEnd = ($li: HTMLLIElement): void => {
   // Get the text node inside $li, if it exists
-  const textNode = $li.firstChild;
+  const textNode = $li.firstChild as Text | null;
 
   // If there is no text node or text is empty, return early
   if (!textNode || !textNode.textContent) return;
@@ -39,16 +49,16 @@ const moveCursorToEnd = ($li) => {
   $li.focus();
 };
 
-const isFolder = ($el) => {
+const isFolder = ($el: HTMLLIElement): boolean => {
   return (
     $el.classList.contains('folder') || $el.classList.contains('folder-open')
   );
 };
 
-const newFile = ($li) => {
+const newFile = ($li: HTMLLIElement): void => {
   let targetLi = $li;
   if (!isFolder($li)) {
-    const parent = $li.parentNode?.parentNode;
+    const parent = $li.parentNode?.parentNode as HTMLLIElement | null;
     if (!parent) return;
     targetLi = parent;
   }
@@ -74,19 +84,22 @@ const newFile = ($li) => {
   // Scroll the new file into view
   $newLi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-  renaming($newLi, (originalPath, renamedFilePath) => {
+  renaming($newLi, (originalPath: string, renamedFilePath: string) => {
     changeSelected($newLi);
     loadFile(renamedFilePath);
   });
 };
 
-const renaming = ($li, renamedCallback) => {
+const renaming = (
+  $li: HTMLLIElement,
+  renamedCallback?: (originalPath: string, newPath: string) => void
+): void => {
   $li.contentEditable = 'true';
   moveCursorToEnd($li);
   const preValue = $li.innerHTML;
   $li.addEventListener(
     'blur',
-    (event) => {
+    (event: FocusEvent) => {
       $li.contentEditable = 'false';
       const curValue = $li.innerHTML;
 
@@ -107,7 +120,7 @@ const renaming = ($li, renamedCallback) => {
     },
     { once: true }
   );
-  $li.addEventListener('keypress', function (event) {
+  $li.addEventListener('keypress', function (event: KeyboardEvent) {
     const activeElement = document.activeElement;
     if (event.key === 'Enter' && activeElement === $li) {
       $li.blur();
@@ -116,12 +129,12 @@ const renaming = ($li, renamedCallback) => {
   });
 };
 
-const reorderSiblings = ($li) => {
+const reorderSiblings = ($li: HTMLLIElement): void => {
   const $parent = $li.parentElement;
   if (!$parent) return;
 
   // Get all file siblings
-  const $siblings = Array.from($parent.children);
+  const $siblings = Array.from($parent.children) as HTMLElement[];
 
   // Sort siblings alphabetically by their text content
   $siblings.sort((a, b) => {
@@ -137,10 +150,14 @@ const reorderSiblings = ($li) => {
   $li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
-const renamed = (filePath, newPath, renamedCallback) => {
-  fileSystem.stat(filePath, (err, _stat) => {
+const renamed = (
+  filePath: string,
+  newPath: string,
+  renamedCallback?: (originalPath: string, newPath: string) => void
+): void => {
+  fileSystem.stat(filePath, (err: Error | null, _stat: any) => {
     if (err) {
-      fileSystem.open(newPath, 'w', (err) => {
+      fileSystem.open(newPath, 'w', (err: Error | null) => {
         if (err) {
           console.error(err);
         } else {
@@ -151,7 +168,7 @@ const renamed = (filePath, newPath, renamedCallback) => {
         }
       });
     } else {
-      fileSystem.rename(filePath, newPath, (err) => {
+      fileSystem.rename(filePath, newPath, (err: Error | null) => {
         if (err) {
           console.error(err);
         } else {
@@ -165,12 +182,12 @@ const renamed = (filePath, newPath, renamedCallback) => {
   });
 };
 
-const deleting = ($li) => {
+const deleting = ($li: HTMLLIElement): void => {
   const filePath = $li.dataset.fullPath;
   if (!filePath) return;
 
   if (isFolder($li)) {
-    fileSystem.rmdir(filePath, { recursive: true, force: true }, (err) => {
+    fileSystem.rmdir(filePath, { recursive: true, force: true }, (err: Error | null) => {
       if (err) {
         console.error(err);
       } else {
@@ -178,7 +195,7 @@ const deleting = ($li) => {
       }
     });
   } else {
-    fileSystem.unlink(filePath, (err) => {
+    fileSystem.unlink(filePath, (err: Error | null) => {
       console.log(`Deleting "${filePath}"`);
       if (err) {
         console.error(err);
@@ -192,13 +209,13 @@ const deleting = ($li) => {
 };
 
 // Store the current context menu target
-let contextMenuTarget = null;
+let contextMenuTarget: HTMLLIElement | null = null;
 
-const popupMenu = ($li) => {
+const popupMenu = ($li: EventTarget | null): void => {
   if ($li instanceof HTMLLIElement) {
     contextMenuTarget = $li;
 
-    const menuItems = [
+    const menuItems: MenuItem[] = [
       { id: 'new-file', label: 'New File' },
       { id: 'rename', label: 'Rename' },
       { id: 'delete', label: 'Delete' },
@@ -209,7 +226,7 @@ const popupMenu = ($li) => {
 };
 
 // Listen for context menu command responses from main process
-onIpc('context-menu-command', (commandId) => {
+onIpc('context-menu-command', (commandId: string) => {
   if (!contextMenuTarget) return;
 
   const $li = contextMenuTarget;
@@ -219,7 +236,7 @@ onIpc('context-menu-command', (commandId) => {
       newFile($li);
       break;
     case 'rename':
-      renaming($li, (originalPath, newPath) => {
+      renaming($li, (originalPath: string, newPath: string) => {
         if (originalPath === $title.textContent) {
           $title.textContent = newPath;
         }
@@ -235,7 +252,7 @@ onIpc('context-menu-command', (commandId) => {
 
 window.addEventListener(
   'contextmenu',
-  (e) => {
+  (e: MouseEvent) => {
     popupMenu(e.target);
     e.preventDefault();
   },

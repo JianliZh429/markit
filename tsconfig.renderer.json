@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020", "DOM"],
+    "outDir": "./dist/renderer",
+    "rootDir": "./markit/renderer",
+    "types": ["node"],
+    "moduleResolution": "node"
+  },
+  "include": ["markit/renderer/**/*"],
+  "exclude": ["markit/renderer/menu.ts", "markit/renderer/renderer.js", "markit/renderer/menu.js"]
+}

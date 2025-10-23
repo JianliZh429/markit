@@ -2,13 +2,18 @@
   "name": "markit",
   "productName": "Markit",
   "version": "0.0.1",
-  "main": "./markit/main/app.js",
+  "main": "./dist/main/app.js",
   "scripts": {
+    "build": "npm run build:main && npm run build:renderer && npm run copy:assets",
+    "build:main": "tsc",
+    "build:renderer": "tsc -p tsconfig.renderer.json",
+    "copy:assets": "mkdir -p dist && cp markit/index.html dist/ && cp -R markit/assets dist/ && mkdir -p dist/renderer && cp markit/renderer/renderer.js markit/renderer/menu.js dist/renderer/",
+    "watch:main": "tsc --watch",
+    "watch:renderer": "tsc -p tsconfig.renderer.json --watch",
     "start": "npm run build && electron dist/main/app.js",
     "format": "prettier --write markit/",
-    "lint": "eslint markit/**/*.js",
-    "lint:fix": "eslint markit/**/*.js --fix",
-    "build": "mkdir -p dist && cp -R markit/* dist/",
+    "lint": "eslint markit/**/*.{js,ts}",
+    "lint:fix": "eslint markit/**/*.{js,ts} --fix",
     "clean": "rm -rf build dist",
     "package": "npx electron-packager .  Markit --platform=linux,darwin --arch=x64 --icon markit/assets/images/markit.icns --out build/",
     "dmg": "electron-installer-dmg build/markit-darwin-x64/Markit.app --icon markit/assets/images/markit.icns --out build/installer Markit",
@@ -35,12 +40,16 @@
   "devDependencies": {
     "@electron/packager": "^18.1.3",
     "@eslint/js": "^9.37.0",
+    "@types/electron": "^1.4.38",
+    "@types/marked": "^5.0.2",
+    "@types/node": "^24.7.1",
     "electron": "^38.1.2",
     "electron-installer-debian": "^3.2.0",
     "electron-installer-dmg": "^4.0.0",
     "electron-reload": "^2.0.0-alpha.1",
     "eslint": "^9.37.0",
     "eslint-plugin-node": "^11.1.0",
-    "prettier": "3.2.5"
+    "prettier": "3.2.5",
+    "typescript": "^5.9.3"
   }
 }
