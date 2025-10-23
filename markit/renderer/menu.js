@@ -1,5 +1,5 @@
-const remote = require("@electron/remote");
-const { Menu, MenuItem } = remote;
+// Access electronAPI without redeclaring variables to avoid conflicts with renderer.js
+const { showContextMenu: showMenu, on: onIpc, fs: fileSystem, path: pathUtil } = window.electronAPI;
 
 const moveCursorToEnd = ($li) => {
   // Get the text node inside $li, if it exists
@@ -27,6 +27,7 @@ const moveCursorToEnd = ($li) => {
   // Focus on the element to make the cursor visible
   $li.focus();
 };
+
 const isFolder = ($el) => {
   return (
     $el.classList.contains("folder") || $el.classList.contains("folder-open")
@@ -46,7 +47,7 @@ const newFile = ($li) => {
   const $newLi = document.createElement("li");
   $newLi.className += " file";
   $newLi.appendChild(document.createTextNode("untitled.md"));
-  const newFilePath = path.join(filePath, "untitled.md");
+  const newFilePath = pathUtil.join(filePath, "untitled.md");
   $newLi.dataset.fullPath = newFilePath;
   createFile(newFilePath);
   $newLi.addEventListener("dblclick", fileDblClickListener);
@@ -71,7 +72,7 @@ const renaming = ($li, renamedCallback) => {
 
       if (curValue != preValue) {
         const preFilePath = $li.dataset.fullPath;
-        const curFilePath = path.join(path.parse(preFilePath).dir, curValue);
+        const curFilePath = pathUtil.join(pathUtil.parse(preFilePath).dir, curValue);
         $li.dataset.fullPath = curFilePath;
         renamed(preFilePath, curFilePath, renamedCallback);
       }
@@ -87,10 +88,11 @@ const renaming = ($li, renamedCallback) => {
     }
   });
 };
+
 const renamed = (filePath, newPath, renamedCallback) => {
-  fs.stat(filePath, (err, stat) => {
+  fileSystem.stat(filePath, (err, stat) => {
     if (err) {
-      fs.open(newPath, "w", (err, file) => {
+      fileSystem.open(newPath, "w", (err, file) => {
         if (err) {
           console.error(err);
         } else {
@@ -101,7 +103,7 @@ const renamed = (filePath, newPath, renamedCallback) => {
         }
       });
     } else {
-      fs.rename(filePath, newPath, (err) => {
+      fileSystem.rename(filePath, newPath, (err) => {
         if (err) {
           console.error(err);
         } else {
@@ -114,10 +116,11 @@ const renamed = (filePath, newPath, renamedCallback) => {
     }
   });
 };
+
 const deleting = ($li) => {
   const filePath = $li.dataset.fullPath;
   if (isFolder($li)) {
-    fs.rmdir(filePath, { recursive: true, force: true }, (err) => {
+    fileSystem.rmdir(filePath, { recursive: true, force: true }, (err) => {
       if (err) {
         console.error(err);
       } else {
@@ -125,7 +128,7 @@ const deleting = ($li) => {
       }
     });
   } else {
-    fs.unlink(filePath, (err) => {
+    fileSystem.unlink(filePath, (err) => {
       console.log(`Deleting "${filePath}"`);
       if (err) {
         console.error(err);
@@ -138,39 +141,47 @@ const deleting = ($li) => {
   $li.remove();
 };
 
+// Store the current context menu target
+let contextMenuTarget = null;
+
 const popupMenu = ($li) => {
   if ($li.tagName.toLowerCase() === "li") {
-    const menu = new Menu();
-    const menuNewFile = new MenuItem({
-      label: "New File",
-      click: (event) => {
-        newFile($li);
-      },
-    });
-    menu.append(menuNewFile);
-
-    const menuRename = new MenuItem({
-      label: "Rename",
-      click: (event) => {
-        renaming($li, (originalPath, newPath) => {
-          if (originalPath == $title.textContent) {
-            $title.textContent = newPath;
-          }
-        });
-      },
-    });
-    menu.append(menuRename);
-
-    const menuDelete = new MenuItem({
-      label: "Delete",
-      click: (event) => {
-        deleting($li);
-      },
-    });
-    menu.append(menuDelete);
-    menu.popup(remote.getCurrentWindow());
+    contextMenuTarget = $li;
+    
+    const menuItems = [
+      { id: "new-file", label: "New File" },
+      { id: "rename", label: "Rename" },
+      { id: "delete", label: "Delete" },
+    ];
+    
+    showMenu(menuItems);
   }
 };
+
+// Listen for context menu command responses from main process
+onIpc("context-menu-command", (commandId) => {
+  if (!contextMenuTarget) return;
+  
+  const $li = contextMenuTarget;
+  
+  switch (commandId) {
+  case "new-file":
+    newFile($li);
+    break;
+  case "rename":
+    renaming($li, (originalPath, newPath) => {
+      if (originalPath == $title.textContent) {
+        $title.textContent = newPath;
+      }
+    });
+    break;
+  case "delete":
+    deleting($li);
+    break;
+  }
+  
+  contextMenuTarget = null;
+});
 
 window.addEventListener(
   "contextmenu",

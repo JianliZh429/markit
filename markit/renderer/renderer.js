@@ -1,27 +1,8 @@
-const { marked } = require("marked");
-const markedCodePreview = require("marked-code-preview");
-const { markedEmoji } = require("marked-emoji");
-const { baseUrl } = require("marked-base-url");
-const { Octokit } = require("@octokit/rest");
-
-const { ipcRenderer } = require("electron");
-const path = require("path");
-// const fs = require("fs");
+// Use the secure electronAPI exposed via preload script  
+const { send: ipcSend, on: ipcOn, fs, path, searchInFiles, parseMarkdown, setMarkdownBaseUrl } = window.electronAPI;
 
 let isEditMode = false;
 let $selected = null;
-
-new Octokit().rest.emojis.get().then((res) => {
-  marked
-    .use({ gfm: true })
-    .use(markedCodePreview())
-    .use(
-      markedEmoji({
-        emojis: res.data,
-        unicode: false,
-      }),
-    );
-});
 
 const $explorer = document.getElementById("explorer");
 const $editor = document.getElementById("editor");
@@ -45,7 +26,7 @@ const currentContent = () => {
 
 const previewMode = () => {
   const markdownContent = $editor.value;
-  const htmlContent = marked.parse(markdownContent);
+  const htmlContent = parseMarkdown(markdownContent);
   $previewer.innerHTML = htmlContent;
   $previewer.style.display = "block";
   $editor.style.display = "none";
@@ -72,7 +53,7 @@ const isGlobalSearchOn = () => {
 };
 
 const loadFile = (filePath) => {
-  marked.use(baseUrl(filePath));
+  setMarkdownBaseUrl(filePath);
   fs.readFile(filePath, "utf8", (err, data) => {
     if (err) {
       console.error(err);
@@ -135,10 +116,10 @@ const fileDblClickListener = (event) => {
 };
 
 const folderDblClickListener = (event) => {
-  let $li = event.target;
+  const $li = event.target;
   const filePath = $li.dataset.fullPath;
   switchFolderState($li);
-  let $ul = $li.getElementsByTagName("ul");
+  const $ul = $li.getElementsByTagName("ul");
   if ($ul.length > 0) {
     $li.removeChild($ul[0]);
   } else {
@@ -148,8 +129,8 @@ const folderDblClickListener = (event) => {
 };
 
 const appendNode = ($ul, filePath, isFile) => {
-  let pasedPath = path.parse(filePath);
-  let $li = document.createElement("li");
+  const pasedPath = path.parse(filePath);
+  const $li = document.createElement("li");
   $li.appendChild(document.createTextNode(pasedPath.base));
   $li.dataset.fullPath = filePath;
   $ul.appendChild($li);
@@ -167,8 +148,8 @@ const appendNode = ($ul, filePath, isFile) => {
 const unfoldDir = ($li, filePath) => {
   $ul = getOrCreateChildUl($li);
   fs.readdirSync(filePath).forEach((f) => {
-    let fPath = path.join(filePath, f);
-    let parsedPath = path.parse(fPath);
+    const fPath = path.join(filePath, f);
+    const parsedPath = path.parse(fPath);
     if (fs.statSync(fPath).isDirectory()) {
       appendNode($ul, fPath, false);
     } else if (parsedPath.ext.toLowerCase() == ".md") {
@@ -178,9 +159,9 @@ const unfoldDir = ($li, filePath) => {
 };
 
 const showFileTree = ($root, filePath) => {
-  let state = fs.statSync(filePath);
+  const state = fs.statSync(filePath);
   if (state.isDirectory()) {
-    let $parent = appendNode($root, filePath, false);
+    const $parent = appendNode($root, filePath, false);
     unfoldDir($parent, filePath);
     switchFolderState($parent);
   } else {
@@ -257,7 +238,7 @@ $globalSearchInput.addEventListener("keydown", async (event) => {
   await globalSearch(keyword);
 });
 
-ipcRenderer.on("toggle-mode", () => {
+ipcOn("toggle-mode", () => {
   isEditMode = !isEditMode;
   $localSearch.style.display = "none";
   if (isEditMode) {
@@ -267,26 +248,26 @@ ipcRenderer.on("toggle-mode", () => {
   }
 });
 
-ipcRenderer.on("select-all", () => {
+ipcOn("select-all", () => {
   $editor.focus();
   $editor.select();
 });
 
-ipcRenderer.on("open-file-dialog", (event) => {
-  ipcRenderer.send("open-file-dialog");
+ipcOn("open-file-dialog", () => {
+  ipcSend("open-file-dialog");
 });
 
-ipcRenderer.on("open-folder-dialog", (event) => {
-  ipcRenderer.send("open-folder-dialog");
+ipcOn("open-folder-dialog", () => {
+  ipcSend("open-folder-dialog");
 });
 
-ipcRenderer.on("file-opened", (event, args) => {
+ipcOn("file-opened", (args) => {
   console.log("file-opened: ", args);
-  let filePath = typeof args === "string" ? args : args[0];
+  const filePath = typeof args === "string" ? args : args[0];
   loadFileOrFolderToExplorer($tree, filePath);
 });
 
-ipcRenderer.on("save-opened-file", (event) => {
+ipcOn("save-opened-file", () => {
   const openedFilePath = $title.textContent;
   content = $editor.value;
   fs.stat(openedFilePath, (err, stat) => {
@@ -302,27 +283,27 @@ ipcRenderer.on("save-opened-file", (event) => {
   });
 });
 
-ipcRenderer.on("save-file-dialog", (event) => {
-  ipcRenderer.send("save-file-dialog");
+ipcOn("save-file-dialog", () => {
+  ipcSend("save-file-dialog");
 });
 
 // Listen for save-file event
-ipcRenderer.on("save-file", (event, filePath) => {
+ipcOn("save-file", (filePath) => {
   // Handle the file save response from the main process
-  ipcRenderer.send("save-file", filePath, $editor.value);
+  ipcSend("save-file", filePath, $editor.value);
 });
 
-ipcRenderer.on("new-file-dialog", (event) => {
-  ipcRenderer.send("new-file-dialog");
+ipcOn("new-file-dialog", () => {
+  ipcSend("new-file-dialog");
 });
 
-ipcRenderer.on("new-file-created", (event, filePath) => {
+ipcOn("new-file-created", (filePath) => {
   createFile(filePath, (filePath) => {
     loadFile(filePath);
   });
 });
 
-ipcRenderer.on("toggle-explorer", () => {
+ipcOn("toggle-explorer", () => {
   if ($explorer.style.display == "none") {
     $explorer.style.display = "block";
   } else {
@@ -330,7 +311,7 @@ ipcRenderer.on("toggle-explorer", () => {
   }
 });
 
-ipcRenderer.on("local-search", () => {
+ipcOn("local-search", () => {
   if ($localSearch.style.display == "none") {
     $localSearch.style.display = "block";
     $localSearchInput.focus();
@@ -345,7 +326,7 @@ ipcRenderer.on("local-search", () => {
   }
 });
 
-ipcRenderer.on("global-search", () => {
+ipcOn("global-search", () => {
   if (isGlobalSearchOn()) {
     hideGlobalSearch();
     $previewer.style.display = "block";
@@ -359,4 +340,4 @@ ipcRenderer.on("global-search", () => {
   }
 });
 
-ipcRenderer.send("open-recent-file");
+ipcSend("open-recent-file");

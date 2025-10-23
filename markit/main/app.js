@@ -5,7 +5,6 @@ const {
   ipcMain,
   BrowserWindow,
 } = require("electron");
-require("@electron/remote/main").initialize();
 
 const path = require("path");
 const fs = require("fs");
@@ -20,12 +19,12 @@ function createWindow() {
     height: 720,
     title: "MarkIt",
     webPreferences: {
-      enableRemoteModule: true,
-      contextIsolation: false,
-      nodeIntegration: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
-  require("@electron/remote/main").enable(win.webContents);
 
   win.loadFile(path.join(__dirname, "../index.html"));
   shortcuts.register(globalShortcut, win, ipcMain);
@@ -111,4 +110,18 @@ ipcMain.on("open-recent-file", async (event) => {
   if (recentOpenFiles.length > 0) {
     event.reply("file-opened", recentOpenFiles[0]);
   }
+});
+
+ipcMain.on("show-context-menu", async (event, menuItems) => {
+  const { Menu } = require("electron");
+  
+  const template = menuItems.map((item) => ({
+    label: item.label,
+    click: () => {
+      event.reply("context-menu-command", item.id);
+    },
+  }));
+  
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup({ window: win });
 });
