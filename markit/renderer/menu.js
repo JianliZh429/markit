@@ -6,10 +6,6 @@ const {
   path: pathUtil,
 } = window.electronAPI;
 
-// These functions are defined in renderer.js and will be available at runtime
-// unfoldDir, switchFolderState, fileDblClickListener, getOrCreateChildUl,
-// createFile, changeSelected, loadFile, unloadFile, $title
-
 const moveCursorToEnd = ($li) => {
   // Get the text node inside $li, if it exists
   const textNode = $li.firstChild;
@@ -30,10 +26,8 @@ const moveCursorToEnd = ($li) => {
 
   // Get the current selection and update it
   const selection = window.getSelection();
-  if (selection) {
-    selection.removeAllRanges();
-    selection.addRange(range);
-  }
+  selection.removeAllRanges();
+  selection.addRange(range);
 
   // Focus on the element to make the cursor visible
   $li.focus();
@@ -46,18 +40,13 @@ const isFolder = ($el) => {
 };
 
 const newFile = ($li) => {
-  let targetLi = $li;
   if (!isFolder($li)) {
-    const parent = $li.parentNode?.parentNode;
-    if (!parent) return;
-    targetLi = parent;
+    $li = $li.parentNode.parentNode;
   }
-  const filePath = targetLi.dataset.fullPath;
-  if (!filePath) return;
-
-  if (!targetLi.classList.contains("folder-open")) {
-    unfoldDir(targetLi, filePath);
-    switchFolderState(targetLi);
+  const filePath = $li.dataset.fullPath;
+  if (!$li.classList.contains("folder-open")) {
+    unfoldDir($li, filePath);
+    switchFolderState($li);
   }
 
   const $newLi = document.createElement("li");
@@ -68,7 +57,7 @@ const newFile = ($li) => {
   createFile(newFilePath);
   $newLi.addEventListener("dblclick", fileDblClickListener);
 
-  const $ul = getOrCreateChildUl(targetLi);
+  const $ul = getOrCreateChildUl($li);
   $ul.appendChild($newLi);
 
   // Scroll the new file into view
@@ -81,19 +70,17 @@ const newFile = ($li) => {
 };
 
 const renaming = ($li, renamedCallback) => {
-  $li.contentEditable = "true";
+  $li.contentEditable = true;
   moveCursorToEnd($li);
   const preValue = $li.innerHTML;
   $li.addEventListener(
     "blur",
     (event) => {
-      $li.contentEditable = "false";
+      $li.contentEditable = false;
       const curValue = $li.innerHTML;
 
-      if (curValue !== preValue) {
+      if (curValue != preValue) {
         const preFilePath = $li.dataset.fullPath;
-        if (!preFilePath) return;
-
         const curFilePath = pathUtil.join(
           pathUtil.parse(preFilePath).dir,
           curValue,
@@ -109,7 +96,7 @@ const renaming = ($li, renamedCallback) => {
   );
   $li.addEventListener("keypress", function (event) {
     const activeElement = document.activeElement;
-    if (event.key === "Enter" && activeElement === $li) {
+    if (event.key === "Enter" && activeElement == $li) {
       $li.blur();
       event.preventDefault();
     }
@@ -125,8 +112,8 @@ const reorderSiblings = ($li) => {
 
   // Sort siblings alphabetically by their text content
   $siblings.sort((a, b) => {
-    const aText = (a.textContent || "").toLowerCase();
-    const bText = (b.textContent || "").toLowerCase();
+    const aText = a.textContent.toLowerCase();
+    const bText = b.textContent.toLowerCase();
     return aText.localeCompare(bText);
   });
 
@@ -140,7 +127,7 @@ const reorderSiblings = ($li) => {
 const renamed = (filePath, newPath, renamedCallback) => {
   fileSystem.stat(filePath, (err, _stat) => {
     if (err) {
-      fileSystem.open(newPath, "w", (err) => {
+      fileSystem.open(newPath, "w", (err, _file) => {
         if (err) {
           console.error(err);
         } else {
@@ -167,8 +154,6 @@ const renamed = (filePath, newPath, renamedCallback) => {
 
 const deleting = ($li) => {
   const filePath = $li.dataset.fullPath;
-  if (!filePath) return;
-
   if (isFolder($li)) {
     fileSystem.rmdir(filePath, { recursive: true, force: true }, (err) => {
       if (err) {
@@ -195,7 +180,7 @@ const deleting = ($li) => {
 let contextMenuTarget = null;
 
 const popupMenu = ($li) => {
-  if ($li instanceof HTMLLIElement) {
+  if ($li.tagName.toLowerCase() === "li") {
     contextMenuTarget = $li;
 
     const menuItems = [
@@ -220,7 +205,7 @@ onIpc("context-menu-command", (commandId) => {
       break;
     case "rename":
       renaming($li, (originalPath, newPath) => {
-        if (originalPath === $title.textContent) {
+        if (originalPath == $title.textContent) {
           $title.textContent = newPath;
         }
       });
