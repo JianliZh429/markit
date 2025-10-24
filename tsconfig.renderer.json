@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "outDir": "./dist/renderer",
+    "rootDir": "./markit/renderer",
+    "types": ["node"],
+    "moduleResolution": "node",
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "allowImportingTsExtensions": false
+  },
+  "include": ["markit/renderer/**/*", "types/**/*"],
+  "exclude": ["markit/renderer/renderer.js", "markit/renderer/menu.js"]
+}
