@@ -1,11 +1,11 @@
-import { Menu, BrowserWindow, MenuItemConstructorOptions } from "electron";
-import * as recentFiles from "./recent-files";
+const { Menu } = require("electron");
+const recentFiles = require("./recent-files.js");
 
 const isMac = process.platform === "darwin";
 
-const recentFilesMenu = (win: BrowserWindow): MenuItemConstructorOptions[] => {
+const recentFilesMenu = (win) => {
   const files = recentFiles.load();
-  return files.map((filePath: string, _index: number) => ({
+  return files.map((filePath, _index) => ({
     label: filePath,
     click: () => {
       win.webContents.send("file-opened", filePath);
@@ -14,7 +14,7 @@ const recentFilesMenu = (win: BrowserWindow): MenuItemConstructorOptions[] => {
   }));
 };
 
-const appMenu = (): MenuItemConstructorOptions => {
+const appMenu = () => {
   return {
     label: "MarkIt",
     submenu: [
@@ -30,8 +30,7 @@ const appMenu = (): MenuItemConstructorOptions => {
     ],
   };
 };
-
-const fileMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
+const fileMenu = (win) => {
   return {
     label: "File",
     submenu: [
@@ -87,8 +86,7 @@ const fileMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
     ],
   };
 };
-
-const editMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
+const editMenu = (win) => {
   return {
     label: "Edit",
     submenu: [
@@ -140,8 +138,7 @@ const editMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
     ],
   };
 };
-
-const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
+const viewMenu = (win) => {
   return {
     label: "View",
     submenu: [
@@ -149,19 +146,19 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         role: "reload",
       },
       {
-        role: "toggleDevTools",
+        role: "toggledevtools",
       },
       {
         type: "separator",
       },
       {
-        role: "resetZoom",
+        role: "resetzoom",
       },
       {
-        role: "zoomIn",
+        role: "zoomin",
       },
       {
-        role: "zoomOut",
+        role: "zoomout",
       },
       {
         type: "separator",
@@ -186,8 +183,7 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
     ],
   };
 };
-
-const winMenu = (): MenuItemConstructorOptions => {
+const winMenu = () => {
   return {
     role: "window",
     submenu: [
@@ -200,8 +196,7 @@ const winMenu = (): MenuItemConstructorOptions => {
     ],
   };
 };
-
-const helpMenu = (): MenuItemConstructorOptions => {
+const helpMenu = () => {
   return {
     role: "help",
     submenu: [
@@ -211,9 +206,8 @@ const helpMenu = (): MenuItemConstructorOptions => {
     ],
   };
 };
-
-const buildTemplate = (win: BrowserWindow): MenuItemConstructorOptions[] => {
-  let menus: MenuItemConstructorOptions[] = [
+const buildTemplate = (win) => {
+  let menus = [
     fileMenu(win),
     editMenu(win),
     viewMenu(win),
@@ -225,8 +219,8 @@ const buildTemplate = (win: BrowserWindow): MenuItemConstructorOptions[] => {
   }
   return menus;
 };
-
-export function initAppMenu(win: BrowserWindow): void {
+const initAppMenu = (win) => {
   const menu = Menu.buildFromTemplate(buildTemplate(win));
   Menu.setApplicationMenu(menu);
-}
+};
+module.exports = { initAppMenu };
