@@ -84,7 +84,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     keyword: string,
     fileExtension?: string,
   ): Promise<unknown> => {
-    return await ipcRenderer.invoke("search-in-files", directory, keyword, fileExtension);
+    return await ipcRenderer.invoke(
+      "search-in-files",
+      directory,
+      keyword,
+      fileExtension,
+    );
   },
 
   // File system operations

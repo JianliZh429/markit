@@ -1,5 +1,5 @@
 /**
- * Main Renderer Process Entry Point (Refactored)
+ * Main Renderer Process Entry Point
  * Initializes and coordinates all renderer modules
  */
 
@@ -8,7 +8,6 @@ import { FileService } from "./services/fileService.js";
 import { MarkdownService } from "./services/markdownService.js";
 import { EditorModule } from "./modules/editor.js";
 import { PreviewModule } from "./modules/preview.js";
-import { FileTreeModule } from "./modules/fileTree.js";
 
 // Get electron API from window
 const {
@@ -19,7 +18,7 @@ const {
   searchInFiles,
   parseMarkdown,
   setMarkdownBaseUrl,
-} = (window as any).electronAPI;
+} = window.electronAPI;
 
 // Initialize services
 const fileService = new FileService(fs, path);
@@ -55,26 +54,15 @@ const $globalSearchResult = document.getElementById(
 const editorModule = new EditorModule($editor, markdownService);
 const previewModule = new PreviewModule($previewer, markdownService);
 
-// Initialize file tree module
-const fileTreeModule = new FileTreeModule($tree, {
-  fileService,
-  onFileSelect: (filePath: string) => {
-    hideLocalSearch();
-    hideGlobalSearch();
-    loadFile(filePath);
-  },
-  onFileCreate: (filePath: string) => {
-    // File created, will be loaded after rename
-    console.log(`File created: ${filePath}`);
-  },
-  onFileUnload: (filePath: string) => {
-    unloadFile(filePath);
-  },
-  getCurrentTitle: () => $title.textContent || "",
-  setTitle: (title: string) => {
-    $title.textContent = title;
-  },
-});
+// Track selected file element
+let $selected: HTMLLIElement | null = null;
+
+/**
+ * Get root directory path from tree
+ */
+function rootDirectory(): string {
+  return ($tree.firstElementChild as HTMLLIElement)?.dataset.fullPath || "";
+}
 
 /**
  * Get current content based on mode
@@ -170,6 +158,158 @@ function unloadFile(filePath: string): void {
 }
 
 /**
+ * Switch folder open/closed state
+ */
+function switchFolderState($li: HTMLLIElement): void {
+  if ($li.classList.contains("folder-open")) {
+    $li.classList.remove("folder-open");
+    $li.classList.add("folder");
+  } else {
+    $li.classList.remove("folder");
+    $li.classList.add("folder-open");
+  }
+}
+
+/**
+ * Change selected file in tree
+ */
+function changeSelected($target: HTMLLIElement): void {
+  if ($selected) {
+    $selected.classList.remove("selected");
+  }
+  $target.classList.add("selected");
+  $selected = $target;
+}
+
+/**
+ * Get or create child ul element
+ */
+function getOrCreateChildUl($li: HTMLLIElement): HTMLUListElement {
+  let $ul = $li.getElementsByTagName("ul")[0];
+  if ($ul) {
+    return $ul;
+  }
+  $ul = document.createElement("ul");
+  $li.appendChild($ul);
+  return $ul;
+}
+
+/**
+ * File double-click listener
+ */
+function fileDblClickListener(event: Event): void {
+  const $li = event.target as HTMLLIElement;
+  const filePath = $li.dataset.fullPath!;
+  hideLocalSearch();
+  hideGlobalSearch();
+  changeSelected($li);
+  loadFile(filePath);
+  event.stopPropagation();
+}
+
+/**
+ * Folder double-click listener
+ */
+function folderDblClickListener(event: Event): void {
+  const $li = event.target as HTMLLIElement;
+  const filePath = $li.dataset.fullPath!;
+  switchFolderState($li);
+  const $ul = $li.getElementsByTagName("ul")[0];
+  if ($ul) {
+    $li.removeChild($ul);
+  } else {
+    unfoldDir($li, filePath);
+  }
+  event.stopPropagation();
+}
+
+/**
+ * Append a node to the tree
+ */
+function appendNode(
+  $ul: HTMLUListElement,
+  filePath: string,
+  isFile: boolean,
+): HTMLLIElement {
+  const parsedPath = fileService.parsePath(filePath);
+  const $li = document.createElement("li");
+  $li.appendChild(document.createTextNode(parsedPath.base));
+  $li.dataset.fullPath = filePath;
+  $ul.appendChild($li);
+
+  if (isFile) {
+    $li.classList.add("file");
+    $li.addEventListener("dblclick", fileDblClickListener);
+  } else {
+    $li.classList.add("folder");
+    $li.addEventListener("dblclick", folderDblClickListener);
+  }
+  return $li;
+}
+
+/**
+ * Unfold a directory
+ */
+function unfoldDir($li: HTMLLIElement, filePath: string): void {
+  const $ul = getOrCreateChildUl($li);
+  const files = fileService.listDirectory(filePath);
+
+  files.forEach((fPath) => {
+    const parsedPath = fileService.parsePath(fPath);
+    if (fileService.isDirectory(fPath)) {
+      appendNode($ul, fPath, false);
+    } else if (parsedPath.ext.toLowerCase() === ".md") {
+      appendNode($ul, fPath, true);
+    }
+  });
+}
+
+/**
+ * Show file tree
+ */
+function showFileTree($root: HTMLUListElement, filePath: string): void {
+  if (fileService.isDirectory(filePath)) {
+    const $parent = appendNode($root, filePath, false);
+    unfoldDir($parent, filePath);
+    switchFolderState($parent);
+  } else {
+    appendNode($root, filePath, true);
+  }
+}
+
+/**
+ * Load file or folder to explorer
+ */
+function loadFileOrFolderToExplorer(
+  $tree: HTMLUListElement,
+  filePath: string,
+): void {
+  $tree.innerHTML = "";
+  if (fileService.isFile(filePath)) {
+    loadFile(filePath);
+  }
+  showFileTree($tree, filePath);
+}
+
+/**
+ * Create a new file
+ */
+async function createFile(
+  filePath: string,
+  callback?: (path: string) => void,
+): Promise<void> {
+  try {
+    await fileService.createFile(filePath);
+    if (callback) {
+      loadFile(filePath);
+    }
+    console.log(`File ${filePath} created successfully`);
+  } catch (err) {
+    console.error("Error creating file:", err);
+  }
+}
+
+/**
  * Local search
  */
 function localSearch(searchTerm: string): void {
@@ -195,8 +335,7 @@ function localSearch(searchTerm: string): void {
  */
 async function globalSearch(keyword: string): Promise<void> {
   hideLocalSearch();
-  const rootDir = fileTreeModule.getRootDirectory();
-  const results = await searchInFiles(rootDir, keyword);
+  const results = await searchInFiles(rootDirectory(), keyword);
   console.log("Search results:", results);
 
   $globalSearchResult.innerHTML = results
@@ -266,7 +405,7 @@ ipcOn("open-folder-dialog", () => {
 ipcOn("file-opened", (args: string | string[]) => {
   console.log("file-opened:", args);
   const filePath = typeof args === "string" ? args : args[0];
-  fileTreeModule.loadFileOrFolder(filePath);
+  loadFileOrFolderToExplorer($tree, filePath);
 });
 
 ipcOn("save-opened-file", async () => {
@@ -297,14 +436,10 @@ ipcOn("new-file-dialog", () => {
   ipcSend("new-file-dialog");
 });
 
-ipcOn("new-file-created", async (filePath: string) => {
-  try {
-    await fileService.createFile(filePath);
-    loadFile(filePath);
-    console.log(`File ${filePath} created successfully`);
-  } catch (err) {
-    console.error("Error creating file:", err);
-  }
+ipcOn("new-file-created", (filePath: string) => {
+  createFile(filePath, (path) => {
+    loadFile(path);
+  });
 });
 
 ipcOn("toggle-explorer", () => {

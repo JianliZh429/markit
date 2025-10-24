@@ -27,6 +27,17 @@ export interface FileSystemAPI {
     flags: string,
     callback: (err: Error | null) => void,
   ) => void;
+  rename: (
+    oldPath: string,
+    newPath: string,
+    callback: (err: Error | null) => void,
+  ) => void;
+  unlink: (path: string, callback: (err: Error | null) => void) => void;
+  rmdir: (
+    path: string,
+    options: { recursive?: boolean; force?: boolean },
+    callback: (err: Error | null) => void,
+  ) => void;
 }
 
 export interface PathAPI {
@@ -164,5 +175,71 @@ export class FileService {
    */
   joinPath(...paths: string[]): string {
     return this.path.join(...paths);
+  }
+
+  /**
+   * Check if file exists
+   */
+  async fileExists(filePath: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.fs.stat(filePath, (err) => {
+        resolve(!err);
+      });
+    });
+  }
+
+  /**
+   * Rename file or directory
+   */
+  async renameFile(oldPath: string, newPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.fs.rename(oldPath, newPath, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          // Update state if the renamed file is currently open
+          const currentFilePath = stateManager.get("currentFilePath");
+          if (currentFilePath === oldPath) {
+            stateManager.set("currentFilePath", newPath);
+          }
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Delete file
+   */
+  async deleteFile(filePath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.fs.unlink(filePath, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          // Clear state if deleted file was currently open
+          const currentFilePath = stateManager.get("currentFilePath");
+          if (currentFilePath === filePath) {
+            stateManager.set("currentFilePath", null);
+          }
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Delete directory recursively
+   */
+  async deleteDirectory(dirPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.fs.rmdir(dirPath, { recursive: true, force: true }, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 }

@@ -1,13 +1,18 @@
-import { globalShortcut, BrowserWindow } from "electron";
+import { BrowserWindow } from "electron";
 
 /**
  * Keyboard Shortcuts Manager
- * Registers and manages global keyboard shortcuts
+ *
+ * NOTE: All keyboard shortcuts are now handled via menu accelerators in menu.ts.
+ * Menu accelerators only work when the application window is focused, which prevents
+ * Markit from capturing shortcuts when other applications are active.
+ *
+ * This file is kept for potential future use of truly global shortcuts
+ * (shortcuts that should work even when Markit is in the background).
  */
 
 export class ShortcutsManager {
   private win: BrowserWindow;
-  private registeredShortcuts: Set<string> = new Set();
 
   constructor(win: BrowserWindow) {
     this.win = win;
@@ -15,84 +20,32 @@ export class ShortcutsManager {
 
   /**
    * Register all application shortcuts
+   *
+   * Currently empty - all shortcuts are handled via menu accelerators.
+   * Menu accelerators are defined in menu.ts and include:
+   * - CommandOrControl+S: Save file
+   * - CommandOrControl+/: Toggle Edit/Preview mode
+   * - CommandOrControl+E: Toggle file explorer
+   * - CommandOrControl+F: Find in file
+   * - Alt+CommandOrControl+F: Find in files
    */
   registerAll(): void {
-    // Toggle Edit/Preview Mode
-    this.register("CommandOrControl+/", () => {
-      this.win.webContents.send("toggle-mode");
-    });
-
-    // Save file
-    this.register("CommandOrControl+S", () => {
-      this.win.webContents.send("save-opened-file");
-    });
-
-    // Toggle file explorer
-    this.register("CommandOrControl+B", () => {
-      this.win.webContents.send("toggle-explorer");
-    });
-
-    // Find in file
-    this.register("CommandOrControl+F", () => {
-      this.win.webContents.send("local-search");
-    });
-
-    // Global search
-    this.register("CommandOrControl+Shift+F", () => {
-      this.win.webContents.send("global-search");
-    });
-
-    console.log(
-      `Registered ${this.registeredShortcuts.size} keyboard shortcuts`,
-    );
-  }
-
-  /**
-   * Register a single shortcut
-   */
-  private register(accelerator: string, callback: () => void): void {
-    try {
-      const success = globalShortcut.register(accelerator, callback);
-      if (success) {
-        this.registeredShortcuts.add(accelerator);
-        console.log(`Registered shortcut: ${accelerator}`);
-      } else {
-        console.warn(`Failed to register shortcut: ${accelerator}`);
-      }
-    } catch (error) {
-      console.error(`Error registering shortcut ${accelerator}:`, error);
-    }
+    // All shortcuts are now handled via menu accelerators in menu.ts
+    // This prevents capturing shortcuts from other applications
+    console.log("Keyboard shortcuts handled via menu accelerators");
   }
 
   /**
    * Unregister all shortcuts
    */
   unregisterAll(): void {
-    globalShortcut.unregisterAll();
-    this.registeredShortcuts.clear();
-    console.log("Unregistered all shortcuts");
-  }
-
-  /**
-   * Check if a shortcut is registered
-   */
-  isRegistered(accelerator: string): boolean {
-    return globalShortcut.isRegistered(accelerator);
-  }
-
-  /**
-   * Get all registered shortcuts
-   */
-  getRegistered(): string[] {
-    return Array.from(this.registeredShortcuts);
+    // No global shortcuts to unregister
+    console.log("No global shortcuts to unregister");
   }
 }
 
 // Legacy export for compatibility
-export function register(
-  _shortcut: typeof globalShortcut,
-  win: BrowserWindow,
-): void {
+export function register(_shortcut: any, win: BrowserWindow): void {
   const manager = new ShortcutsManager(win);
   manager.registerAll();
 }

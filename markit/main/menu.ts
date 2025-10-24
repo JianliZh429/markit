@@ -135,7 +135,7 @@ const editMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         click: () => {
           win.webContents.send("global-search");
         },
-        accelerator: "Alt+CommandOrControl+F",
+        accelerator: "CommandOrControl+Alt+F",
       },
     ],
   };
@@ -174,7 +174,7 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         click: () => {
           win.webContents.send("toggle-explorer");
         },
-        accelerator: "CommandOrControl+E",
+        accelerator: "CommandOrControl+B",
       },
       {
         label: "View / Edit Mode",
