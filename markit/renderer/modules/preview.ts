@@ -3,9 +3,9 @@
  * Handles markdown preview functionality
  */
 
-import { stateManager } from '../state';
-import { MarkdownService } from '../services/markdownService';
-import { debounce } from '../utils/performance';
+import { stateManager } from "../state.js";
+import { MarkdownService } from "../services/markdownService.js";
+import { debounce } from "../utils/performance.js";
 
 export class PreviewModule {
   private previewElement: HTMLDivElement;
@@ -14,7 +14,7 @@ export class PreviewModule {
 
   constructor(
     previewElement: HTMLDivElement,
-    markdownService: MarkdownService
+    markdownService: MarkdownService,
   ) {
     this.previewElement = previewElement;
     this.markdownService = markdownService;
@@ -23,38 +23,38 @@ export class PreviewModule {
 
   private setupEventListeners(): void {
     // Save scroll position
-    this.previewElement.addEventListener('scroll', () => {
-      stateManager.set('previewScrollTop', this.previewElement.scrollTop);
+    this.previewElement.addEventListener("scroll", () => {
+      stateManager.set("previewScrollTop", this.previewElement.scrollTop);
     });
 
     // Handle paste in preview mode
-    this.previewElement.addEventListener('paste', (event) => {
+    this.previewElement.addEventListener("paste", (event) => {
       this.handlePaste(event);
     });
 
     // Handle Enter key in preview mode
-    this.previewElement.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
+    this.previewElement.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
         this.handleEnter(event);
       }
     });
 
     // Real-time markdown preview in editable preview mode
     const debouncedUpdate = debounce(() => this.updateFromInput(), 300);
-    this.previewElement.addEventListener('input', () => {
+    this.previewElement.addEventListener("input", () => {
       debouncedUpdate();
     });
   }
 
   private handlePaste(event: ClipboardEvent): void {
-    if (!stateManager.get('isEditMode')) {
+    if (!stateManager.get("isEditMode")) {
       event.preventDefault();
 
       const clipboardData = event.clipboardData;
       if (!clipboardData) return;
 
-      const htmlData = clipboardData.getData('text/html');
-      const plainText = clipboardData.getData('text/plain');
+      const htmlData = clipboardData.getData("text/html");
+      const plainText = clipboardData.getData("text/plain");
 
       // Convert HTML to Markdown or use plain text
       const markdown = htmlData
@@ -62,8 +62,8 @@ export class PreviewModule {
         : plainText;
 
       // Append to preview content
-      const currentText = this.previewElement.innerText || '';
-      this.setMarkdownContent(currentText + '\n\n' + markdown);
+      const currentText = this.previewElement.innerText || "";
+      this.setMarkdownContent(currentText + "\n\n" + markdown);
 
       // Scroll to bottom
       setTimeout(() => {
@@ -73,14 +73,14 @@ export class PreviewModule {
   }
 
   private handleEnter(event: KeyboardEvent): void {
-    if (!stateManager.get('isEditMode')) {
+    if (!stateManager.get("isEditMode")) {
       event.preventDefault();
 
       const selection = window.getSelection();
       if (!selection) return;
 
       const range = selection.getRangeAt(0);
-      const br = document.createTextNode('\n');
+      const br = document.createTextNode("\n");
       range.deleteContents();
       range.insertNode(br);
 
@@ -91,13 +91,14 @@ export class PreviewModule {
       selection.addRange(range);
 
       // Trigger input event for update
-      this.previewElement.dispatchEvent(new Event('input'));
+      this.previewElement.dispatchEvent(new Event("input"));
     }
   }
 
   private updateFromInput(): void {
     // Get plain text content from previewer
-    const plainText = this.previewElement.innerText || this.previewElement.textContent || '';
+    const plainText =
+      this.previewElement.innerText || this.previewElement.textContent || "";
 
     // Parse and update HTML
     const htmlContent = this.markdownService.parse(plainText);
@@ -106,8 +107,15 @@ export class PreviewModule {
     if (this.previewElement.innerHTML !== htmlContent) {
       // Save cursor position
       const selection = window.getSelection();
-      const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-      const cursorOffset = range ? this.getTextOffset(this.previewElement, range.startContainer, range.startOffset) : 0;
+      const range =
+        selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+      const cursorOffset = range
+        ? this.getTextOffset(
+            this.previewElement,
+            range.startContainer,
+            range.startOffset,
+          )
+        : 0;
 
       this.previewElement.innerHTML = htmlContent;
 
@@ -116,11 +124,15 @@ export class PreviewModule {
     }
   }
 
-  private getTextOffset(container: Node, targetNode: Node, offset: number): number {
+  private getTextOffset(
+    container: Node,
+    targetNode: Node,
+    offset: number,
+  ): number {
     const walker = document.createTreeWalker(
       container,
       NodeFilter.SHOW_TEXT,
-      null
+      null,
     );
 
     let totalOffset = 0;
@@ -144,7 +156,7 @@ export class PreviewModule {
       const walker = document.createTreeWalker(
         this.previewElement,
         NodeFilter.SHOW_TEXT,
-        null
+        null,
       );
 
       let currentOffset = 0;
@@ -166,13 +178,16 @@ export class PreviewModule {
 
       if (targetNode) {
         const range = document.createRange();
-        range.setStart(targetNode, Math.min(targetOffset, targetNode.textContent?.length || 0));
+        range.setStart(
+          targetNode,
+          Math.min(targetOffset, targetNode.textContent?.length || 0),
+        );
         range.collapse(true);
         selection.removeAllRanges();
         selection.addRange(range);
       }
     } catch (e) {
-      console.error('Error restoring cursor:', e);
+      console.error("Error restoring cursor:", e);
     }
   }
 
@@ -195,8 +210,8 @@ export class PreviewModule {
    * Show preview
    */
   show(makeEditable: boolean = false): void {
-    this.previewElement.style.display = 'block';
-    this.previewElement.contentEditable = makeEditable ? 'true' : 'false';
+    this.previewElement.style.display = "block";
+    this.previewElement.contentEditable = makeEditable ? "true" : "false";
 
     // Restore scroll position
     const state = stateManager.getState();
@@ -212,10 +227,10 @@ export class PreviewModule {
    */
   hide(): void {
     // Save scroll position
-    stateManager.set('previewScrollTop', this.previewElement.scrollTop);
-    
-    this.previewElement.style.display = 'none';
-    this.previewElement.contentEditable = 'false';
+    stateManager.set("previewScrollTop", this.previewElement.scrollTop);
+
+    this.previewElement.style.display = "none";
+    this.previewElement.contentEditable = "false";
   }
 
   /**

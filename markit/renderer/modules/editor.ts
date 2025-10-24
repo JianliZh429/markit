@@ -3,8 +3,8 @@
  * Handles markdown editor functionality
  */
 
-import { stateManager } from '../state';
-import { MarkdownService } from '../services/markdownService';
+import { stateManager } from "../state.js";
+import { MarkdownService } from "../services/markdownService.js";
 
 export class EditorModule {
   private editorElement: HTMLTextAreaElement;
@@ -12,7 +12,7 @@ export class EditorModule {
 
   constructor(
     editorElement: HTMLTextAreaElement,
-    markdownService: MarkdownService
+    markdownService: MarkdownService,
   ) {
     this.editorElement = editorElement;
     this.markdownService = markdownService;
@@ -21,11 +21,11 @@ export class EditorModule {
 
   private setupEventListeners(): void {
     // Save scroll position and selection on input
-    this.editorElement.addEventListener('scroll', () => {
-      stateManager.set('editorScrollTop', this.editorElement.scrollTop);
+    this.editorElement.addEventListener("scroll", () => {
+      stateManager.set("editorScrollTop", this.editorElement.scrollTop);
     });
 
-    this.editorElement.addEventListener('select', () => {
+    this.editorElement.addEventListener("select", () => {
       stateManager.setState({
         editorSelectionStart: this.editorElement.selectionStart,
         editorSelectionEnd: this.editorElement.selectionEnd,
@@ -33,7 +33,7 @@ export class EditorModule {
     });
 
     // Handle paste with HTML to Markdown conversion
-    this.editorElement.addEventListener('paste', (event) => {
+    this.editorElement.addEventListener("paste", (event) => {
       this.handlePaste(event);
     });
   }
@@ -42,8 +42,8 @@ export class EditorModule {
     const clipboardData = event.clipboardData;
     if (!clipboardData) return;
 
-    const htmlData = clipboardData.getData('text/html');
-    const plainText = clipboardData.getData('text/plain');
+    const htmlData = clipboardData.getData("text/html");
+    const plainText = clipboardData.getData("text/plain");
 
     if (htmlData) {
       event.preventDefault();
@@ -84,14 +84,14 @@ export class EditorModule {
    * Show editor
    */
   show(): void {
-    this.editorElement.style.display = 'block';
-    
+    this.editorElement.style.display = "block";
+
     // Restore editor state
     const state = stateManager.getState();
     this.editorElement.scrollTop = state.editorScrollTop;
     this.editorElement.setSelectionRange(
       state.editorSelectionStart,
-      state.editorSelectionEnd
+      state.editorSelectionEnd,
     );
     this.editorElement.focus();
   }
@@ -106,8 +106,8 @@ export class EditorModule {
       editorSelectionStart: this.editorElement.selectionStart,
       editorSelectionEnd: this.editorElement.selectionEnd,
     });
-    
-    this.editorElement.style.display = 'none';
+
+    this.editorElement.style.display = "none";
   }
 
   /**

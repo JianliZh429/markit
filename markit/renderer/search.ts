@@ -20,7 +20,7 @@ export async function searchInFiles(
 ): Promise<SearchResult[]> {
   // Create cache key
   const cacheKey = `${directory}:${keyword}:${fileExtension}`;
-  
+
   // Check cache first
   const cached = searchCache.get(cacheKey);
   if (cached) {

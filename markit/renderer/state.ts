@@ -52,9 +52,9 @@ class StateManager {
   setState(updates: Partial<AppState>): void {
     const oldState = { ...this.state };
     this.state = { ...this.state, ...updates };
-    
+
     // Notify all listeners
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       listener(this.state);
     });
   }
@@ -64,7 +64,7 @@ class StateManager {
    */
   subscribe(listener: StateChangeListener): () => void {
     this.listeners.add(listener);
-    
+
     // Return unsubscribe function
     return () => {
       this.listeners.delete(listener);

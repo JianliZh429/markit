@@ -18,31 +18,33 @@ export class ShortcutsManager {
    */
   registerAll(): void {
     // Toggle Edit/Preview Mode
-    this.register('CommandOrControl+/', () => {
-      this.win.webContents.send('toggle-mode');
+    this.register("CommandOrControl+/", () => {
+      this.win.webContents.send("toggle-mode");
     });
 
     // Save file
-    this.register('CommandOrControl+S', () => {
-      this.win.webContents.send('save-file');
+    this.register("CommandOrControl+S", () => {
+      this.win.webContents.send("save-opened-file");
     });
 
     // Toggle file explorer
-    this.register('CommandOrControl+B', () => {
-      this.win.webContents.send('toggle-explorer');
+    this.register("CommandOrControl+B", () => {
+      this.win.webContents.send("toggle-explorer");
     });
 
     // Find in file
-    this.register('CommandOrControl+F', () => {
-      this.win.webContents.send('toggle-local-search');
+    this.register("CommandOrControl+F", () => {
+      this.win.webContents.send("local-search");
     });
 
     // Global search
-    this.register('CommandOrControl+Shift+F', () => {
-      this.win.webContents.send('toggle-global-search');
+    this.register("CommandOrControl+Shift+F", () => {
+      this.win.webContents.send("global-search");
     });
 
-    console.log(`Registered ${this.registeredShortcuts.size} keyboard shortcuts`);
+    console.log(
+      `Registered ${this.registeredShortcuts.size} keyboard shortcuts`,
+    );
   }
 
   /**
@@ -68,7 +70,7 @@ export class ShortcutsManager {
   unregisterAll(): void {
     globalShortcut.unregisterAll();
     this.registeredShortcuts.clear();
-    console.log('Unregistered all shortcuts');
+    console.log("Unregistered all shortcuts");
   }
 
   /**

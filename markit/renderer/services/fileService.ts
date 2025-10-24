@@ -3,26 +3,46 @@
  * Handles all file system operations
  */
 
-import { stateManager } from '../state';
+import { stateManager } from "../state";
 
 export interface FileSystemAPI {
-  readFile: (path: string, encoding: string, callback: (err: Error | null, data: string) => void) => void;
-  writeFile: (path: string, content: string, callback: (err: Error | null) => void) => void;
-  stat: (path: string, callback: (err: Error | null, stats?: any) => void) => void;
+  readFile: (
+    path: string,
+    encoding: string,
+    callback: (err: Error | null, data: string) => void,
+  ) => void;
+  writeFile: (
+    path: string,
+    content: string,
+    callback: (err: Error | null) => void,
+  ) => void;
+  stat: (
+    path: string,
+    callback: (err: Error | null, stats?: any) => void,
+  ) => void;
   statSync: (path: string) => any;
   readdirSync: (path: string) => string[];
-  open: (path: string, flags: string, callback: (err: Error | null) => void) => void;
+  open: (
+    path: string,
+    flags: string,
+    callback: (err: Error | null) => void,
+  ) => void;
 }
 
 export interface PathAPI {
-  parse: (path: string) => { dir: string; base: string; ext: string; name: string };
+  parse: (path: string) => {
+    dir: string;
+    base: string;
+    ext: string;
+    name: string;
+  };
   join: (...paths: string[]) => string;
 }
 
 export class FileService {
   constructor(
     private fs: FileSystemAPI,
-    private path: PathAPI
+    private path: PathAPI,
   ) {}
 
   /**
@@ -30,11 +50,11 @@ export class FileService {
    */
   async loadFile(filePath: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.fs.readFile(filePath, 'utf8', (err, data) => {
+      this.fs.readFile(filePath, "utf8", (err, data) => {
         if (err) {
           reject(err);
         } else {
-          stateManager.set('currentFilePath', filePath);
+          stateManager.set("currentFilePath", filePath);
           resolve(data);
         }
       });
@@ -58,7 +78,7 @@ export class FileService {
             }
           });
         } else {
-          reject(new Error('File does not exist'));
+          reject(new Error("File does not exist"));
         }
       });
     });
@@ -69,7 +89,7 @@ export class FileService {
    */
   async createFile(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.fs.open(filePath, 'w', (err) => {
+      this.fs.open(filePath, "w", (err) => {
         if (err) {
           reject(err);
         } else {
@@ -109,9 +129,9 @@ export class FileService {
   listDirectory(dirPath: string): string[] {
     try {
       const files = this.fs.readdirSync(dirPath);
-      return files.map(file => this.path.join(dirPath, file));
+      return files.map((file) => this.path.join(dirPath, file));
     } catch (err) {
-      console.error('Error listing directory:', err);
+      console.error("Error listing directory:", err);
       return [];
     }
   }
@@ -121,16 +141,21 @@ export class FileService {
    */
   getMarkdownFiles(dirPath: string): string[] {
     const files = this.listDirectory(dirPath);
-    return files.filter(file => {
+    return files.filter((file) => {
       const parsed = this.path.parse(file);
-      return parsed.ext.toLowerCase() === '.md';
+      return parsed.ext.toLowerCase() === ".md";
     });
   }
 
   /**
    * Parse file path
    */
-  parsePath(filePath: string): { dir: string; base: string; ext: string; name: string } {
+  parsePath(filePath: string): {
+    dir: string;
+    base: string;
+    ext: string;
+    name: string;
+  } {
     return this.path.parse(filePath);
   }
 

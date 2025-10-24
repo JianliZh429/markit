@@ -3,8 +3,8 @@
  * Handles automatic saving of file content
  */
 
-import { stateManager } from '../state';
-import { FileService } from '../services/fileService';
+import { stateManager } from "../state";
+import { FileService } from "../services/fileService";
 
 export class AutosaveModule {
   private fileService: FileService;
@@ -18,7 +18,7 @@ export class AutosaveModule {
   constructor(
     fileService: FileService,
     getContentCallback: () => string,
-    statusElement?: HTMLElement
+    statusElement?: HTMLElement,
   ) {
     this.fileService = fileService;
     this.getContentCallback = getContentCallback;
@@ -48,7 +48,7 @@ export class AutosaveModule {
     }
 
     this.start();
-    this.updateStatus('Autosave enabled');
+    this.updateStatus("Autosave enabled");
     console.log(`Autosave enabled with ${this.saveInterval}ms interval`);
   }
 
@@ -60,8 +60,8 @@ export class AutosaveModule {
 
     this.isEnabled = false;
     this.stop();
-    this.updateStatus('Autosave disabled');
-    console.log('Autosave disabled');
+    this.updateStatus("Autosave disabled");
+    console.log("Autosave disabled");
   }
 
   /**
@@ -116,37 +116,40 @@ export class AutosaveModule {
     if (!this.isEnabled) return;
     if (!this.isDirty) return;
 
-    const currentFilePath = stateManager.get('currentFilePath');
+    const currentFilePath = stateManager.get("currentFilePath");
     if (!currentFilePath) {
-      console.log('Autosave skipped: no file open');
+      console.log("Autosave skipped: no file open");
       return;
     }
 
     try {
-      this.updateStatus('Saving...', 'saving');
+      this.updateStatus("Saving...", "saving");
 
       const content = this.getContentCallback();
       await this.fileService.saveFile(currentFilePath, content);
 
       this.isDirty = false;
-      this.updateStatus('Saved', 'success');
-      
+      this.updateStatus("Saved", "success");
+
       // Clear success message after 2 seconds
       setTimeout(() => {
-        if (this.statusElement && this.statusElement.textContent === 'Saved') {
-          this.updateStatus('');
+        if (this.statusElement && this.statusElement.textContent === "Saved") {
+          this.updateStatus("");
         }
       }, 2000);
 
-      console.log('Autosave completed:', currentFilePath);
+      console.log("Autosave completed:", currentFilePath);
     } catch (error) {
-      console.error('Autosave failed:', error);
-      this.updateStatus('Autosave failed', 'error');
-      
+      console.error("Autosave failed:", error);
+      this.updateStatus("Autosave failed", "error");
+
       // Clear error message after 3 seconds
       setTimeout(() => {
-        if (this.statusElement && this.statusElement.textContent === 'Autosave failed') {
-          this.updateStatus('');
+        if (
+          this.statusElement &&
+          this.statusElement.textContent === "Autosave failed"
+        ) {
+          this.updateStatus("");
         }
       }, 3000);
     }
@@ -176,14 +179,21 @@ export class AutosaveModule {
   /**
    * Update status display
    */
-  private updateStatus(message: string, status?: 'saving' | 'success' | 'error'): void {
+  private updateStatus(
+    message: string,
+    status?: "saving" | "success" | "error",
+  ): void {
     if (!this.statusElement) return;
 
     this.statusElement.textContent = message;
-    
+
     // Remove all status classes
-    this.statusElement.classList.remove('status-saving', 'status-success', 'status-error');
-    
+    this.statusElement.classList.remove(
+      "status-saving",
+      "status-success",
+      "status-error",
+    );
+
     // Add appropriate status class
     if (status) {
       this.statusElement.classList.add(`status-${status}`);

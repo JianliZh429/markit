@@ -1,8 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import * as fs from "fs";
 import * as path from "path";
-// Note: search module will be converted to TS later
-const { searchInFiles } = require("../renderer/search.js");
 import { marked } from "marked";
 import markedCodePreview from "marked-code-preview";
 import { markedEmoji } from "marked-emoji";
@@ -80,13 +78,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.send("show-context-menu", menuItems);
   },
 
-  // Search functionality
+  // Search functionality - now via IPC
   searchInFiles: async (
     directory: string,
     keyword: string,
     fileExtension?: string,
   ): Promise<unknown> => {
-    return await searchInFiles(directory, keyword, fileExtension);
+    return await ipcRenderer.invoke("search-in-files", directory, keyword, fileExtension);
   },
 
   // File system operations

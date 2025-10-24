@@ -8,7 +8,7 @@
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -30,7 +30,7 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean = false;
 
@@ -104,7 +104,7 @@ export class LRUCache<K, V> {
  * Request Animation Frame based debounce for visual updates
  */
 export function rafDebounce<T extends (...args: any[]) => any>(
-  func: T
+  func: T,
 ): (...args: Parameters<T>) => void {
   let rafId: number | null = null;
 
@@ -125,7 +125,7 @@ export function rafDebounce<T extends (...args: any[]) => any>(
  */
 export function batchCalls<T extends (...args: any[]) => any>(
   func: T,
-  delay: number = 0
+  delay: number = 0,
 ): (...args: Parameters<T>) => void {
   let pending: Parameters<T>[] = [];
   let timeout: NodeJS.Timeout | null = null;
@@ -155,7 +155,7 @@ export function batchCalls<T extends (...args: any[]) => any>(
  */
 export async function measurePerformance<T>(
   name: string,
-  func: () => T | Promise<T>
+  func: () => T | Promise<T>,
 ): Promise<T> {
   const start = performance.now();
   try {
@@ -165,7 +165,10 @@ export async function measurePerformance<T>(
     return result;
   } catch (error) {
     const end = performance.now();
-    console.error(`[Performance] ${name} failed after ${(end - start).toFixed(2)}ms:`, error);
+    console.error(
+      `[Performance] ${name} failed after ${(end - start).toFixed(2)}ms:`,
+      error,
+    );
     throw error;
   }
 }

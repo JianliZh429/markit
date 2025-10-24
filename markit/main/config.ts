@@ -3,44 +3,44 @@
  * Manages user preferences and application settings
  */
 
-import { app } from 'electron';
-import * as fs from 'fs-extra';
-import * as path from 'path';
-import { logger } from './utils/logger';
+import { app } from "electron";
+import * as fs from "fs-extra";
+import * as path from "path";
+import { logger } from "./utils/logger";
 
 export interface AppConfig {
   // Editor preferences
-  theme: 'light' | 'dark' | 'auto';
+  theme: "light" | "dark" | "auto";
   fontSize: number;
   fontFamily: string;
-  
+
   // Autosave settings
   autosaveEnabled: boolean;
   autosaveInterval: number; // in milliseconds
-  
+
   // File management
   recentFilesLimit: number;
-  
+
   // Search settings
   searchCaseSensitive: boolean;
   searchWholeWord: boolean;
-  
+
   // UI preferences
   showLineNumbers: boolean;
   wordWrap: boolean;
-  
+
   // Performance
   renderCache: boolean;
   searchCache: boolean;
-  
+
   // Logging
-  logLevel: 'debug' | 'info' | 'warn' | 'error';
+  logLevel: "debug" | "info" | "warn" | "error";
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-  theme: 'auto',
+  theme: "auto",
   fontSize: 14,
-  fontFamily: 'monospace',
+  fontFamily: "monospace",
   autosaveEnabled: true,
   autosaveInterval: 30000, // 30 seconds
   recentFilesLimit: 10,
@@ -50,7 +50,7 @@ const DEFAULT_CONFIG: AppConfig = {
   wordWrap: true,
   renderCache: true,
   searchCache: true,
-  logLevel: 'info',
+  logLevel: "info",
 };
 
 export class ConfigManager {
@@ -60,8 +60,8 @@ export class ConfigManager {
   private saveTimeout: NodeJS.Timeout | null = null;
 
   private constructor() {
-    const userDataPath = app.getPath('userData');
-    this.configPath = path.join(userDataPath, 'config.json');
+    const userDataPath = app.getPath("userData");
+    this.configPath = path.join(userDataPath, "config.json");
     this.config = { ...DEFAULT_CONFIG };
     this.load();
   }
@@ -79,19 +79,19 @@ export class ConfigManager {
   private load(): void {
     try {
       if (fs.existsSync(this.configPath)) {
-        const data = fs.readFileSync(this.configPath, 'utf-8');
+        const data = fs.readFileSync(this.configPath, "utf-8");
         const loadedConfig = JSON.parse(data);
-        
+
         // Merge with defaults to handle new config keys
         this.config = { ...DEFAULT_CONFIG, ...loadedConfig };
-        
-        logger.info('CONFIG', 'Configuration loaded successfully');
+
+        logger.info("CONFIG", "Configuration loaded successfully");
       } else {
-        logger.info('CONFIG', 'No config file found, using defaults');
+        logger.info("CONFIG", "No config file found, using defaults");
         this.save(); // Create default config file
       }
     } catch (error) {
-      logger.error('CONFIG', 'Failed to load configuration', error);
+      logger.error("CONFIG", "Failed to load configuration", error);
       this.config = { ...DEFAULT_CONFIG };
     }
   }
@@ -108,10 +108,10 @@ export class ConfigManager {
     this.saveTimeout = setTimeout(() => {
       try {
         const data = JSON.stringify(this.config, null, 2);
-        fs.writeFileSync(this.configPath, data, 'utf-8');
-        logger.info('CONFIG', 'Configuration saved successfully');
+        fs.writeFileSync(this.configPath, data, "utf-8");
+        logger.info("CONFIG", "Configuration saved successfully");
       } catch (error) {
-        logger.error('CONFIG', 'Failed to save configuration', error);
+        logger.error("CONFIG", "Failed to save configuration", error);
       }
       this.saveTimeout = null;
     }, 1000);
@@ -137,7 +137,7 @@ export class ConfigManager {
   set<K extends keyof AppConfig>(key: K, value: AppConfig[K]): void {
     this.config[key] = value;
     this.save();
-    logger.debug('CONFIG', `Updated ${key}:`, value);
+    logger.debug("CONFIG", `Updated ${key}:`, value);
   }
 
   /**
@@ -146,7 +146,7 @@ export class ConfigManager {
   update(updates: Partial<AppConfig>): void {
     this.config = { ...this.config, ...updates };
     this.save();
-    logger.debug('CONFIG', 'Updated configuration', updates);
+    logger.debug("CONFIG", "Updated configuration", updates);
   }
 
   /**
@@ -155,7 +155,7 @@ export class ConfigManager {
   reset(): void {
     this.config = { ...DEFAULT_CONFIG };
     this.save();
-    logger.info('CONFIG', 'Configuration reset to defaults');
+    logger.info("CONFIG", "Configuration reset to defaults");
   }
 
   /**

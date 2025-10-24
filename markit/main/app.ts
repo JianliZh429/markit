@@ -9,10 +9,12 @@ import {
 } from "electron";
 import * as path from "path";
 import * as fs from "fs";
+import * as fsExtra from "fs-extra";
+import fg from "fast-glob";
 import * as shortcuts from "./shortcuts";
 import * as menu from "./menu";
 import * as recentFiles from "./recent-files";
-import { MenuItem } from "../../types";
+import { MenuItem, SearchResult, SearchMatch } from "../../types";
 import { showErrorDialog, validatePath } from "./security";
 
 let win: BrowserWindow | null = null;
@@ -147,5 +149,77 @@ ipcMain.on(
 
     const contextMenu = Menu.buildFromTemplate(template);
     contextMenu.popup({ window: win });
+  },
+);
+
+// Handle search-in-files requests
+ipcMain.handle(
+  "search-in-files",
+  async (
+    _event,
+    directory: string,
+    keyword: string,
+    fileExtension: string = "md",
+  ): Promise<SearchResult[]> => {
+    try {
+      const validatedDir = validatePath(directory);
+      console.log("Searching in files...", validatedDir, keyword);
+
+      // Define the pattern to match only files with specified extension
+      const pattern = `${validatedDir}/**/*.${fileExtension}`;
+      const files = await fg(pattern);
+
+      const results: SearchResult[] = [];
+      for (const file of files) {
+        try {
+          // Read the content of the file
+          const content = await fsExtra.readFile(file, "utf-8");
+
+          // Find all matches for the keyword
+          const regex = new RegExp(keyword, "gi");
+          const matches = [...content.matchAll(regex)];
+
+          if (matches.length > 0) {
+            results.push({
+              file,
+              matches: matches.map((match): SearchMatch => {
+                const matchIndex = match.index ?? 0;
+                const snippetStart = Math.max(0, matchIndex - 20);
+                const snippetEnd = Math.min(
+                  content.length,
+                  matchIndex + keyword.length + 20,
+                );
+                const snippet = content.substring(snippetStart, snippetEnd);
+
+                // Highlight the keyword in the snippet
+                const highlightedSnippet = snippet.replace(
+                  regex,
+                  `<mark>${keyword}</mark>`,
+                );
+
+                return {
+                  line: matchIndex,
+                  snippet: highlightedSnippet,
+                  context: snippet,
+                };
+              }),
+            });
+          }
+        } catch (err: unknown) {
+          if (err instanceof Error) {
+            console.error(`Error reading file ${file}:`, err.message);
+          } else {
+            console.error(`Error reading file ${file}`);
+          }
+        }
+      }
+
+      return results;
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      console.error("Search failed:", message);
+      throw error;
+    }
   },
 );

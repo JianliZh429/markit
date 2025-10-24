@@ -215,19 +215,19 @@ onIpc("context-menu-command", (commandId) => {
   const $li = contextMenuTarget;
 
   switch (commandId) {
-    case "new-file":
-      newFile($li);
-      break;
-    case "rename":
-      renaming($li, (originalPath, newPath) => {
-        if (originalPath === $title.textContent) {
-          $title.textContent = newPath;
-        }
-      });
-      break;
-    case "delete":
-      deleting($li);
-      break;
+  case "new-file":
+    newFile($li);
+    break;
+  case "rename":
+    renaming($li, (originalPath, newPath) => {
+      if (originalPath === $title.textContent) {
+        $title.textContent = newPath;
+      }
+    });
+    break;
+  case "delete":
+    deleting($li);
+    break;
   }
 
   contextMenuTarget = null;
