@@ -103,8 +103,8 @@ function previewMode(): void {
  */
 function editMode(): void {
   // Get plain text from preview (in case user edited it)
-  const plainText = $previewer.innerText || $previewer.textContent || "";
-  editorModule.setContent(plainText);
+  // const plainText = $previewer.innerText || $previewer.textContent || "";
+  // editorModule.setContent(plainText);
 
   previewModule.hide();
   editorModule.show();
@@ -233,10 +233,10 @@ ipcOn("toggle-mode", () => {
   stateManager.set("isEditMode", !isEditMode);
   $localSearch.style.display = "none";
 
-  if (stateManager.get("isEditMode")) {
-    editMode();
-  } else {
+  if (isEditMode) {
     previewMode();
+  } else {
+    editMode();
   }
 });
 
