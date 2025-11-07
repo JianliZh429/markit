@@ -12,8 +12,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        node-version: [18.x, 20.x]
+        os: [ubuntu-latest]
+        node-version: [18.x, 20.x, 22.x, 24.x]
 
     steps:
       - name: Checkout code
@@ -61,7 +61,7 @@ jobs:
           retention-days: 7
 
   build-check:
-    runs-on: ubuntu-latest, macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
