@@ -1,31 +1,34 @@
-
 # Markit
 
-![Build Status](https://github.com/JianliZh429/markit/actions/workflows/test.yml/badge.svg?branch=main)
+![Build Status](https://github.com/JianliZh429/markit/actions/workflows/ci.yml/badge.svg?branch=main)
 
 A modern, cross-platform Markdown editor built with Electron and TypeScript. Markit provides a clean, distraction-free writing experience with powerful features for managing and editing Markdown files.
 
 ## Features
 
 ### Core Editing
+
 - **Dual-mode editing**: Switch between raw markdown editor and live preview
 - **Real-time preview**: Instant markdown rendering with syntax highlighting
 - **Smart paste**: Automatic HTML-to-Markdown conversion when pasting
 - **State preservation**: Maintains scroll position and cursor location across mode switches
 
 ### File Management
+
 - **File explorer**: Built-in tree view with folder navigation
 - **Recent files**: Quick access to recently opened files and folders
 - **File operations**: Create, rename, delete files and directories
 - **Multi-format support**: Optimized for Markdown (.md) files
 
 ### Search & Navigation
+
 - **Local search**: Search within current document with highlighting
 - **Global search**: Search across all files in the current directory
 - **Fast file scanning**: Powered by fast-glob for efficient directory traversal
 - **Context-aware results**: Shows search matches with surrounding context
 
 ### Advanced Features
+
 - **Markdown extensions**: Support for emoji, code preview, and base URL handling
 - **Keyboard shortcuts**: Comprehensive shortcuts for efficient workflow
 - **Autosave**: Automatic saving with configurable intervals
@@ -42,22 +45,26 @@ A modern, cross-platform Markdown editor built with Electron and TypeScript. Mar
 ### Development Setup
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/JianliZh429/markit.git
 cd markit
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Build the project:
+
 ```bash
 npm run build
 ```
 
 4. Start the application:
+
 ```bash
 npm start
 ```
@@ -65,22 +72,26 @@ npm start
 ## Available Scripts
 
 ### Development
+
 - `npm start` - Start the application in development mode
 - `npm run build` - Build for development with source maps
 - `npm run build:dev` - Development build with debugging enabled
 - `npm run build:prod` - Production build (optimized)
 
 ### Testing
+
 - `npm test` - Run all tests
 - `npm run test:watch` - Run tests in watch mode
 - `npm run test:coverage` - Run tests with coverage report
 
 ### Code Quality
+
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues automatically
 - `npm run format` - Format code with Prettier
 
 ### Packaging & Distribution
+
 - `npm run clean` - Clean build and dist directories
 - `npm run package` - Create platform-specific packages (macOS, Linux)
 - `npm run dmg` - Create macOS DMG installer with app icon
@@ -155,6 +166,7 @@ Markit is actively developed with ~70% completion of the planned features:
 - 🚧 **Advanced Features**: Web workers and virtual scrolling planned
 
 ### CI/CD Pipeline
+
 - **Multi-platform testing**: Ubuntu and macOS with Node.js 18.x and 20.x
 - **Automated builds**: TypeScript compilation and packaging verification
 - **Code quality**: ESLint, Prettier, and test coverage reporting
@@ -180,6 +192,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 ## Keyboard Shortcuts
 
 ### File Operations
+
 - `Cmd/Ctrl + N` - Create new file
 - `Cmd/Ctrl + O` - Open file dialog
 - `Cmd/Ctrl + Shift + O` - Open folder dialog
@@ -187,12 +200,14 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - `Cmd/Ctrl + A` - Select all content
 
 ### View & Navigation
+
 - `Cmd/Ctrl + E` - Toggle between edit and preview mode
 - `Cmd/Ctrl + B` - Toggle file explorer panel
 - `Cmd/Ctrl + F` - Local search within current document
 - `Cmd/Ctrl + Shift + F` - Global search across all files
 
 ### Editor Features
+
 - Smart paste with HTML-to-Markdown conversion
 - Auto-save with configurable intervals
 - Context menu with file operations
@@ -201,11 +216,13 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 ## Technology Stack
 
 ### Core Framework
+
 - **Electron** 38.2.2 - Cross-platform desktop framework
 - **TypeScript** 5.9.3 - Type-safe JavaScript development
 - **Node.js** - Backend runtime for main process
 
 ### Markdown Processing
+
 - **marked** 16.4.0 - Fast markdown parser and compiler
 - **marked-emoji** 2.0.1 - Emoji support in markdown
 - **marked-highlight** 2.2.2 - Syntax highlighting for code blocks
@@ -213,6 +230,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - **marked-base-url** 1.1.7 - Base URL resolution for relative links
 
 ### Development Tools
+
 - **Jest** 30.2.0 - Testing framework with TypeScript support
 - **ESLint** 9.37.0 - Code linting and style enforcement
 - **Prettier** 3.6.2 - Code formatting
@@ -220,10 +238,12 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - **ts-jest** 29.4.4 - TypeScript support for Jest
 
 ### File Operations
+
 - **fast-glob** 3.3.3 - High-performance file system scanning
 - **fs-extra** 11.3.2 - Enhanced file system operations
 
 ### Build & Packaging
+
 - **@electron/packager** 18.4.4 - Application packaging
 - **electron-installer-dmg** 5.0.1 - macOS installer creation
 - **electron-installer-debian** 3.2.0 - Linux package creation
