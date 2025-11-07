@@ -161,7 +161,7 @@ jobs:
     outputs:
       changelog: ${{ steps.changelog.outputs.changelog }}
       clean_changelog: ${{ steps.changelog.outputs.clean_changelog }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -196,7 +196,6 @@ jobs:
     # Only run package check on main/develop branches (expensive operation)
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     needs: [build-check, changelog]
-    needs: build-check
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -239,21 +238,21 @@ jobs:
 
           echo "Found package: $PACKAGE_DIR"
           ls -lh "$PACKAGE_DIR"
-          
+
           # Check package size
           PACKAGE_SIZE=$(du -sh "$PACKAGE_DIR" | cut -f1)
           echo "Package size: $PACKAGE_SIZE"
-          
+
           # Set size limit (adjust as needed)
           SIZE_LIMIT_MB=500
           ACTUAL_SIZE_MB=$(du -sm "$PACKAGE_DIR" | cut -f1)
-          
+
           if [ "$ACTUAL_SIZE_MB" -gt "$SIZE_LIMIT_MB" ]; then
             echo "::warning::Package size ($ACTUAL_SIZE_MB MB) exceeds limit ($SIZE_LIMIT_MB MB)"
           fi
-          
+
           echo "Packaging successful!"
-          
+
           # Store package info for release
           echo "package_size=$PACKAGE_SIZE" >> $GITHUB_ENV
           echo "package_path=$PACKAGE_DIR" >> $GITHUB_ENV
