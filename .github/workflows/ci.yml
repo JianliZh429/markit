@@ -60,7 +60,25 @@ jobs:
         continue-on-error: true
 
       - name: Build TypeScript
-        run: npm run build
+        run: |
+          START_TIME=$(date +%s%N)
+          npm run build
+          END_TIME=$(date +%s%N)
+          DURATION=$((($END_TIME - $START_TIME)/1000000))
+          echo "Build duration: ${DURATION}ms"
+          echo "build_duration=${DURATION}" >> $GITHUB_ENV
+
+      - name: Cache build outputs
+        uses: actions/cache@v3
+        with:
+          path: |
+            dist
+            .next
+            .nuxt
+            build
+          key: ${{ runner.os }}-build-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
       - name: Archive test results
         if: failure()
@@ -137,9 +155,47 @@ jobs:
       - name: Verify dependency tree
         run: npm ls --depth=0
 
+  changelog:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      clean_changelog: ${{ steps.changelog.outputs.clean_changelog }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: |
+            {
+              "categories": [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": ["feature", "enhancement"]
+                },
+                {
+                  "title": "## 🐛 Fixes",
+                  "labels": ["fix", "bug"]
+                },
+                {
+                  "title": "## 📦 Dependencies",
+                  "labels": ["dependencies"]
+                }
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   package-check:
     # Only run package check on main/develop branches (expensive operation)
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    needs: [build-check, changelog]
     needs: build-check
     runs-on: ${{ matrix.os }}
 
@@ -183,4 +239,21 @@ jobs:
 
           echo "Found package: $PACKAGE_DIR"
           ls -lh "$PACKAGE_DIR"
+          
+          # Check package size
+          PACKAGE_SIZE=$(du -sh "$PACKAGE_DIR" | cut -f1)
+          echo "Package size: $PACKAGE_SIZE"
+          
+          # Set size limit (adjust as needed)
+          SIZE_LIMIT_MB=500
+          ACTUAL_SIZE_MB=$(du -sm "$PACKAGE_DIR" | cut -f1)
+          
+          if [ "$ACTUAL_SIZE_MB" -gt "$SIZE_LIMIT_MB" ]; then
+            echo "::warning::Package size ($ACTUAL_SIZE_MB MB) exceeds limit ($SIZE_LIMIT_MB MB)"
+          fi
+          
           echo "Packaging successful!"
+          
+          # Store package info for release
+          echo "package_size=$PACKAGE_SIZE" >> $GITHUB_ENV
+          echo "package_path=$PACKAGE_DIR" >> $GITHUB_ENV
