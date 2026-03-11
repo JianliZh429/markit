@@ -248,4 +248,37 @@ export class AutosaveModule {
     this.stop();
     this.isEnabled = false;
   }
+
+  /**
+   * Get the most recent autosave file path, if any.
+   */
+   private getLatestAutosaveFile(): string | null {
+     try {
+       const files = fs.readdirSync(this.AUTOSAVE_DIR);
+       const mdFiles = files.filter((f) => f.endsWith('.md'));
+       if (mdFiles.length === 0) return null;
+       const latest = mdFiles.reduce((a, b) => (parseInt(a) > parseInt(b) ? a : b));
+       return path.join(this.AUTOSAVE_DIR, latest);
+     } catch (e) {
+       console.error('Failed to read autosave directory', e);
+       return null;
+     }
+   }
+
+  /**
+   * Load the most recent autosave content.
+   * Returns the markdown string or null if none.
+   */
+   async loadRecentAutosave(): Promise<string | null> {
+     const latestPath = this.getLatestAutosaveFile();
+     if (!latestPath) return null;
+     try {
+       const data = await fs.promises.readFile(latestPath, 'utf-8');
+       console.log('Loaded autosave from', latestPath);
+       return data;
+     } catch (e) {
+       console.error('Failed to load autosave file', e);
+       return null;
+     }
+   }
 }
