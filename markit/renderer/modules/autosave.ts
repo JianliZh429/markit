@@ -1,27 +1,13 @@
 /**
  * Autosave Module
- * Handles automatic saving of file content
- */
-
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
-
-/**
- * Autosave Module
- * Handles automatic saving of file content.
+ * Handles automatic saving of file content (renderer-side state tracking)
  *
- * Improvements:
- *  - Saves a backup copy to a hidden autosave folder (`$HOME/.markit/autosave`).
- *  - Ensures the autosave directory exists.
- *  - Uses a timestamped filename for each autosave.
- *  - On enable, loads the most recent autosave if no file is currently open.
+ * Note: Actual file saving is handled by the main process via IPC.
  */
+
 import { stateManager } from "../state";
-import { FileService } from "../services/fileService";
 
 export class AutosaveModule {
-  private fileService: FileService;
   private intervalId: NodeJS.Timeout | null = null;
   private isEnabled: boolean = false;
   private saveInterval: number = 30000; // 30 seconds default
@@ -29,15 +15,10 @@ export class AutosaveModule {
   private statusElement: HTMLElement | null = null;
   private getContentCallback: () => string;
 
-  // Hidden autosave folder (e.g. $HOME/.markit/autosave)
-  private readonly AUTOSAVE_DIR: string = path.join(os.homedir(), ".markit", "autosave");
-
   constructor(
-    fileService: FileService,
     getContentCallback: () => string,
     statusElement?: HTMLElement,
   ) {
-    this.fileService = fileService;
     this.getContentCallback = getContentCallback;
     this.statusElement = statusElement || null;
     this.setupStateListener();
@@ -52,7 +33,6 @@ export class AutosaveModule {
       }
     });
   }
-
 
   /**
    * Enable autosave
@@ -130,47 +110,41 @@ export class AutosaveModule {
   /**
    * Perform autosave operation
    */
-  private async performAutosave(): Promise<void> {
+  private performAutosave(): void {
     if (!this.isEnabled) return;
     if (!this.isDirty) return;
 
     const currentFilePath = stateManager.get("currentFilePath");
-    // Ensure autosave directory exists
-    try {
-      fs.mkdirSync(this.AUTOSAVE_DIR, { recursive: true });
-    } catch (e) {
-      console.error("Failed to create autosave directory", e);
+    if (!currentFilePath) {
+      console.log("Autosave skipped: no file open");
+      return;
     }
-    const timestamp = Date.now();
-    const autosavePath = path.join(this.AUTOSAVE_DIR, `${timestamp}.md`);
 
     try {
       this.updateStatus("Saving...", "saving");
 
       const content = this.getContentCallback();
-
-      // Save to actual file if one is open
-      if (currentFilePath) {
-        await this.fileService.saveFile(currentFilePath, content);
-      }
-
-      // Always write hidden backup
-      await fs.promises.writeFile(autosavePath, content, "utf-8");
+      
+      // Send save request to main process
+      const { send } = (window as any).electronAPI;
+      send("autosave-file", currentFilePath, content);
 
       this.isDirty = false;
       this.updateStatus("Saved", "success");
 
+      // Clear success message after 2 seconds
       setTimeout(() => {
         if (this.statusElement && this.statusElement.textContent === "Saved") {
           this.updateStatus("");
         }
       }, 2000);
 
-      console.log("Autosave completed. Backup saved at", autosavePath);
+      console.log("Autosave completed:", currentFilePath);
     } catch (error) {
       console.error("Autosave failed:", error);
       this.updateStatus("Autosave failed", "error");
 
+      // Clear error message after 3 seconds
       setTimeout(() => {
         if (
           this.statusElement &&
@@ -186,7 +160,7 @@ export class AutosaveModule {
    * Manually trigger autosave
    */
   async saveNow(): Promise<void> {
-    await this.performAutosave();
+    this.performAutosave();
   }
 
   /**
@@ -248,37 +222,4 @@ export class AutosaveModule {
     this.stop();
     this.isEnabled = false;
   }
-
-  /**
-   * Get the most recent autosave file path, if any.
-   */
-   private getLatestAutosaveFile(): string | null {
-     try {
-       const files = fs.readdirSync(this.AUTOSAVE_DIR);
-       const mdFiles = files.filter((f) => f.endsWith('.md'));
-       if (mdFiles.length === 0) return null;
-       const latest = mdFiles.reduce((a, b) => (parseInt(a) > parseInt(b) ? a : b));
-       return path.join(this.AUTOSAVE_DIR, latest);
-     } catch (e) {
-       console.error('Failed to read autosave directory', e);
-       return null;
-     }
-   }
-
-  /**
-   * Load the most recent autosave content.
-   * Returns the markdown string or null if none.
-   */
-   async loadRecentAutosave(): Promise<string | null> {
-     const latestPath = this.getLatestAutosaveFile();
-     if (!latestPath) return null;
-     try {
-       const data = await fs.promises.readFile(latestPath, 'utf-8');
-       console.log('Loaded autosave from', latestPath);
-       return data;
-     } catch (e) {
-       console.error('Failed to load autosave file', e);
-       return null;
-     }
-   }
 }

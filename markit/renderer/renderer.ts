@@ -78,22 +78,12 @@ const previewModule = new PreviewModule($previewer, markdownService);
 
 // Initialize autosave module
 const autosaveModule = new AutosaveModule(
-  fileService,
   () => editorModule.getContent(),
   document.getElementById("autosave-status") || undefined
 );
 
-// Try to load autosave if no file is currently open
-(async () => {
-  const currentFilePath = stateManager.get("currentFilePath");
-  if (!currentFilePath) {
-    const autosaveContent = await autosaveModule.loadRecentAutosave();
-    if (autosaveContent) {
-      editorModule.setContent(autosaveContent);
-      console.log("Autosave content loaded");
-    }
-  }
-})();
+// Try to load autosave if no file is currently open (main process handles this)
+// This is a placeholder - actual loading happens in main process
 
 // Enable autosave by default
 autosaveModule.enable(30000);
