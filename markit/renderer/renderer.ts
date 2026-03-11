@@ -29,6 +29,26 @@ const markdownService = new MarkdownService({
   setMarkdownBaseUrl,
 });
 
+// Default settings (can be overridden by main process via IPC)
+const DEFAULT_SETTINGS = {
+  theme: "light" as const,
+  fontSize: 14,
+  autosaveEnabled: true,
+  autosaveInterval: 30000,
+};
+
+// Apply default settings to UI
+function applySettingsToUI(settings: typeof DEFAULT_SETTINGS): void {
+  const root = document.documentElement;
+  root.style.setProperty("--theme", settings.theme);
+  root.style.setProperty("--font-size", `${settings.fontSize}px`);
+  
+  document.body.classList.remove("theme-light", "theme-dark");
+  document.body.classList.add(`theme-${settings.theme}`);
+}
+
+applySettingsToUI(DEFAULT_SETTINGS);
+
 // Get DOM elements
 const $explorer = document.getElementById("explorer") as HTMLDivElement;
 const $editor = document.getElementById("editor") as HTMLTextAreaElement;
