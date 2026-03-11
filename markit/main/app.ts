@@ -163,7 +163,6 @@ ipcMain.handle(
   ): Promise<SearchResult[]> => {
     try {
       const validatedDir = validatePath(directory);
-      console.log("Searching in files...", validatedDir, keyword);
 
       // Define the pattern to match only files with specified extension
       const pattern = `${validatedDir}/**/*.${fileExtension}`;
@@ -184,6 +183,8 @@ ipcMain.handle(
               file,
               matches: matches.map((match): SearchMatch => {
                 const matchIndex = match.index ?? 0;
+                // Convert character index to line number
+                const lineNumber = content.slice(0, matchIndex).split("\n").length;
                 const snippetStart = Math.max(0, matchIndex - 20);
                 const snippetEnd = Math.min(
                   content.length,
@@ -198,7 +199,7 @@ ipcMain.handle(
                 );
 
                 return {
-                  line: matchIndex,
+                  line: lineNumber,
                   snippet: highlightedSnippet,
                   context: snippet,
                 };
@@ -206,19 +207,18 @@ ipcMain.handle(
             });
           }
         } catch (err: unknown) {
-          if (err instanceof Error) {
-            console.error(`Error reading file ${file}:`, err.message);
-          } else {
-            console.error(`Error reading file ${file}`);
-          }
+          // Silently skip files that cannot be read
         }
       }
 
       return results;
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      console.error("Search failed:", message);
+      // Log errors in development mode only
+      if (process.env.NODE_ENV !== "production") {
+        const message =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        console.error("Search failed:", message);
+      }
       throw error;
     }
   },
