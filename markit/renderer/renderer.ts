@@ -9,6 +9,7 @@ import { MarkdownService } from "./services/markdownService.js";
 import { EditorModule } from "./modules/editor.js";
 import { PreviewModule } from "./modules/preview.js";
 import { FileTreeModule } from "./modules/fileTree.js";
+import { AutosaveModule } from "./modules/autosave.js";
 
 // Get electron API from window
 const {
@@ -54,6 +55,28 @@ const $globalSearchResult = document.getElementById(
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService);
 const previewModule = new PreviewModule($previewer, markdownService);
+
+// Initialize autosave module
+const autosaveModule = new AutosaveModule(
+  fileService,
+  () => editorModule.getContent(),
+  document.getElementById("autosave-status") || undefined
+);
+
+// Try to load autosave if no file is currently open
+(async () => {
+  const currentFilePath = stateManager.get("currentFilePath");
+  if (!currentFilePath) {
+    const autosaveContent = await autosaveModule.loadRecentAutosave();
+    if (autosaveContent) {
+      editorModule.setContent(autosaveContent);
+      console.log("Autosave content loaded");
+    }
+  }
+})();
+
+// Enable autosave by default
+autosaveModule.enable(30000);
 
 // Initialize file tree module
 const fileTreeModule = new FileTreeModule($tree, {
