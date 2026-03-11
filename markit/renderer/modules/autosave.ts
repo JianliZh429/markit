@@ -3,6 +3,20 @@
  * Handles automatic saving of file content
  */
 
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+
+/**
+ * Autosave Module
+ * Handles automatic saving of file content.
+ *
+ * Improvements:
+ *  - Saves a backup copy to a hidden autosave folder (`$HOME/.markit/autosave`).
+ *  - Ensures the autosave directory exists.
+ *  - Uses a timestamped filename for each autosave.
+ *  - On enable, loads the most recent autosave if no file is currently open.
+ */
 import { stateManager } from "../state";
 import { FileService } from "../services/fileService";
 
@@ -14,6 +28,9 @@ export class AutosaveModule {
   private isDirty: boolean = false;
   private statusElement: HTMLElement | null = null;
   private getContentCallback: () => string;
+
+  // Hidden autosave folder (e.g. $HOME/.markit/autosave)
+  private readonly AUTOSAVE_DIR: string = path.join(os.homedir(), ".markit", "autosave");
 
   constructor(
     fileService: FileService,
@@ -35,6 +52,7 @@ export class AutosaveModule {
       }
     });
   }
+
 
   /**
    * Enable autosave
@@ -117,33 +135,42 @@ export class AutosaveModule {
     if (!this.isDirty) return;
 
     const currentFilePath = stateManager.get("currentFilePath");
-    if (!currentFilePath) {
-      console.log("Autosave skipped: no file open");
-      return;
+    // Ensure autosave directory exists
+    try {
+      fs.mkdirSync(this.AUTOSAVE_DIR, { recursive: true });
+    } catch (e) {
+      console.error("Failed to create autosave directory", e);
     }
+    const timestamp = Date.now();
+    const autosavePath = path.join(this.AUTOSAVE_DIR, `${timestamp}.md`);
 
     try {
       this.updateStatus("Saving...", "saving");
 
       const content = this.getContentCallback();
-      await this.fileService.saveFile(currentFilePath, content);
+
+      // Save to actual file if one is open
+      if (currentFilePath) {
+        await this.fileService.saveFile(currentFilePath, content);
+      }
+
+      // Always write hidden backup
+      await fs.promises.writeFile(autosavePath, content, "utf-8");
 
       this.isDirty = false;
       this.updateStatus("Saved", "success");
 
-      // Clear success message after 2 seconds
       setTimeout(() => {
         if (this.statusElement && this.statusElement.textContent === "Saved") {
           this.updateStatus("");
         }
       }, 2000);
 
-      console.log("Autosave completed:", currentFilePath);
+      console.log("Autosave completed. Backup saved at", autosavePath);
     } catch (error) {
       console.error("Autosave failed:", error);
       this.updateStatus("Autosave failed", "error");
 
-      // Clear error message after 3 seconds
       setTimeout(() => {
         if (
           this.statusElement &&
