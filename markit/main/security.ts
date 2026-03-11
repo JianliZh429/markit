@@ -90,6 +90,11 @@ export function validatePath(filePath: string): string {
     );
   }
 
+  // Ensure the file is a markdown file
+  if (!isMarkdownFile(sanitized)) {
+    throw new Error(`Invalid file type: Only markdown files are allowed: ${sanitized}`);
+  }
+
   return sanitized;
 }
 
