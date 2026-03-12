@@ -1,13 +1,13 @@
 /**
  * Autosave Module
- * Handles automatic saving of file content
+ * Handles automatic saving of file content (renderer-side state tracking)
+ *
+ * Note: Actual file saving is handled by the main process via IPC.
  */
 
 import { stateManager } from "../state";
-import { FileService } from "../services/fileService";
 
 export class AutosaveModule {
-  private fileService: FileService;
   private intervalId: NodeJS.Timeout | null = null;
   private isEnabled: boolean = false;
   private saveInterval: number = 30000; // 30 seconds default
@@ -16,11 +16,9 @@ export class AutosaveModule {
   private getContentCallback: () => string;
 
   constructor(
-    fileService: FileService,
     getContentCallback: () => string,
     statusElement?: HTMLElement,
   ) {
-    this.fileService = fileService;
     this.getContentCallback = getContentCallback;
     this.statusElement = statusElement || null;
     this.setupStateListener();
@@ -112,7 +110,7 @@ export class AutosaveModule {
   /**
    * Perform autosave operation
    */
-  private async performAutosave(): Promise<void> {
+  private performAutosave(): void {
     if (!this.isEnabled) return;
     if (!this.isDirty) return;
 
@@ -126,7 +124,10 @@ export class AutosaveModule {
       this.updateStatus("Saving...", "saving");
 
       const content = this.getContentCallback();
-      await this.fileService.saveFile(currentFilePath, content);
+      
+      // Send save request to main process
+      const { send } = (window as any).electronAPI;
+      send("autosave-file", currentFilePath, content);
 
       this.isDirty = false;
       this.updateStatus("Saved", "success");
@@ -159,7 +160,7 @@ export class AutosaveModule {
    * Manually trigger autosave
    */
   async saveNow(): Promise<void> {
-    await this.performAutosave();
+    this.performAutosave();
   }
 
   /**

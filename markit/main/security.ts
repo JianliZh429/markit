@@ -53,11 +53,14 @@ export function isPathSafe(filePath: string): boolean {
 
     // Check if path is within any safe base directory
     const safePaths = getSafeBasePaths();
+    // Path is safe if it stays within a safe base directory.
+    // `path.relative` returns an empty string when the resolved path equals the base,
+    // so we must treat that case as safe as well.
     const isSafe = safePaths.some((basePath) => {
       const relativePath = path.relative(basePath, resolvedPath);
-      // Path is safe if it doesn't start with '..' (not going up from base)
+      // If the path is inside the base, it will NOT start with ".." and will be
+      // a relative path (or empty string for the exact base dir).
       return (
-        relativePath &&
         !relativePath.startsWith("..") &&
         !path.isAbsolute(relativePath)
       );

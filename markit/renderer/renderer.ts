@@ -9,6 +9,7 @@ import { MarkdownService } from "./services/markdownService.js";
 import { EditorModule } from "./modules/editor.js";
 import { PreviewModule } from "./modules/preview.js";
 import { FileTreeModule } from "./modules/fileTree.js";
+import { AutosaveModule } from "./modules/autosave.js";
 
 // Get electron API from window
 const {
@@ -27,6 +28,26 @@ const markdownService = new MarkdownService({
   parseMarkdown,
   setMarkdownBaseUrl,
 });
+
+// Default settings (can be overridden by main process via IPC)
+const DEFAULT_SETTINGS = {
+  theme: "light" as const,
+  fontSize: 14,
+  autosaveEnabled: true,
+  autosaveInterval: 30000,
+};
+
+// Apply default settings to UI
+function applySettingsToUI(settings: typeof DEFAULT_SETTINGS): void {
+  const root = document.documentElement;
+  root.style.setProperty("--theme", settings.theme);
+  root.style.setProperty("--font-size", `${settings.fontSize}px`);
+  
+  document.body.classList.remove("theme-light", "theme-dark");
+  document.body.classList.add(`theme-${settings.theme}`);
+}
+
+applySettingsToUI(DEFAULT_SETTINGS);
 
 // Get DOM elements
 const $explorer = document.getElementById("explorer") as HTMLDivElement;
@@ -54,6 +75,18 @@ const $globalSearchResult = document.getElementById(
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService);
 const previewModule = new PreviewModule($previewer, markdownService);
+
+// Initialize autosave module
+const autosaveModule = new AutosaveModule(
+  () => editorModule.getContent(),
+  document.getElementById("autosave-status") || undefined
+);
+
+// Try to load autosave if no file is currently open (main process handles this)
+// This is a placeholder - actual loading happens in main process
+
+// Enable autosave by default
+autosaveModule.enable(30000);
 
 // Initialize file tree module
 const fileTreeModule = new FileTreeModule($tree, {
