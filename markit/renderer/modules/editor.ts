@@ -126,7 +126,7 @@ export class EditorModule {
   }
 
   /**
-   * 获取当前锚点信息（行号、offset、上下文）
+   * Get anchor info (line, offset, context)
    */
   getAnchorInfo(): { line: number; offset: number; context: string } {
     const value = this.editorElement.value;
@@ -140,6 +140,21 @@ export class EditorModule {
       anchorInLine + 5
     );
     return { line: lineNum, offset: cursorOffset, context };
+  }
+
+  /**
+   * Restore caret to anchor info if possible
+   */
+  restoreAnchor(anchor: { line: number; offset: number; context: string }): void {
+    const lines = this.editorElement.value.split('\n');
+    const lineStr = lines[anchor.line] || '';
+    let index = lineStr.indexOf(anchor.context);
+    if (index === -1) index = 0;
+    let offset = 0;
+    for (let i = 0; i < anchor.line; i++) offset += lines[i].length + 1;
+    offset += index + anchor.context.length;
+    this.editorElement.setSelectionRange(offset, offset);
+    this.editorElement.focus();
   }
 
 

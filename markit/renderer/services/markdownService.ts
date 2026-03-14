@@ -34,21 +34,10 @@ export class MarkdownService {
 
     if (!anchor) return html;
 
-    // 2. 若有anchor，插入data-anchor（简单策略：按行拆分后找到包含context目标，插入特殊span）
-    const lines = content.split('\n');
-    const targetLine = lines[anchor.line] || '';
-    const locator = anchor.context && targetLine.includes(anchor.context)
-      ? anchor.context
-      : targetLine.trim();
-
-    // 粗略方案：找到HTML文本中第一个“locator”文本，插入data-anchor标记
-    // 注：真实情况需处理markdown块映射，这里简写
-    if (locator) {
-      // 用正则仅替换第一个目标出现的位置
-      const anchorHtml = `<span data-anchor="1"></span>${locator}`;
-      html = html.replace(locator, anchorHtml);
-    }
-    return html;
+    // 2. Use anchor util for data-anchor injection
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { injectAnchor } = require('../utils/anchor');
+    return injectAnchor(html, anchor);
   }
 
   /**

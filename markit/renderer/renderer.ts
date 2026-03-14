@@ -154,12 +154,8 @@ function previewMode(): void {
  * FIX: Sync cursor position from preview and center view
  */
 function editMode(): void {
-  // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
 
-  // Save cursor position from preview before switching
-  const previewCursorOffset = previewModule.getCursorOffset();
-  
   // Get plain text from preview (in case user edited it)
   const plainText = previewModule.getMarkdownContent();
   editorModule.setContent(plainText);
@@ -168,12 +164,13 @@ function editMode(): void {
   previewModule.hide();
   editorModule.show();
 
-  // Sync cursor position to editor and center view
-  editorModule.setCursorPosition(previewCursorOffset);
+  // Restore caret to last anchor if exists
+  if (lastEditorAnchor) {
+    editorModule.restoreAnchor(lastEditorAnchor);
+  }
 
   stateManager.set("isEditMode", true);
-  
-  // Clear mode switching flag after a brief delay
+
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
   }, 100);
