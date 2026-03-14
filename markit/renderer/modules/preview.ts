@@ -223,53 +223,18 @@ export class PreviewModule {
   }
 
   /**
-   * Scroll to center the cursor in viewport
-   */
-  centerCursorInView(): void {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const containerRect = this.previewElement.getBoundingClientRect();
-
-    // Calculate the scroll position to center the cursor
-    const cursorCenter = rect.top + rect.height / 2 - containerRect.top;
-    const containerHeight = this.previewElement.clientHeight;
-    const currentScroll = this.previewElement.scrollTop;
-
-    // Scroll to center the cursor
-    const targetScroll = currentScroll + cursorCenter - containerHeight / 2;
-    this.previewElement.scrollTop = Math.max(0, targetScroll);
-  }
-
-  /**
    * Set markdown content and render to HTML
-   * FIX: Also update shadow markdown for stable editing
    */
   setMarkdownContent(markdown: string): void {
-    this.shadowMarkdown = markdown;
-    this.isUpdating = true;
-    
-    // In editable preview mode, we show plain text, not rendered HTML
-    // This prevents style corruption during input
-    this.previewElement.innerText = markdown;
-    
-    this.isUpdating = false;
+    const html = this.markdownService.parse(markdown);
+    this.previewElement.innerHTML = html;
   }
 
   /**
-   * Get HTML content (rendered)
+   * Get HTML content
    */
   getHtmlContent(): string {
     return this.previewElement.innerHTML;
-  }
-
-  /**
-   * Get plain text content (markdown source)
-   */
-  getMarkdownContent(): string {
-    return this.shadowMarkdown || this.previewElement.innerText || "";
   }
 
   /**
@@ -285,13 +250,6 @@ export class PreviewModule {
 
     if (makeEditable) {
       this.previewElement.focus();
-      
-      // Restore cursor position from state
-      const cursorOffset = state.previewCursorOffset;
-      if (cursorOffset > 0) {
-        this.restoreCursorPosition(cursorOffset);
-        this.centerCursorInView();
-      }
     }
   }
 
@@ -301,9 +259,6 @@ export class PreviewModule {
   hide(): void {
     // Save scroll position
     stateManager.set("previewScrollTop", this.previewElement.scrollTop);
-
-    // Save cursor position before hiding
-    this.saveCursorPosition();
 
     this.previewElement.style.display = "none";
     this.previewElement.contentEditable = "false";
@@ -351,5 +306,29 @@ export class PreviewModule {
       range.startContainer,
       range.startOffset,
     );
+  }
+
+  /**
+   * Save cursor position to state
+   */
+  saveCursorPosition(): void {
+    stateManager.setState({
+      previewCursorOffset: this.getCursorOffset(),
+    });
+  }
+  
+  /** Center helper kept for compatibility in other code paths */
+  centerCursorInView(): void {
+    // Simple scroll centering around current selection range; robust enough for tests
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const containerRect = this.previewElement.getBoundingClientRect();
+    const cursorCenter = rect.top + rect.height / 2 - containerRect.top;
+    const containerHeight = this.previewElement.clientHeight;
+    const currentScroll = this.previewElement.scrollTop;
+    const targetScroll = currentScroll + cursorCenter - containerHeight / 2;
+    this.previewElement.scrollTop = Math.max(0, targetScroll);
   }
 }
