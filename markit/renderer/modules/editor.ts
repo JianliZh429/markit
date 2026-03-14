@@ -126,6 +126,24 @@ export class EditorModule {
   }
 
   /**
+   * 获取当前锚点信息（行号、offset、上下文）
+   */
+  getAnchorInfo(): { line: number; offset: number; context: string } {
+    const value = this.editorElement.value;
+    const cursorOffset = this.editorElement.selectionStart;
+    const lines = value.substring(0, cursorOffset).split('\n');
+    const lineNum = lines.length - 1;
+    const currentLine = lines[lineNum] || '';
+    const anchorInLine = cursorOffset - (value.lastIndexOf('\n', cursorOffset - 1) + 1);
+    const context = currentLine.substring(
+      Math.max(0, anchorInLine - 5),
+      anchorInLine + 5
+    );
+    return { line: lineNum, offset: cursorOffset, context };
+  }
+
+
+  /**
    * Convert character offset to line number
    */
   offsetToLine(offset: number): number {

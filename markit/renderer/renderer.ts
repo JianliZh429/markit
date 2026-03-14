@@ -122,24 +122,24 @@ function currentContent(): string {
  * Switch to preview mode
  * FIX: Sync cursor position from editor and center view
  */
+let lastEditorAnchor = null;
 function previewMode(): void {
   // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
 
-  // Save cursor position from editor before switching
-  const editorCursorOffset = editorModule.getCursorOffset();
-  
+  // Save anchor info from editor before switching
+  lastEditorAnchor = editorModule.getAnchorInfo();
+
   // Get content from editor
   const markdownContent = editorModule.getContent();
-  previewModule.setMarkdownContent(markdownContent);
+  previewModule.setMarkdownContent(markdownContent, lastEditorAnchor);
 
   // Hide editor, show preview
   editorModule.hide();
   previewModule.show(true); // Make editable
 
-  // Sync cursor position to preview and center view
-  // Note: We use a simple character offset sync
-  previewModule.setCursorPosition(editorCursorOffset);
+  // Sync anchor position to preview and center view (to be implemented)
+  // previewModule.locateAnchor(lastEditorAnchor);
 
   stateManager.set("isEditMode", false);
   
