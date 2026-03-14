@@ -207,18 +207,15 @@ export class PreviewModule {
   /**
    * Set markdown content and render to HTML (支持光标anchor)
    */
-  setMarkdownContent(markdown: string, anchor?: { line: number; context: string }): void {
-    const html = this.markdownService.parse(markdown, anchor);
+  setMarkdownContent(markdown: string): void {
+    const html = this.markdownService.parse(markdown);
     this.previewElement.innerHTML = html;
     this.markdownContent = markdown;
     // Anchor定位：渲染后如存在data-anchor, 则滚动到此处
-    if (anchor) {
-      const anchorEl = this.previewElement.querySelector('[data-anchor="1"]');
-      if (anchorEl) {
-        anchorEl.scrollIntoView({ block: 'center' });
-        // 可考虑聚焦或高亮
-        anchorEl.classList.add('anchor-highlight');
-      }
+    const anchorEl = this.previewElement.querySelector('[data-anchor="1"]');
+    if (anchorEl) {
+      anchorEl.scrollIntoView({ block: 'center' });
+      anchorEl.classList.add('anchor-highlight');
     }
   }
   /**
