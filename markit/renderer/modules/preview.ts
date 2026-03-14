@@ -14,7 +14,7 @@ import { debounce } from "../utils/performance.js";
 export class PreviewModule {
   private previewElement: HTMLDivElement;
   private markdownService: MarkdownService;
-  private updateTimeout: number | null = null;
+  private markdownContent: string = "";
   // Shadow copy of the markdown source text for stable editing
   private shadowMarkdown: string = "";
   // Flag to prevent recursive updates
@@ -130,31 +130,6 @@ export class PreviewModule {
     return offset + Math.min(column, lines[line]?.length || 0);
   }
 
-  /**
-   * Save cursor position as line/column in state
-   */
-  saveCursorPosition(): void {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-
-    const range = selection.getRangeAt(0);
-    const cursorOffset = this.getTextOffset(
-      this.previewElement,
-      range.startContainer,
-      range.startOffset,
-    );
-
-    const text = this.shadowMarkdown || this.previewElement.innerText || "";
-    const pos = this.offsetToLineColumn(text, cursorOffset);
-    
-    stateManager.setState({
-      previewCursorOffset: cursorOffset,
-    });
-    
-    // Also save line/column for editor sync
-    stateManager.set("previewCursorOffset", cursorOffset);
-  }
-
   private getTextOffset(
     container: Node,
     targetNode: Node,
@@ -228,8 +203,14 @@ export class PreviewModule {
   setMarkdownContent(markdown: string): void {
     const html = this.markdownService.parse(markdown);
     this.previewElement.innerHTML = html;
+    this.markdownContent = markdown;
   }
-
+  /**
+   * Get plain text content (markdown source)
+   */
+  getMarkdownContent(): string {
+    return this.markdownContent || this.previewElement.innerText || "";
+  }
   /**
    * Get HTML content
    */
@@ -250,6 +231,12 @@ export class PreviewModule {
 
     if (makeEditable) {
       this.previewElement.focus();
+       // Restore cursor position from state
+      const cursorOffset = state.previewCursorOffset;
+      if (cursorOffset > 0) {
+        this.restoreCursorPosition(cursorOffset);
+        this.centerCursorInView();
+      }
     }
   }
 
