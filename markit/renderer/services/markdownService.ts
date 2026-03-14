@@ -21,16 +21,33 @@ export class MarkdownService {
   /**
    * Parse markdown to HTML with caching
    */
-  parse(content: string): string {
-    // Check cache first
-    const cached = this.renderCache.get(content);
-    if (cached) {
-      return cached;
+  /**
+   * Parse markdown to HTML with optional anchor insertion
+   */
+  parse(content: string, anchor?: { line: number; context: string }): string {
+    // 1. 解析成HTML
+    let html = this.renderCache.get(content);
+    if (!html) {
+      html = this.markdownAPI.parseMarkdown(content);
+      this.renderCache.set(content, html);
     }
 
-    // Parse and cache the result
-    const html = this.markdownAPI.parseMarkdown(content);
-    this.renderCache.set(content, html);
+    if (!anchor) return html;
+
+    // 2. 若有anchor，插入data-anchor（简单策略：按行拆分后找到包含context目标，插入特殊span）
+    const lines = content.split('\n');
+    const targetLine = lines[anchor.line] || '';
+    const locator = anchor.context && targetLine.includes(anchor.context)
+      ? anchor.context
+      : targetLine.trim();
+
+    // 粗略方案：找到HTML文本中第一个“locator”文本，插入data-anchor标记
+    // 注：真实情况需处理markdown块映射，这里简写
+    if (locator) {
+      // 用正则仅替换第一个目标出现的位置
+      const anchorHtml = `<span data-anchor="1"></span>${locator}`;
+      html = html.replace(locator, anchorHtml);
+    }
     return html;
   }
 
