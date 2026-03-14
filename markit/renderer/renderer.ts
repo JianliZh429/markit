@@ -123,31 +123,46 @@ function currentContent(): string {
  * FIX: Sync cursor position from editor and center view
  */
 let lastEditorAnchor = null;
+import { insertAnchorAtCaret, stripAnchorAndGetOffset } from "./utils/anchor";
+
 function previewMode(): void {
-  // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
 
-  // Save anchor info from editor before switching
-  lastEditorAnchor = editorModule.getAnchorInfo();
+  // Get content and current caret
+  const content = editorModule.getContent();
+  const caretOffset = editorModule.editorElement.selectionStart;
+  const contentWithAnchor = insertAnchorAtCaret(content, caretOffset);
 
-  // Get content from editor
-  const markdownContent = editorModule.getContent();
-  previewModule.setMarkdownContent(markdownContent, lastEditorAnchor);
-
-  // Hide editor, show preview
+  previewModule.setMarkdownContent(contentWithAnchor);
   editorModule.hide();
-  previewModule.show(true); // Make editable
+  previewModule.show(true);
 
-  // Sync anchor position to preview and center view (to be implemented)
-  // previewModule.locateAnchor(lastEditorAnchor);
+  setTimeout(() => {
+    const anchorEl = previewModule.previewElement.querySelector('[data-anchor="1"]');
+    if (anchorEl) anchorEl.scrollIntoView({ block: 'center' });
+    stateManager.set("isModeSwitching", false);
+  }, 50);
 
   stateManager.set("isEditMode", false);
-  
-  // Clear mode switching flag after a brief delay
-  setTimeout(() => {
-    stateManager.set("isModeSwitching", false);
-  }, 100);
 }
+
+function editMode(): void {
+  stateManager.set("isModeSwitching", true);
+
+  // Get markdown with anchor
+  const markedText = previewModule.getMarkdownContent();
+  const { text: rawText, offset } = stripAnchorAndGetOffset(markedText);
+
+  editorModule.setContent(rawText);
+  previewModule.hide();
+  editorModule.show();
+  editorModule.editorElement.setSelectionRange(offset, offset);
+  editorModule.editorElement.focus();
+
+  stateManager.set("isEditMode", true);
+  setTimeout(() => stateManager.set("isModeSwitching", false), 100);
+}
+
 
 /**
  * Switch to edit mode

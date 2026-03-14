@@ -93,7 +93,7 @@ describe("PreviewModule", () => {
       const markdown = "# Test";
       previewModule.setMarkdownContent(markdown);
 
-      expect(mockMarkdownService.parse).toHaveBeenCalledWith(markdown);
+      expect(mockMarkdownService.parse).toHaveBeenCalledWith(markdown, undefined);
       expect(mockElement.innerHTML).toBe('<p>parsed html</p>');
     });
 

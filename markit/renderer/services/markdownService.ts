@@ -24,20 +24,14 @@ export class MarkdownService {
   /**
    * Parse markdown to HTML with optional anchor insertion
    */
-  parse(content: string, anchor?: { line: number; context: string }): string {
-    // 1. 解析成HTML
+  parse(content: string): string {
     let html = this.renderCache.get(content);
     if (!html) {
       html = this.markdownAPI.parseMarkdown(content);
       this.renderCache.set(content, html);
     }
-
-    if (!anchor) return html;
-
-    // 2. Use anchor util for data-anchor injection
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { injectAnchor } = require('../utils/anchor');
-    return injectAnchor(html, anchor);
+    html = html.replace("{{ANCHOR}}", '<span data-anchor="1"></span>');
+    return html;
   }
 
   /**
