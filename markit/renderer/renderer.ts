@@ -120,29 +120,63 @@ function currentContent(): string {
 
 /**
  * Switch to preview mode
+ * FIX: Sync cursor position from editor and center view
  */
 function previewMode(): void {
+  // Set mode switching flag to prevent input handler interference
+  stateManager.set("isModeSwitching", true);
+
+  // Save cursor position from editor before switching
+  const editorCursorOffset = editorModule.getCursorOffset();
+  
+  // Get content from editor
   const markdownContent = editorModule.getContent();
   previewModule.setMarkdownContent(markdownContent);
 
+  // Hide editor, show preview
   editorModule.hide();
   previewModule.show(true); // Make editable
 
+  // Sync cursor position to preview and center view
+  // Note: We use a simple character offset sync
+  previewModule.setCursorPosition(editorCursorOffset);
+
   stateManager.set("isEditMode", false);
+  
+  // Clear mode switching flag after a brief delay
+  setTimeout(() => {
+    stateManager.set("isModeSwitching", false);
+  }, 100);
 }
 
 /**
  * Switch to edit mode
+ * FIX: Sync cursor position from preview and center view
  */
 function editMode(): void {
+  // Set mode switching flag to prevent input handler interference
+  stateManager.set("isModeSwitching", true);
+
+  // Save cursor position from preview before switching
+  const previewCursorOffset = previewModule.getCursorOffset();
+  
   // Get plain text from preview (in case user edited it)
-  const plainText = $previewer.innerText || $previewer.textContent || "";
+  const plainText = previewModule.getMarkdownContent();
   editorModule.setContent(plainText);
 
+  // Hide preview, show editor
   previewModule.hide();
   editorModule.show();
 
+  // Sync cursor position to editor and center view
+  editorModule.setCursorPosition(previewCursorOffset);
+
   stateManager.set("isEditMode", true);
+  
+  // Clear mode switching flag after a brief delay
+  setTimeout(() => {
+    stateManager.set("isModeSwitching", false);
+  }, 100);
 }
 
 /**

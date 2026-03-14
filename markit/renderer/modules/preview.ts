@@ -1,6 +1,10 @@
 /**
  * Preview Module
  * Handles markdown preview functionality
+ * 
+ * FIX: Preview mode input stability - we now keep a shadow markdown source
+ * and only sync when necessary, avoiding constant re-rendering that corrupts
+ * the contentEditable state.
  */
 
 import { stateManager } from "../state.js";
@@ -11,6 +15,10 @@ export class PreviewModule {
   private previewElement: HTMLDivElement;
   private markdownService: MarkdownService;
   private updateTimeout: number | null = null;
+  // Shadow copy of the markdown source text for stable editing
+  private shadowMarkdown: string = "";
+  // Flag to prevent recursive updates
+  private isUpdating: boolean = false;
 
   constructor(
     previewElement: HTMLDivElement,
@@ -40,9 +48,13 @@ export class PreviewModule {
     });
 
     // Real-time markdown preview in editable preview mode
-    const debouncedUpdate = debounce(() => this.updateFromInput(), 300);
+    // FIX: Only sync when not in mode switching to prevent corruption
+    const debouncedSync = debounce(() => this.syncFromPreview(), 500);
     this.previewElement.addEventListener("input", () => {
-      debouncedUpdate();
+      // Don't sync during mode switching or when updating internally
+      if (!stateManager.get("isModeSwitching") && !this.isUpdating) {
+        debouncedSync();
+      }
     });
   }
 
@@ -61,67 +73,86 @@ export class PreviewModule {
         ? this.markdownService.htmlToMarkdown(htmlData)
         : plainText;
 
-      // Append to preview content
-      const currentText = this.previewElement.innerText || "";
-      this.setMarkdownContent(currentText + "\n\n" + markdown);
-
-      // Scroll to bottom
-      setTimeout(() => {
-        this.previewElement.scrollTop = this.previewElement.scrollHeight;
-      }, 0);
+      // Insert at cursor position in contentEditable
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(document.createTextNode(markdown));
+        range.collapse(false);
+      } else {
+        // Fallback: append to end
+        this.shadowMarkdown += "\n\n" + markdown;
+        this.previewElement.innerText = this.shadowMarkdown;
+      }
     }
   }
 
   private handleEnter(event: KeyboardEvent): void {
     if (!stateManager.get("isEditMode")) {
-      event.preventDefault();
-
-      const selection = window.getSelection();
-      if (!selection) return;
-
-      const range = selection.getRangeAt(0);
-      const br = document.createTextNode("\n");
-      range.deleteContents();
-      range.insertNode(br);
-
-      // Move cursor after the line break
-      range.setStartAfter(br);
-      range.collapse(true);
-      selection.removeAllRanges();
-      selection.addRange(range);
-
-      // Trigger input event for update
-      this.previewElement.dispatchEvent(new Event("input"));
+      // Let the default Enter behavior work naturally in contentEditable
+      // The input event listener will handle syncing
     }
   }
 
-  private updateFromInput(): void {
+  /**
+   * Sync preview content back to shadow markdown
+   * FIX: This is now debounced and only called when not switching modes
+   */
+  private syncFromPreview(): void {
+    if (this.isUpdating) return;
+    
     // Get plain text content from previewer
-    const plainText =
-      this.previewElement.innerText || this.previewElement.textContent || "";
+    const plainText = this.previewElement.innerText || "";
+    this.shadowMarkdown = plainText;
+  }
 
-    // Parse and update HTML
-    const htmlContent = this.markdownService.parse(plainText);
+  /**
+   * Convert character offset to line/column position
+   */
+  private offsetToLineColumn(text: string, offset: number): { line: number; column: number } {
+    const lines = text.substring(0, offset).split("\n");
+    return {
+      line: lines.length - 1,
+      column: lines[lines.length - 1].length,
+    };
+  }
 
-    // Only update if content actually changed
-    if (this.previewElement.innerHTML !== htmlContent) {
-      // Save cursor position
-      const selection = window.getSelection();
-      const range =
-        selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-      const cursorOffset = range
-        ? this.getTextOffset(
-            this.previewElement,
-            range.startContainer,
-            range.startOffset,
-          )
-        : 0;
-
-      this.previewElement.innerHTML = htmlContent;
-
-      // Try to restore cursor position
-      this.restoreCursorPosition(cursorOffset);
+  /**
+   * Convert line/column position to character offset
+   */
+  private lineColumnToOffset(text: string, line: number, column: number): number {
+    const lines = text.split("\n");
+    let offset = 0;
+    for (let i = 0; i < line && i < lines.length; i++) {
+      offset += lines[i].length + 1; // +1 for newline
     }
+    return offset + Math.min(column, lines[line]?.length || 0);
+  }
+
+  /**
+   * Save cursor position as line/column in state
+   */
+  saveCursorPosition(): void {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const cursorOffset = this.getTextOffset(
+      this.previewElement,
+      range.startContainer,
+      range.startOffset,
+    );
+
+    const text = this.shadowMarkdown || this.previewElement.innerText || "";
+    const pos = this.offsetToLineColumn(text, cursorOffset);
+    
+    stateManager.setState({
+      previewCursorOffset: cursorOffset,
+    });
+    
+    // Also save line/column for editor sync
+    stateManager.set("previewCursorOffset", cursorOffset);
   }
 
   private getTextOffset(
@@ -192,18 +223,53 @@ export class PreviewModule {
   }
 
   /**
-   * Set markdown content and render to HTML
+   * Scroll to center the cursor in viewport
    */
-  setMarkdownContent(markdown: string): void {
-    const html = this.markdownService.parse(markdown);
-    this.previewElement.innerHTML = html;
+  centerCursorInView(): void {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const containerRect = this.previewElement.getBoundingClientRect();
+
+    // Calculate the scroll position to center the cursor
+    const cursorCenter = rect.top + rect.height / 2 - containerRect.top;
+    const containerHeight = this.previewElement.clientHeight;
+    const currentScroll = this.previewElement.scrollTop;
+
+    // Scroll to center the cursor
+    const targetScroll = currentScroll + cursorCenter - containerHeight / 2;
+    this.previewElement.scrollTop = Math.max(0, targetScroll);
   }
 
   /**
-   * Get HTML content
+   * Set markdown content and render to HTML
+   * FIX: Also update shadow markdown for stable editing
+   */
+  setMarkdownContent(markdown: string): void {
+    this.shadowMarkdown = markdown;
+    this.isUpdating = true;
+    
+    // In editable preview mode, we show plain text, not rendered HTML
+    // This prevents style corruption during input
+    this.previewElement.innerText = markdown;
+    
+    this.isUpdating = false;
+  }
+
+  /**
+   * Get HTML content (rendered)
    */
   getHtmlContent(): string {
     return this.previewElement.innerHTML;
+  }
+
+  /**
+   * Get plain text content (markdown source)
+   */
+  getMarkdownContent(): string {
+    return this.shadowMarkdown || this.previewElement.innerText || "";
   }
 
   /**
@@ -219,6 +285,13 @@ export class PreviewModule {
 
     if (makeEditable) {
       this.previewElement.focus();
+      
+      // Restore cursor position from state
+      const cursorOffset = state.previewCursorOffset;
+      if (cursorOffset > 0) {
+        this.restoreCursorPosition(cursorOffset);
+        this.centerCursorInView();
+      }
     }
   }
 
@@ -228,6 +301,9 @@ export class PreviewModule {
   hide(): void {
     // Save scroll position
     stateManager.set("previewScrollTop", this.previewElement.scrollTop);
+
+    // Save cursor position before hiding
+    this.saveCursorPosition();
 
     this.previewElement.style.display = "none";
     this.previewElement.contentEditable = "false";
@@ -252,5 +328,28 @@ export class PreviewModule {
    */
   focus(): void {
     this.previewElement.focus();
+  }
+
+  /**
+   * Set cursor position from offset
+   */
+  setCursorPosition(offset: number): void {
+    this.restoreCursorPosition(offset);
+    this.centerCursorInView();
+  }
+
+  /**
+   * Get current cursor offset
+   */
+  getCursorOffset(): number {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return 0;
+
+    const range = selection.getRangeAt(0);
+    return this.getTextOffset(
+      this.previewElement,
+      range.startContainer,
+      range.startOffset,
+    );
   }
 }
