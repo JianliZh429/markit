@@ -138,7 +138,7 @@ function previewMode(): void {
   previewModule.show(true);
 
   setTimeout(() => {
-    const anchorEl = previewModule.previewElement.querySelector('[data-anchor="1"]');
+    const anchorEl = previewModule.getPreviewElement().querySelector('[data-anchor="1"]');
     if (anchorEl) anchorEl.scrollIntoView({ block: 'center' });
     stateManager.set("isModeSwitching", false);
   }, 50);

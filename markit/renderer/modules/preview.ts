@@ -29,6 +29,13 @@ export class PreviewModule {
     this.setupEventListeners();
   }
 
+  /** 
+   * Public getter for preview element (for external scroll-to-anchor calls) 
+   */
+  public getPreviewElement(): HTMLDivElement {
+    return this.previewElement;
+  }
+
   private setupEventListeners(): void {
     // Save scroll position
     this.previewElement.addEventListener("scroll", () => {
