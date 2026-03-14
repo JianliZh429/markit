@@ -130,7 +130,7 @@ function previewMode(): void {
 
   // Get content and current caret
   const content = editorModule.getContent();
-  const caretOffset = editorModule.editorElement.selectionStart;
+  const caretOffset = editorModule.getCaretOffset();
   const contentWithAnchor = insertAnchorAtCaret(content, caretOffset);
 
   previewModule.setMarkdownContent(contentWithAnchor);
@@ -156,40 +156,12 @@ function editMode(): void {
   editorModule.setContent(rawText);
   previewModule.hide();
   editorModule.show();
-  editorModule.editorElement.setSelectionRange(offset, offset);
-  editorModule.editorElement.focus();
+  editorModule.setCaretOffset(offset);
 
   stateManager.set("isEditMode", true);
   setTimeout(() => stateManager.set("isModeSwitching", false), 100);
 }
 
-
-/**
- * Switch to edit mode
- * FIX: Sync cursor position from preview and center view
- */
-function editMode(): void {
-  stateManager.set("isModeSwitching", true);
-
-  // Get plain text from preview (in case user edited it)
-  const plainText = previewModule.getMarkdownContent();
-  editorModule.setContent(plainText);
-
-  // Hide preview, show editor
-  previewModule.hide();
-  editorModule.show();
-
-  // Restore caret to last anchor if exists
-  if (lastEditorAnchor) {
-    editorModule.restoreAnchor(lastEditorAnchor);
-  }
-
-  stateManager.set("isEditMode", true);
-
-  setTimeout(() => {
-    stateManager.set("isModeSwitching", false);
-  }, 100);
-}
 
 /**
  * Hide local search panel

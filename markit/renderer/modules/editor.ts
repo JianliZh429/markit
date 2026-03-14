@@ -119,6 +119,21 @@ export class EditorModule {
   }
 
   /**
+   * Get current caret (selectionStart) position
+   */
+  public getCaretOffset(): number {
+    return this.editorElement.selectionStart;
+  }
+
+  /**
+   * Restore caret (selection)
+   */
+  public setCaretOffset(offset: number): void {
+    this.editorElement.setSelectionRange(offset, offset);
+    this.editorElement.focus();
+  }
+
+  /**
    * Focus editor
    */
   focus(): void {
