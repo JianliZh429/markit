@@ -141,3 +141,27 @@
   - Estimate: 2-3h
   - Prerequisites: None
   - Deliverables: README updated
+
+
+## Executable Tasks Backlog
+
+- Harden base-dir path checks
+  - Description: Update path safety logic to allow exact base directory but reject parents ("..") or absolute paths. Add tests.
+  - Owner: AI Assistant
+  - Priority: High
+  - Status: To Do
+  - Estimate: 6-10h
+  - Prerequisites: None
+  - Deliverables: Updated security.ts, unit tests, README notes
+
+
+## Executable Tasks Backlog
+
+- Harden base-dir path checks
+  - Description: Update path safety logic to allow exact base directory but reject parents ("..") or absolute paths. Add tests.
+  - Owner: AI Assistant
+  - Priority: High
+  - Status: To Do
+  - Estimate: 6-10h
+  - Prerequisites: None
+  - Deliverables: Updated security.ts, unit tests, README notes
