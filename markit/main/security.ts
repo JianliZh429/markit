@@ -1,4 +1,6 @@
 import * as path from "path";
+import { realpathSync } from "fs";
+
 import { app, dialog } from "electron";
 import * as os from "os";
 
@@ -48,14 +50,12 @@ function getSafeBasePaths(): string[] {
  */
 export function isPathSafe(filePath: string): boolean {
   try {
-    // Resolve to absolute path to handle relative paths and symlinks
-    const resolvedPath = path.resolve(filePath);
+    // Resolve to absolute path and resolve symlinks
+    const resolvedPath = realpathSync(path.resolve(filePath)); // Modified to use realpathSync
 
     // Check if path is within any safe base directory
     const safePaths = getSafeBasePaths();
     // Path is safe if it stays within a safe base directory.
-    // `path.relative` returns an empty string when the resolved path equals the base,
-    // so we must treat that case as safe as well.
     const isSafe = safePaths.some((basePath) => {
       const relativePath = path.relative(basePath, resolvedPath);
       // If the path is inside the base, it will NOT start with ".." and will be
@@ -68,6 +68,8 @@ export function isPathSafe(filePath: string): boolean {
 
     return isSafe;
   } catch (error) {
+    // Handle potential errors from realpathSync (e.g., path not found)
+    console.error(`Error resolving path ${filePath}:`, error);
     return false;
   }
 }
