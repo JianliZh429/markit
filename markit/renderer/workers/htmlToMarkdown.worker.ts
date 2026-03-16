@@ -3,6 +3,8 @@
  * Offloads heavy DOM processing from main thread
  */
 
+import DOMPurify from "dompurify";
+
 // Reuse the processing logic from markdownService
 interface ProcessNodeResult {
   markdown: string;
@@ -160,8 +162,11 @@ self.onmessage = function (e: MessageEvent) {
   const { html, id } = e.data;
 
   try {
+    // Sanitize HTML before processing
+    const sanitizedHtml = DOMPurify.sanitize(html);
+    
     const temp = document.createElement("div");
-    temp.innerHTML = html;
+    temp.innerHTML = sanitizedHtml;
     const markdown = processNode(temp);
 
     self.postMessage({ markdown, id });

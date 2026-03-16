@@ -177,6 +177,32 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Detailed system architecture and design patterns
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines and contribution process
 
+## Security Considerations
+
+Markit implements multiple layers of security to protect users from malicious content:
+
+### Content Sanitization
+- **DOMPurify Integration**: All HTML pasted into the editor is sanitized using [DOMPurify](https://github.com/cure53/DOMPurify) before conversion to Markdown
+- **XSS Prevention**: Script tags, event handlers, and dangerous protocols are automatically stripped
+- **Safe HTML Subset**: Only safe HTML elements and attributes are allowed during HTML-to-Markdown conversion
+
+### Electron Security
+- **Sandboxed Renderer**: The renderer process runs in a sandboxed environment with limited system access
+- **Context Isolation**: Preload script provides a secure bridge between renderer and main processes
+- **IPC Channel Whitelisting**: Only explicitly allowed IPC channels can be invoked from the renderer
+- **Path Validation**: All file system operations validate paths to prevent directory traversal attacks
+
+### Best Practices for Users
+1. **Keep Dependencies Updated**: Regularly run `npm audit` and update dependencies
+2. **Verify Pasted Content**: While HTML is sanitized, always review pasted content from untrusted sources
+3. **Use Official Builds**: Download Markit only from official releases or build from source
+4. **Report Security Issues**: Please report security vulnerabilities responsibly via GitHub Issues
+
+### Security Audit
+- Run `npm audit` to check for known vulnerabilities in dependencies
+- CI pipeline includes automated security auditing on every push
+- Dependency tree verification is performed in CI/CD
+
 ## Keyboard Shortcuts
 
 ### File Operations
