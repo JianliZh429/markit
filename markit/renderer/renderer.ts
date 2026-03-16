@@ -76,11 +76,9 @@ const $globalSearchResult = document.getElementById(
 const editorModule = new EditorModule($editor, markdownService);
 const previewModule = new PreviewModule($previewer, markdownService);
 
-// Initialize autosave module
+// Initialize autosave module - always uses editor content
 const autosaveModule = new AutosaveModule(
-  () => stateManager.get("isEditMode")
-    ? editorModule.getContent()
-    : previewModule.getMarkdownContent(),
+  () => editorModule.getContent(),
   document.getElementById("autosave-status") || undefined
 );
 
@@ -122,7 +120,8 @@ function currentContent(): string {
 
 /**
  * Switch to preview mode
- * FIX: Sync cursor position from editor and center view
+ * Preview mode is READ-ONLY for viewing rendered markdown
+ * All editing must be done in editor mode
  */
 function previewMode(): void {
   // Set mode switching flag to prevent input handler interference
@@ -130,21 +129,21 @@ function previewMode(): void {
 
   // Save cursor position from editor before switching
   const editorCursorOffset = editorModule.getCursorOffset();
-  
+
   // Get content from editor
   const markdownContent = editorModule.getContent();
   previewModule.setMarkdownContent(markdownContent);
 
-  // Hide editor, show preview
+  // Hide editor, show preview (READ-ONLY)
   editorModule.hide();
-  previewModule.show(true); // Make editable
+  previewModule.show(false); // Read-only mode
 
   // Sync cursor position to preview and center view
   // Note: We use a simple character offset sync
   previewModule.setCursorPosition(editorCursorOffset);
 
   stateManager.set("isEditMode", false);
-  
+
   // Clear mode switching flag after a brief delay
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
@@ -161,9 +160,9 @@ function editMode(): void {
 
   // Save cursor position from preview before switching
   const previewCursorOffset = previewModule.getCursorOffset();
-  
-  // Get plain text from preview (in case user edited it)
-  const plainText = previewModule.getMarkdownContent();
+
+  // Get content from editor (preview is read-only, no changes)
+  const plainText = editorModule.getContent();
   editorModule.setContent(plainText);
 
   // Hide preview, show editor
@@ -174,7 +173,7 @@ function editMode(): void {
   editorModule.setCursorPosition(previewCursorOffset);
 
   stateManager.set("isEditMode", true);
-  
+
   // Clear mode switching flag after a brief delay
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
@@ -297,13 +296,13 @@ $globalSearchInput.addEventListener("keydown", async (event) => {
 });
 
 // IPC Event Handlers
-ipcOn("toggle-mode", () => {
+ipcOn("toggle-mode", async () => {
   const isEditMode = stateManager.get("isEditMode");
   stateManager.set("isEditMode", !isEditMode);
   $localSearch.style.display = "none";
 
   if (stateManager.get("isEditMode")) {
-    editMode();
+    await editMode();
   } else {
     previewMode();
   }
@@ -345,11 +344,7 @@ ipcOn("save-opened-file", async () => {
     return;
   }
 
-  // Get content from current mode (editor or preview)
-  const content = stateManager.get("isEditMode")
-    ? editorModule.getContent()
-    : previewModule.getMarkdownContent();
-    
+  const content = editorModule.getContent();
   try {
     await fileService.saveFile(openedFilePath, content);
     console.log(`File ${openedFilePath} saved successfully`);

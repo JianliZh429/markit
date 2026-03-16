@@ -97,7 +97,7 @@ export class PreviewModule {
 
   /**
    * Sync preview content back to shadow markdown
-   * FIX: This is now debounced and only called when not switching modes
+   * Note: Preview is read-only, this is kept for compatibility
    */
   private syncFromPreview(): void {
     if (this.isUpdating) return;
@@ -105,7 +105,6 @@ export class PreviewModule {
     // Get plain text content from previewer
     const plainText = this.previewElement.innerText || "";
     this.shadowMarkdown = plainText;
-    this.markdownContent = plainText;
   }
 
   /**
@@ -207,7 +206,7 @@ export class PreviewModule {
     this.markdownContent = markdown;
   }
   /**
-   * Get plain text content (markdown source)
+   * Get plain text content (for fallback)
    */
   getMarkdownContent(): string {
     return this.markdownContent || this.previewElement.innerText || "";
