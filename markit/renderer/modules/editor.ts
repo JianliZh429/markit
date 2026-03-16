@@ -38,7 +38,7 @@ export class EditorModule {
     });
   }
 
-  private handlePaste(event: ClipboardEvent): void {
+  private async handlePaste(event: ClipboardEvent): Promise<void> {
     const clipboardData = event.clipboardData;
     if (!clipboardData) return;
 
@@ -48,8 +48,8 @@ export class EditorModule {
     if (htmlData) {
       event.preventDefault();
 
-      // Convert HTML to Markdown
-      const markdown = this.markdownService.htmlToMarkdown(htmlData);
+      // Convert HTML to Markdown (async for large content)
+      const markdown = await this.markdownService.htmlToMarkdown(htmlData);
 
       // Insert at cursor position
       const start = this.editorElement.selectionStart;
