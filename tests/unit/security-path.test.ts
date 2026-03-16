@@ -1,4 +1,4 @@
-import { isPathSafe, validatePath, isMarkdownFile } from "../markit/main/security";
+import { isPathSafe, validatePath, isMarkdownFile } from "../../markit/main/security";
 
 describe("path safety tests", () => {
   test("path inside safe dir (current working dir)", () => {

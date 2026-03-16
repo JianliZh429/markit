@@ -1,4 +1,4 @@
-import { isMarkdownFile } from "../markit/main/security";
+import { isMarkdownFile } from "../../markit/main/security";
 
 describe("markdown extension tests", () => {
   test("accepts .md and .markdown", () => {

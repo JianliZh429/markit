@@ -14,10 +14,14 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "sourceMap": true,
-    "inlineSources": true
+    "inlineSources": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
-  "include": ["markit/main/**/*"],
+  "include": ["markit/main/**/*", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist", "build"]
 }
