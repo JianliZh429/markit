@@ -68,7 +68,7 @@ describe("PreviewModule", () => {
       isModeSwitching: false,
     } as any);
 
-    jest.spyOn(stateManager, 'set');
+    jest.spyOn(stateManager, 'set').mockImplementation(() => {});
     jest.spyOn(stateManager, 'setState');
 
     previewModule = new PreviewModule(mockElement, mockMarkdownService);
@@ -144,7 +144,12 @@ describe("PreviewModule", () => {
     });
 
     it("should restore scroll position", () => {
-      (stateManager.getState as jest.Mock).mockReturnValue({ previewScrollTop: 100 });
+      // Reset mock to return our custom state
+      jest.spyOn(stateManager, 'getState').mockImplementation(() => ({
+        previewScrollTop: 100,
+        previewCursorOffset: 0,
+        isModeSwitching: false,
+      } as any));
 
       previewModule.show();
 
