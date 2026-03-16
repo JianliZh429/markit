@@ -1,15 +1,15 @@
 {
   "name": "markit",
   "productName": "Markit",
-  "version": "0.0.2",
-  "main": "./dist/main/app.js",
+  "version": "0.0.3",
+  "main": "./dist/markit/main/app.js",
   "scripts": {
     "build": "npm run build:main && npm run build:renderer && npm run build:worker && npm run copy:assets",
     "build:dev": "npm run build:main:dev && npm run build:renderer:dev && npm run build:worker && npm run copy:assets",
     "build:prod": "npm run build:main:prod && npm run build:renderer:prod && npm run build:worker && npm run copy:assets",
     "build:main": "tsc",
     "build:main:dev": "tsc --sourceMap --inlineSources",
-    "build:main:prod": "tsc --sourceMap false --inlineSources false --removeComments true",
+    "build:main:prod": "tsc --sourceMap false --inlineSources false --removeComments true --inlineSourceMap false",
     "build:renderer": "esbuild markit/renderer/renderer.ts --bundle --outfile=dist/markit/renderer/renderer.js --platform=browser --target=es2020 --format=iife --external:electron",
     "build:renderer:dev": "esbuild markit/renderer/renderer.ts --bundle --outfile=dist/markit/renderer/renderer.js --platform=browser --target=es2020 --format=iife --sourcemap=inline --external:electron",
     "build:renderer:prod": "esbuild markit/renderer/renderer.ts --bundle --outfile=dist/markit/renderer/renderer.js --platform=browser --target=es2020 --format=iife --minify --external:electron",
