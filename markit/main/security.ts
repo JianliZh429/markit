@@ -1,4 +1,5 @@
 import * as path from "path";
+import * as fs from "fs";
 
 import { app, dialog } from "electron";
 import * as os from "os";
@@ -39,6 +40,21 @@ function getSafeBasePaths(): string[] {
       const homeDir = os.homedir();
       SAFE_BASE_PATHS = [homeDir];
     }
+
+    // Add resolved realpath versions of safe base paths to handle symlinks
+    // (e.g., /var -> /private/var on macOS)
+    const resolvedPaths: string[] = [];
+    for (const basePath of SAFE_BASE_PATHS) {
+      try {
+        const resolved = fs.realpathSync(basePath);
+        if (resolved !== basePath) {
+          resolvedPaths.push(resolved);
+        }
+      } catch (e) {
+        // Ignore if realpath fails
+      }
+    }
+    SAFE_BASE_PATHS = [...SAFE_BASE_PATHS, ...resolvedPaths];
   }
   return SAFE_BASE_PATHS;
 }
@@ -46,11 +62,25 @@ function getSafeBasePaths(): string[] {
 /**
  * Validates if a path is safe to access
  * Prevents directory traversal attacks and restricts to safe directories
+ * 
+ * @param filePath - The path to validate
+ * @param resolveSymlinks - Whether to resolve symlinks (default: false for performance)
  */
-export function isPathSafe(filePath: string): boolean {
+export function isPathSafe(filePath: string, resolveSymlinks: boolean = false): boolean {
   try {
-    // Resolve to absolute path (without resolving symlinks to avoid ENOENT errors)
-    const absolutePath = path.resolve(filePath);
+    // Resolve to absolute path
+    let absolutePath = path.resolve(filePath);
+
+    // Optionally resolve symlinks to their real paths
+    if (resolveSymlinks) {
+      try {
+        absolutePath = fs.realpathSync(absolutePath);
+      } catch (e) {
+        // If realpath fails (e.g., file doesn't exist), fall back to the resolved path
+        // This allows validation of non-existent files
+        absolutePath = path.resolve(filePath);
+      }
+    }
 
     // Check if path is within any safe base directory
     const safePaths = getSafeBasePaths();
@@ -66,16 +96,18 @@ export function isPathSafe(filePath: string): boolean {
 
     return isSafe;
   } catch (error) {
-    // Handle potential errors from path operations
+    // Handle potential errors from path operations or symlink resolution
     return false;
   }
 }
 
 /**
  * Validates and sanitizes a file path
+ * @param filePath - The path to validate
+ * @param resolveSymlinks - Whether to resolve symlinks (default: false)
  * @throws Error if path is unsafe
  */
-export function validatePath(filePath: string): string {
+export function validatePath(filePath: string, resolveSymlinks: boolean = false): string {
   if (!filePath || typeof filePath !== "string") {
     throw new Error("Invalid file path: Path must be a non-empty string");
   }
@@ -83,13 +115,26 @@ export function validatePath(filePath: string): string {
   // Remove any null bytes
   const sanitized = filePath.replace(/\0/g, "");
 
-  if (!isPathSafe(sanitized)) {
+  // Resolve symlinks if requested
+  let validatedPath = sanitized;
+  if (resolveSymlinks) {
+    try {
+      validatedPath = fs.realpathSync(path.resolve(sanitized));
+    } catch (error) {
+      // If realpath fails (e.g., file doesn't exist), fall back to resolved path
+      validatedPath = path.resolve(sanitized);
+    }
+  } else {
+    validatedPath = path.resolve(sanitized);
+  }
+
+  if (!isPathSafe(validatedPath, resolveSymlinks)) {
     throw new Error(
-      `Access denied: Path is outside allowed directories: ${sanitized}`,
+      `Access denied: Path is outside allowed directories: ${validatedPath}`,
     );
   }
 
-  return sanitized;
+  return validatedPath;
 }
 
 /**
@@ -114,11 +159,13 @@ export function validateMarkdownExtension(filePath: string): string {
 /**
  * Validates and sanitizes a markdown file path
  * Combines path safety and markdown extension checks
+ * @param filePath - The path to validate
+ * @param resolveSymlinks - Whether to resolve symlinks (default: false)
  * @throws Error if path is unsafe or not a markdown file
  */
-export function validateMarkdownPath(filePath: string): string {
-  // First validate path safety
-  const safePath = validatePath(filePath);
+export function validateMarkdownPath(filePath: string, resolveSymlinks: boolean = false): string {
+  // First validate path safety (with optional symlink resolution)
+  const safePath = validatePath(filePath, resolveSymlinks);
   // Then validate markdown extension
   return validateMarkdownExtension(safePath);
 }

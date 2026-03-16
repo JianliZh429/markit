@@ -57,7 +57,7 @@
   - Description: After sanitising the path, ensure extension is .md or .markdown; reject others with a clear error.
   - Owner: AI Assistant
   - Priority: High
-  - Status: To Do
+  - Status: Completed ✅
   - Estimate: 4-6h
   - Prerequisites: None
   - Deliverables: Updated validator, tests, error messages
@@ -66,7 +66,7 @@
   - Description: Use realpath to resolve symlinks before base-dir comparison; add tests for edge cases.
   - Owner: AI Assistant
   - Priority: Medium
-  - Status: To Do
+  - Status: Completed ✅
   - Estimate: 6h
   - Prerequisites: None
   - Deliverables: Realpath-based checks, tests

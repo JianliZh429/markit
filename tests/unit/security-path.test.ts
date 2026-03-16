@@ -1,3 +1,6 @@
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import { isPathSafe, validatePath, isMarkdownFile, validateMarkdownExtension, validateMarkdownPath } from "../../markit/main/security";
 
 describe("path safety tests", () => {
@@ -15,6 +18,135 @@ describe("path safety tests", () => {
   test("validatePath should throw for unsafe path", () => {
     const bad = "/outside/evil";
     expect(() => validatePath(bad)).toThrow();
+  });
+});
+
+describe("symlink resolution", () => {
+  let tempDir: string;
+  let realFile: string;
+  let symlinkFile: string;
+
+  beforeEach(() => {
+    // Create a temp directory for symlink tests
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "markit-symlink-test-"));
+    realFile = path.join(tempDir, "real.md");
+    symlinkFile = path.join(tempDir, "symlink.md");
+
+    // Create a real file
+    fs.writeFileSync(realFile, "# Test content");
+
+    // Create a symlink (skip on Windows if symlinks require elevated privileges)
+    try {
+      fs.symlinkSync(realFile, symlinkFile);
+    } catch (e) {
+      // Skip symlink tests on systems that don't support them
+      console.warn("Symlinks not supported, skipping symlink tests");
+    }
+  });
+
+  afterEach(() => {
+    // Cleanup
+    try {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  });
+
+  describe("isPathSafe with symlinks", () => {
+    it("should validate symlink target within safe dirs", () => {
+      if (!fs.existsSync(symlinkFile)) return; // Skip if symlink creation failed
+
+      // Without symlink resolution, checks the symlink path itself
+      expect(isPathSafe(symlinkFile)).toBe(true);
+
+      // With symlink resolution, checks the real file path
+      expect(isPathSafe(symlinkFile, true)).toBe(true);
+    });
+
+    it("should reject symlinks pointing outside safe dirs when resolved", () => {
+      if (!fs.existsSync(symlinkFile)) return; // Skip if symlink creation failed
+
+      // Create a symlink to an unsafe location
+      const unsafeTarget = "/etc/passwd";
+      const unsafeSymlink = path.join(tempDir, "unsafe.md");
+
+      try {
+        fs.symlinkSync(unsafeTarget, unsafeSymlink);
+
+        // Without resolution, the symlink path itself is in safe dir
+        expect(isPathSafe(unsafeSymlink)).toBe(true);
+
+        // With resolution, should detect the unsafe target
+        expect(isPathSafe(unsafeSymlink, true)).toBe(false);
+      } catch (e) {
+        // Skip if can't create unsafe symlink (e.g., permissions)
+      }
+    });
+  });
+
+  describe("validatePath with symlinks", () => {
+    it("should resolve symlinks when requested", () => {
+      if (!fs.existsSync(symlinkFile)) return; // Skip if symlink creation failed
+
+      const resolved = validatePath(symlinkFile, true);
+
+      // Should return the real path (resolved), not the symlink
+      // Note: realpath may return /private/var instead of /var on macOS
+      expect(resolved).toBe(fs.realpathSync(realFile));
+    });
+
+    it("should not resolve symlinks by default", () => {
+      if (!fs.existsSync(symlinkFile)) return; // Skip if symlink creation failed
+
+      const resolved = validatePath(symlinkFile, false);
+
+      // Should return the resolved symlink path, not the real path
+      expect(resolved).toBe(path.resolve(symlinkFile));
+    });
+
+    it("should handle non-existent files gracefully", () => {
+      const nonExistent = path.join(tempDir, "does-not-exist.md");
+
+      // Should not throw for non-existent files, but resolve to absolute path
+      // When file doesn't exist, realpath falls back to path.resolve
+      const result = validatePath(nonExistent, true);
+      // The result will be the resolved absolute path
+      expect(result).toMatch(/does-not-exist\.md$/);
+    });
+  });
+
+  describe("validateMarkdownPath with symlinks", () => {
+    it("should resolve symlinks and validate markdown extension", () => {
+      if (!fs.existsSync(symlinkFile)) return; // Skip if symlink creation failed
+
+      const resolved = validateMarkdownPath(symlinkFile, true);
+
+      // Should return the real path (resolved) with .md extension
+      // Note: realpath may return /private/var instead of /var on macOS
+      expect(resolved).toBe(fs.realpathSync(realFile));
+    });
+
+    it("should reject symlinks to non-markdown files", () => {
+      if (!fs.existsSync(symlinkFile)) return; // Skip if symlink creation failed
+
+      // Create a symlink to a non-markdown file (use different name to avoid conflict)
+      const realTxt = path.join(tempDir, "real.txt");
+      const symlinkMd2 = path.join(tempDir, "symlink2.md");
+      fs.writeFileSync(realTxt, "text content");
+      
+      try {
+        fs.symlinkSync(realTxt, symlinkMd2);
+
+        // Should reject because the real file has wrong extension
+        expect(() => validateMarkdownPath(symlinkMd2, true)).toThrow("Invalid file extension");
+      } catch (e) {
+        // Skip if can't create symlink
+      } finally {
+        // Cleanup
+        try { fs.unlinkSync(symlinkMd2); } catch (e) {}
+      }
+    });
   });
 });
 

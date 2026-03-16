@@ -120,7 +120,7 @@ ipcMain.on(
   "save-file",
   async (_event: IpcMainEvent, filePath: string, content: string) => {
     try {
-      const validatedPath = validateMarkdownPath(filePath);
+      const validatedPath = validateMarkdownPath(filePath, true); // Resolve symlinks for security
       await fs.promises.writeFile(validatedPath, content);
     } catch (error: unknown) {
       const message =
@@ -231,7 +231,7 @@ ipcMain.on(
   "autosave-file",
   async (_event: IpcMainEvent, filePath: string, content: string) => {
     try {
-      const validatedPath = validateMarkdownPath(filePath);
+      const validatedPath = validateMarkdownPath(filePath, true); // Resolve symlinks for security
       await fs.promises.writeFile(validatedPath, content);
     } catch (error: unknown) {
       // Log errors in development mode only
