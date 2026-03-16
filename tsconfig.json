@@ -4,7 +4,7 @@
     "module": "commonjs",
     "lib": ["ES2020", "DOM"],
     "outDir": "./dist/main",
-    "rootDir": "./markit/main",
+    "rootDir": ".",
     "strict": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
