@@ -78,7 +78,9 @@ const previewModule = new PreviewModule($previewer, markdownService);
 
 // Initialize autosave module
 const autosaveModule = new AutosaveModule(
-  () => editorModule.getContent(),
+  () => stateManager.get("isEditMode")
+    ? editorModule.getContent()
+    : previewModule.getMarkdownContent(),
   document.getElementById("autosave-status") || undefined
 );
 
@@ -343,7 +345,11 @@ ipcOn("save-opened-file", async () => {
     return;
   }
 
-  const content = editorModule.getContent();
+  // Get content from current mode (editor or preview)
+  const content = stateManager.get("isEditMode")
+    ? editorModule.getContent()
+    : previewModule.getMarkdownContent();
+    
   try {
     await fileService.saveFile(openedFilePath, content);
     console.log(`File ${openedFilePath} saved successfully`);

@@ -101,10 +101,11 @@ export class PreviewModule {
    */
   private syncFromPreview(): void {
     if (this.isUpdating) return;
-    
+
     // Get plain text content from previewer
     const plainText = this.previewElement.innerText || "";
     this.shadowMarkdown = plainText;
+    this.markdownContent = plainText;
   }
 
   /**
