@@ -15,7 +15,7 @@ import * as shortcuts from "./shortcuts";
 import * as menu from "./menu";
 import * as recentFiles from "./recent-files";
 import { MenuItem, SearchResult, SearchMatch } from "../../types";
-import { showErrorDialog, validatePath } from "./security";
+import { showErrorDialog, validatePath, validateMarkdownPath } from "./security";
 
 let win: BrowserWindow | null = null;
 
@@ -99,6 +99,8 @@ ipcMain.on("open-folder-dialog", async (event: IpcMainEvent) => {
 });
 
 ipcMain.on("save-file-dialog", async (event: IpcMainEvent) => {
+  if (!win) return;
+
   try {
     const result = await dialog.showSaveDialog({
       defaultPath: "untitled.md",
@@ -118,7 +120,7 @@ ipcMain.on(
   "save-file",
   async (_event: IpcMainEvent, filePath: string, content: string) => {
     try {
-      const validatedPath = validatePath(filePath);
+      const validatedPath = validateMarkdownPath(filePath);
       await fs.promises.writeFile(validatedPath, content);
     } catch (error: unknown) {
       const message =
@@ -220,6 +222,24 @@ ipcMain.handle(
         console.error("Search failed:", message);
       }
       throw error;
+    }
+  },
+);
+
+// Handle autosave requests
+ipcMain.on(
+  "autosave-file",
+  async (_event: IpcMainEvent, filePath: string, content: string) => {
+    try {
+      const validatedPath = validateMarkdownPath(filePath);
+      await fs.promises.writeFile(validatedPath, content);
+    } catch (error: unknown) {
+      // Log errors in development mode only
+      if (process.env.NODE_ENV !== "production") {
+        const message =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        console.error("Autosave failed:", message);
+      }
     }
   },
 );

@@ -93,6 +93,37 @@ export function validatePath(filePath: string): string {
 }
 
 /**
+ * Validates that a file path has a markdown extension
+ * @throws Error if extension is not .md or .markdown
+ */
+export function validateMarkdownExtension(filePath: string): string {
+  if (!filePath || typeof filePath !== "string") {
+    throw new Error("Invalid file path: Path must be a non-empty string");
+  }
+
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext !== ".md" && ext !== ".markdown") {
+    throw new Error(
+      `Invalid file extension: Only .md and .markdown files are supported (got: ${ext || "no extension"})`,
+    );
+  }
+
+  return filePath;
+}
+
+/**
+ * Validates and sanitizes a markdown file path
+ * Combines path safety and markdown extension checks
+ * @throws Error if path is unsafe or not a markdown file
+ */
+export function validateMarkdownPath(filePath: string): string {
+  // First validate path safety
+  const safePath = validatePath(filePath);
+  // Then validate markdown extension
+  return validateMarkdownExtension(safePath);
+}
+
+/**
  * Validates that a path only contains markdown files
  */
 export function isMarkdownFile(filePath: string): boolean {
