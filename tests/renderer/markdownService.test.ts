@@ -22,9 +22,9 @@ describe("MarkdownService Async HTML to Markdown", () => {
   });
 
   describe("htmlToMarkdown", () => {
-    it("should use sync for small content (< 10KB)", () => {
+    it("should use sync for small content (< 10KB)", async () => {
       const smallHtml = "<p>small content</p>";
-      const result = service.htmlToMarkdown(smallHtml);
+      const result = await service.htmlToMarkdown(smallHtml);
       expect(result).toBe("small content\n\n");
     });
 

@@ -40,13 +40,13 @@ export class MarkdownService {
   /**
    * Initialize the worker lazily
    */
-  private getWorker(): Worker {
+  private getWorker(): Worker | null {
     if (!this.worker) {
       try {
-        // Use dynamic import for worker script
-        const workerScript = new URL("./workers/htmlToMarkdown.worker.ts", import.meta.url);
-        this.worker = new Worker(workerScript.href);
-        
+        // Create worker using blob URL from inline script for browser compatibility
+        const workerScriptPath = "./workers/htmlToMarkdown.worker.js";
+        this.worker = new Worker(workerScriptPath);
+
         this.worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
           const { markdown, error, id } = e.data;
           const pending = this.workerPromises.get(id);
@@ -68,7 +68,7 @@ export class MarkdownService {
           });
           this.workerPromises.clear();
         };
-        
+
         this.workerInitialized = true;
       } catch (error) {
         console.error("Failed to initialize worker:", error);
@@ -256,8 +256,9 @@ export class MarkdownService {
   /**
    * Convert HTML to Markdown (for paste operations)
    * Uses worker for large content, sync for small
+   * @returns Promise resolving to markdown string
    */
-  htmlToMarkdown(html: string): string {
+  async htmlToMarkdown(html: string): Promise<string> {
     // For small content, use sync conversion (faster, no overhead)
     if (html.length < WORKER_THRESHOLD) {
       const temp = document.createElement("div");
@@ -272,8 +273,10 @@ export class MarkdownService {
   /**
    * Async version using Web Worker for large content
    */
-  private htmlToMarkdownAsync(html: string): string {
-    if (!this.workerInitialized) {
+  private async htmlToMarkdownAsync(html: string): Promise<string> {
+    const worker = this.getWorker();
+    
+    if (!worker || !this.workerInitialized) {
       // Fallback to sync if worker failed to initialize
       const temp = document.createElement("div");
       temp.innerHTML = html;
@@ -282,7 +285,6 @@ export class MarkdownService {
 
     this.workerMessageId++;
     const id = this.workerMessageId;
-    const worker = this.getWorker();
 
     return new Promise((resolve, reject) => {
       // Set timeout for worker communication
@@ -308,7 +310,7 @@ export class MarkdownService {
         },
       });
 
-      worker?.postMessage({ html, id });
+      worker.postMessage({ html, id });
     });
   }
 

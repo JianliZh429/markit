@@ -58,7 +58,7 @@ export class PreviewModule {
     });
   }
 
-  private handlePaste(event: ClipboardEvent): void {
+  private async handlePaste(event: ClipboardEvent): Promise<void> {
     if (!stateManager.get("isEditMode")) {
       event.preventDefault();
 
@@ -68,9 +68,9 @@ export class PreviewModule {
       const htmlData = clipboardData.getData("text/html");
       const plainText = clipboardData.getData("text/plain");
 
-      // Convert HTML to Markdown or use plain text
+      // Convert HTML to Markdown or use plain text (async for large content)
       const markdown = htmlData
-        ? this.markdownService.htmlToMarkdown(htmlData)
+        ? await this.markdownService.htmlToMarkdown(htmlData)
         : plainText;
 
       // Insert at cursor position in contentEditable
