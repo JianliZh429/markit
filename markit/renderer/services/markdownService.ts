@@ -10,12 +10,72 @@ export interface MarkdownAPI {
   setMarkdownBaseUrl: (url: string) => void;
 }
 
+// Worker message types
+interface WorkerMessage {
+  html: string;
+  id: number;
+}
+
+interface WorkerResponse {
+  markdown?: string;
+  error?: string;
+  id: number;
+}
+
+// Threshold in bytes for when to use worker vs sync conversion
+export const WORKER_THRESHOLD = 10240; // 10KB
+
 export class MarkdownService {
   private renderCache: LRUCache<string, string>;
+  private worker: Worker | null = null;
+  private workerMessageId = 0;
+  private workerPromises: Map<number, { resolve: (value: string) => void; reject: (error: Error) => void }> = new Map();
+  private workerInitialized = false;
 
   constructor(private markdownAPI: MarkdownAPI) {
     // Cache up to 100 rendered markdown documents
     this.renderCache = new LRUCache<string, string>(100);
+  }
+
+  /**
+   * Initialize the worker lazily
+   */
+  private getWorker(): Worker {
+    if (!this.worker) {
+      try {
+        // Use dynamic import for worker script
+        const workerScript = new URL("./workers/htmlToMarkdown.worker.ts", import.meta.url);
+        this.worker = new Worker(workerScript.href);
+        
+        this.worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+          const { markdown, error, id } = e.data;
+          const pending = this.workerPromises.get(id);
+          if (pending) {
+            if (error) {
+              pending.reject(new Error(error));
+            } else {
+              pending.resolve(markdown!);
+            }
+            this.workerPromises.delete(id);
+          }
+        };
+
+        this.worker.onerror = (error) => {
+          console.error("Worker error:", error);
+          // Reject all pending promises
+          this.workerPromises.forEach((pending) => {
+            pending.reject(new Error("Worker error"));
+          });
+          this.workerPromises.clear();
+        };
+        
+        this.workerInitialized = true;
+      } catch (error) {
+        console.error("Failed to initialize worker:", error);
+        this.worker = null;
+      }
+    }
+    return this.worker;
   }
 
   /**
@@ -49,63 +109,57 @@ export class MarkdownService {
   }
 
   /**
-   * Convert HTML to Markdown (for paste operations)
+   * Sync version of htmlToMarkdown for small content
    */
-  htmlToMarkdown(html: string): string {
-    const temp = document.createElement("div");
-    temp.innerHTML = html;
-    return this.processNode(temp);
-  }
-
-  private processNode(node: Node): string {
+  private processNodeSync(node: Node): string {
     let markdown = "";
 
     for (const child of Array.from(node.childNodes)) {
       if (child.nodeType === Node.TEXT_NODE) {
-        markdown += child.textContent;
+        markdown += child.textContent || "";
       } else if (child.nodeType === Node.ELEMENT_NODE) {
         const element = child as HTMLElement;
         const tag = element.tagName.toLowerCase();
 
         switch (tag) {
           case "table":
-            markdown += this.convertTableToMarkdown(element);
+            markdown += this.convertTableToMarkdownSync(element);
             break;
           case "h1":
-            markdown += `# ${this.processNode(element)}\n\n`;
+            markdown += `# ${this.processNodeSync(element)}\n\n`;
             break;
           case "h2":
-            markdown += `## ${this.processNode(element)}\n\n`;
+            markdown += `## ${this.processNodeSync(element)}\n\n`;
             break;
           case "h3":
-            markdown += `### ${this.processNode(element)}\n\n`;
+            markdown += `### ${this.processNodeSync(element)}\n\n`;
             break;
           case "h4":
-            markdown += `#### ${this.processNode(element)}\n\n`;
+            markdown += `#### ${this.processNodeSync(element)}\n\n`;
             break;
           case "h5":
-            markdown += `##### ${this.processNode(element)}\n\n`;
+            markdown += `##### ${this.processNodeSync(element)}\n\n`;
             break;
           case "h6":
-            markdown += `###### ${this.processNode(element)}\n\n`;
+            markdown += `###### ${this.processNodeSync(element)}\n\n`;
             break;
           case "strong":
           case "b":
-            markdown += `**${this.processNode(element)}**`;
+            markdown += `**${this.processNodeSync(element)}**`;
             break;
           case "em":
           case "i":
-            markdown += `*${this.processNode(element)}*`;
+            markdown += `*${this.processNodeSync(element)}*`;
             break;
           case "code":
-            markdown += `\`${this.processNode(element)}\``;
+            markdown += `\`${this.processNodeSync(element)}\``;
             break;
           case "pre":
-            markdown += `\n\`\`\`\n${this.processNode(element)}\n\`\`\`\n\n`;
+            markdown += `\n\`\`\`\n${this.processNodeSync(element)}\n\`\`\`\n\n`;
             break;
           case "a":
             const href = element.getAttribute("href") || "";
-            markdown += `[${this.processNode(element)}](${href})`;
+            markdown += `[${this.processNodeSync(element)}](${href})`;
             break;
           case "img":
             const src = element.getAttribute("src") || "";
@@ -113,24 +167,24 @@ export class MarkdownService {
             markdown += `![${alt}](${src})`;
             break;
           case "ul":
-            markdown += `\n${this.processNode(element)}\n`;
+            markdown += `\n${this.processNodeSync(element)}\n`;
             break;
           case "ol":
-            markdown += `\n${this.processNode(element)}\n`;
+            markdown += `\n${this.processNodeSync(element)}\n`;
             break;
           case "li":
             const parentTag = element.parentElement?.tagName.toLowerCase();
             if (parentTag === "ol") {
-              markdown += `1. ${this.processNode(element)}\n`;
+              markdown += `1. ${this.processNodeSync(element)}\n`;
             } else {
-              markdown += `- ${this.processNode(element)}\n`;
+              markdown += `- ${this.processNodeSync(element)}\n`;
             }
             break;
           case "blockquote":
-            markdown += `> ${this.processNode(element).split("\n").join("\n> ")}\n\n`;
+            markdown += `> ${this.processNodeSync(element).split("\n").join("\n> ")}\n\n`;
             break;
           case "p":
-            markdown += `${this.processNode(element)}\n\n`;
+            markdown += `${this.processNodeSync(element)}\n\n`;
             break;
           case "br":
             markdown += "\n";
@@ -141,10 +195,10 @@ export class MarkdownService {
           case "del":
           case "s":
           case "strike":
-            markdown += `~~${this.processNode(element)}~~`;
+            markdown += `~~${this.processNodeSync(element)}~~`;
             break;
           default:
-            markdown += this.processNode(element);
+            markdown += this.processNodeSync(element);
         }
       }
     }
@@ -152,7 +206,7 @@ export class MarkdownService {
     return markdown;
   }
 
-  private convertTableToMarkdown(tableElement: HTMLElement): string {
+  private convertTableToMarkdownSync(tableElement: HTMLElement): string {
     const rows: string[][] = [];
     let maxColumns = 0;
 
@@ -163,7 +217,7 @@ export class MarkdownService {
       const cellElements = tr.querySelectorAll("th, td");
 
       cellElements.forEach((cell) => {
-        const content = this.processNode(cell).trim().replace(/\n/g, " ");
+        const content = this.processNodeSync(cell).trim().replace(/\n/g, " ");
         cells.push(content);
       });
 
@@ -180,17 +234,13 @@ export class MarkdownService {
 
     let markdown = "\n";
 
-    // Add header row
     const headerRow = rows[0];
     while (headerRow.length < maxColumns) {
       headerRow.push("");
     }
     markdown += "| " + headerRow.join(" | ") + " |\n";
-
-    // Add separator row
     markdown += "|" + " --- |".repeat(maxColumns) + "\n";
 
-    // Add data rows
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       while (row.length < maxColumns) {
@@ -201,5 +251,74 @@ export class MarkdownService {
 
     markdown += "\n";
     return markdown;
+  }
+
+  /**
+   * Convert HTML to Markdown (for paste operations)
+   * Uses worker for large content, sync for small
+   */
+  htmlToMarkdown(html: string): string {
+    // For small content, use sync conversion (faster, no overhead)
+    if (html.length < WORKER_THRESHOLD) {
+      const temp = document.createElement("div");
+      temp.innerHTML = html;
+      return this.processNodeSync(temp);
+    }
+
+    // For large content, use worker
+    return this.htmlToMarkdownAsync(html);
+  }
+
+  /**
+   * Async version using Web Worker for large content
+   */
+  private htmlToMarkdownAsync(html: string): string {
+    if (!this.workerInitialized) {
+      // Fallback to sync if worker failed to initialize
+      const temp = document.createElement("div");
+      temp.innerHTML = html;
+      return this.processNodeSync(temp);
+    }
+
+    this.workerMessageId++;
+    const id = this.workerMessageId;
+    const worker = this.getWorker();
+
+    return new Promise((resolve, reject) => {
+      // Set timeout for worker communication
+      const timeout = setTimeout(() => {
+        this.workerPromises.delete(id);
+        // Fallback to sync if worker times out
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+        resolve(this.processNodeSync(temp));
+      }, 5000); // 5 second timeout
+
+      this.workerPromises.set(id, {
+        resolve: (markdown) => {
+          clearTimeout(timeout);
+          resolve(markdown);
+        },
+        reject: (error) => {
+          clearTimeout(timeout);
+          // Fallback to sync on error
+          const temp = document.createElement("div");
+          temp.innerHTML = html;
+          resolve(this.processNodeSync(temp));
+        },
+      });
+
+      worker?.postMessage({ html, id });
+    });
+  }
+
+  /**
+   * Shutdown worker on service disposal
+   */
+  dispose(): void {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
   }
 }
