@@ -84,7 +84,6 @@ body {
     margin: 0;
     padding-left: var(--spacing-sm);  /* Move content slightly left */
     display: inline-block;  /* Allow width to expand with content */
-    min-width: 100%;  /* At least fill parent width */
 
     li {
       list-style: none;  /* Remove default list marker */
@@ -219,7 +218,6 @@ body {
 
 #editor {
   flex: 1;
-  width: 100%;
   padding: var(--spacing-lg);
   font-family: var(--font-mono);
   font-size: var(--font-size-base);
@@ -237,7 +235,6 @@ body {
 
 #previewer {
   flex: 1;
-  width: 100%;
   padding: var(--spacing-lg) var(--spacing-xl);
   overflow-y: auto;
   background-color: var(--bg-color);
@@ -260,6 +257,9 @@ body {
       height: auto;
       border-radius: var(--border-radius);
     }
+  }
+  h1:first-child {
+    margin-top: 0;
   }
 }
 
