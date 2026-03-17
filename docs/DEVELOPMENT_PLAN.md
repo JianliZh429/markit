@@ -97,8 +97,8 @@ Markit is a modern, cross-platform Markdown editor built with Electron and TypeS
 ### 🚧 In Progress (10%)
 
 #### Enhanced Search
-- [ ] Search in file, bind shortcut to move next and up matched text
-- [ ] Screen would scrolled to the matched text when the matched text is active
+- [x] Search in file, bind shortcut to move next and up matched text
+- [x] Screen would scrolled to the matched text when the matched text is active
 
 #### Recent files
 - [ ] Add shortcu `Ctrl/CMD + Tab` to switching the recent opened files recently
