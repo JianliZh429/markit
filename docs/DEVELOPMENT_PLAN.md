@@ -1,42 +1,282 @@
-# DEVELOPMENT_PLAN.md
+# Markit Development Plan
 
-## Current Focus
+**Last Updated:** March 17, 2026  
+**Current Version:** v0.0.4  
+**Status:** Active Development (~85% Complete)
 
-- **UI/UX Refinement:** Enhance user interface and experience based on feedback.
-- **Performance Optimization:** Improve application speed and resource usage.
-- **New Feature Integration:** Add support for real-time collaboration.
+---
 
-## Future Considerations
+## Executive Summary
 
-- **Cross-platform Compatibility:** Ensure seamless operation on Windows, macOS, and Linux.
-- **Mobile App Development:** Explore possibilities for a companion mobile application.
-- **AI Integration:** Investigate potential AI-driven features for enhanced user productivity.
+Markit is a modern, cross-platform Markdown editor built with Electron and TypeScript. The application provides a clean, distraction-free writing experience with powerful features for managing and editing Markdown files.
 
-## Milestones
+### Recent Achievements (v0.0.4)
 
-### Q1 2024 (Completed)
+✅ **UI/UX Enhancements**
+- Modern design system with CSS variables
+- Enhanced file explorer with horizontal scrolling
+- Folder content indicators (empty vs. has children)
+- Custom scrollbars and improved typography
+- Floating mode indicator with icons
 
-- Core feature development
-- Initial beta release
+✅ **Performance Improvements**
+- Async HTML to Markdown conversion with Web Workers
+- Content hash-based caching strategy
+- LRU caching for rendered markdown
 
-### Q2 2024 (In Progress)
+✅ **Security Enhancements**
+- DOMPurify integration for HTML sanitization
+- XSS prevention for pasted content
+- Path validation and sandboxed renderer
 
-- Bug fixing and stability improvements
+✅ **Platform Support**
+- Native Apple Silicon (arm64) support
+- Intel Mac (x64) support
+- Linux (x64) support
+- Automated CI/CD pipeline
+
+---
+
+## Feature Completion Status
+
+### ✅ Completed Features (85%)
+
+#### Core Editing
+- [x] Dual-mode editing (Editor ↔ Preview)
+- [x] Real-time markdown preview
+- [x] Smart paste with HTML-to-Markdown conversion
+- [x] State preservation (scroll, cursor position)
+- [x] Syntax highlighting for code blocks
+- [x] Markdown extensions (emoji, base URL, code preview)
+
+#### File Management
+- [x] File explorer with tree view
+- [x] Folder navigation with expand/collapse
+- [x] File operations (create, rename, delete)
+- [x] Recent files management
+- [x] Folder content indicators
+- [x] Horizontal scrolling for long filenames
+
+#### Search & Navigation
+- [x] Local search (within document)
+- [x] Global search (across all files)
+- [x] Fast file scanning (fast-glob)
+- [x] Search result highlighting
+- [x] Context-aware search results
+
+#### Performance & Optimization
+- [x] Web Workers for heavy HTML→Markdown conversion
+- [x] Content hash-based caching
+- [x] LRU cache for search results
+- [x] Debouncing and throttling
+- [x] Lazy loading for large content
+
+#### Security
+- [x] DOMPurify HTML sanitization
+- [x] Path traversal prevention
+- [x] IPC channel whitelisting
+- [x] Sandboxed renderer
+- [x] Content Security Policy (CSP)
+
+#### Developer Experience
+- [x] TypeScript migration (100%)
+- [x] Comprehensive test suite (139 tests)
+- [x] CI/CD pipeline with GitHub Actions
+- [x] ESLint and Prettier integration
+- [x] Automated packaging for all platforms
+
+#### Platform Support
+- [x] macOS (Intel x64)
+- [x] macOS (Apple Silicon arm64)
+- [x] Linux (x64)
+- [x] DMG installer for macOS
+- [x] DEB package for Linux
+
+---
+
+### 🚧 In Progress (10%)
+
+#### Enhanced Search
+- [ ] Search in file, bind shortcut to move next and up matched text
+- [ ] Screen would scrolled to the matched text when the matched text is active
+
+#### Recent files
+- [ ] Add shortcu `Ctrl/CMD + Tab` to switching the recent opened files recently
+- [ ] The recent files must be under the same folder of the root directory opened in the tree view 
+
+#### Enhanced Preview Mode
+- [ ] Live preview without mode switching
+   - Editable in preview mode, which is editing the text with Html styles
+   - Editing in Edit mode, which is editing the text Markdown syntax
+- [ ] Customizable preview themes
+
+#### Advanced Settings
+- [ ] Settings UI panel
+- [ ] Customizable keyboard shortcuts
+- [ ] Theme customization (dark mode)
+- [ ] Font family and size preferences
+- [ ] Autosave interval configuration
+
+#### Documentation
+- [ ] User manual
+- [ ] API documentation
+- [ ] Video tutorials
+- [ ] Migration guide from other editors
+
+---
+
+### 📋 Planned Features (5%)
+
+#### v0.1.0 - Productivity Features
+- [ ] Table of contents generation
+- [ ] Word count and reading time
+- [ ] Export to PDF/HTML
+- [ ] Print support
+- [ ] Multiple tabs for multiple files
+
+#### v0.2.0 - Advanced Editing
+- [ ] Markdown table editor
+- [ ] Image drag-and-drop
+- [ ] Image upload to cloud storage
+- [ ] Link checker
+- [ ] Spell checker integration
+
+#### v0.3.0 - Collaboration (Future)
+- [ ] Real-time collaboration (optional)
+- [ ] Document sharing
+- [ ] Comment and suggestion mode
+- [ ] Version history
+
+#### v0.4.0 - Extensions & Plugins
+- [ ] Plugin system
+- [ ] Custom markdown renderers
+- [ ] Integration with external tools
+- [ ] API for third-party extensions
+
+---
+
+## Technical Debt & Improvements
+
+### High Priority
+
+1. **Test Coverage**
+   - Current: ~40% overall
+   - Target: 80%+ coverage
+   - Focus areas: renderer.ts, editor.ts, autosave.ts
+
+2. **Dependency Updates**
+   - Electron: 38.x → Latest stable
+   - marked: 16.x → 17.x (breaking changes)
+   - esbuild: 0.25.x → 0.27.x
+
+3. **Performance**
+   - Virtual scrolling for large files (>10,000 lines)
+   - Lazy loading for preview images
+   - Optimized re-rendering in preview mode
+
+### Medium Priority
+
+1. **Code Quality**
+   - Add JSDoc comments to public APIs
+   - Implement error boundaries
+   - Add loading states for async operations
+
+2. **Accessibility**
+   - ARIA labels for UI elements
+   - Keyboard navigation improvements
+   - Screen reader support
+
+3. **Internationalization**
+   - i18n framework integration
+   - Multi-language support
+   - RTL text support
+
+---
+
+## Release Schedule
+
+### v0.0.4 (Current) - ✅ Released
 - UI/UX enhancements
-- Performance optimization
+- Apple Silicon support
+- Security improvements
+- Performance optimizations
 
-### Q3 2024 (Planned)
+### v0.1.0 (Q2 2026) - Planned
+- Productivity features
+- Enhanced settings UI
+- Export capabilities
+- Tab support
 
-- Real-time collaboration implementation
-- User feedback incorporation
+### v0.2.0 (Q3 2026) - Planned
+- Advanced editing features
+- Image management
+- Link checker
+- Spell checker
 
-### Q4 2024 (Planned)
+### v1.0.0 (Q4 2026) - Target
+- Feature complete
+- Stable release
+- Comprehensive documentation
+- Full test coverage
 
-- Cross-platform compatibility testing and release
-- Security audits
+---
 
-## Key Decisions
+## Key Metrics
 
-- **Tech Stack:** Electron with React for desktop application.
-- **Data Storage:** Local storage with optional cloud sync.
-- **Collaboration Model:** Centralized real-time sync server.
+### Current Status
+- **Version:** 0.0.4
+- **Test Coverage:** ~40%
+- **Test Count:** 139 passing tests
+- **TypeScript Coverage:** 100%
+- **Platforms:** macOS (x64/arm64), Linux (x64)
+
+### Performance Targets
+- **Startup Time:** < 2 seconds
+- **File Load:** < 500ms for 10KB files
+- **Preview Render:** < 100ms for typical documents
+- **Memory Usage:** < 200MB for typical usage
+
+### Quality Targets
+- **Test Coverage:** 80%+
+- **Lint Errors:** 0
+- **Build Warnings:** 0
+- **Critical Bugs:** 0
+
+---
+
+## Contribution Guidelines
+
+### Getting Started
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Ensure all tests pass
+5. Submit a pull request
+
+### Code Standards
+- TypeScript strict mode
+- ESLint rules enforced
+- Prettier formatting
+- Meaningful commit messages
+
+### Testing Requirements
+- Unit tests for new features
+- Integration tests for workflows
+- Manual testing on all platforms
+- Performance regression testing
+
+---
+
+## Contact & Support
+
+- **GitHub Issues:** [Report bugs or request features](https://github.com/JianliZh429/markit/issues)
+- **Discussions:** [Community discussions](https://github.com/JianliZh429/markit/discussions)
+- **Email:** [Project maintainer contact]
+
+---
+
+## License
+
+MIT License - See [LICENSE](LICENSE) file for details.
+
+**Markit** - A modern Markdown editor for focused writing.

@@ -12,11 +12,14 @@ A modern, cross-platform Markdown editor built with Electron and TypeScript. Mar
 - **Real-time preview**: Instant markdown rendering with syntax highlighting
 - **Smart paste**: Automatic HTML-to-Markdown conversion when pasting
 - **State preservation**: Maintains scroll position and cursor location across mode switches
+- **Mode indicator**: Floating badge showing current edit/preview mode
 
 ### File Management
 - **File explorer**: Built-in tree view with folder navigation
 - **Recent files**: Quick access to recently opened files and folders
 - **File operations**: Create, rename, delete files and directories
+- **Folder indicators**: Visual distinction between empty and populated folders
+- **Horizontal scrolling**: View complete long filenames
 - **Multi-format support**: Optimized for Markdown (.md) files
 
 ### Search & Navigation
@@ -29,8 +32,14 @@ A modern, cross-platform Markdown editor built with Electron and TypeScript. Mar
 - **Markdown extensions**: Support for emoji, code preview, and base URL handling
 - **Keyboard shortcuts**: Comprehensive shortcuts for efficient workflow
 - **Autosave**: Automatic saving with configurable intervals
-- **Performance optimization**: LRU caching for search results and markdown rendering
-- **Security**: Path validation, sandboxed renderer, and IPC channel whitelisting
+- **Performance optimization**: LRU caching, content hash-based caching, and Web Workers
+- **Security**: DOMPurify sanitization, path validation, sandboxed renderer, and IPC channel whitelisting
+
+### UI/UX
+- **Modern design system**: CSS variables for consistent theming
+- **Custom scrollbars**: Styled scrollbars for better aesthetics
+- **Improved typography**: System fonts for native feel
+- **Enhanced file explorer**: Better spacing, hover effects, and visual feedback
 
 ## Installation
 
@@ -82,8 +91,12 @@ npm start
 
 ### Packaging & Distribution
 - `npm run clean` - Clean build and dist directories
-- `npm run package` - Create platform-specific packages (macOS, Linux)
-- `npm run dmg` - Create macOS DMG installer with app icon
+- `npm run package` - Create platform-specific packages (macOS Intel, macOS Apple Silicon, Linux)
+- `npm run package:mac` - Build for macOS (both Intel and Apple Silicon)
+- `npm run package:mac-intel` - Build for Intel Macs (x64)
+- `npm run package:mac-apple` - Build for Apple Silicon (arm64)
+- `npm run package:linux` - Build for Linux (x64)
+- `npm run dmg` - Create macOS DMG installers (Intel + Apple Silicon)
 - `npm run deb` - Create Debian package for Linux distribution
 - `npm run installer` - Build complete installer suite for all platforms
 
@@ -144,24 +157,17 @@ markit/
 
 ## Development Status
 
-Markit is actively developed with ~70% completion of the planned features:
-
-- ✅ **Security & Architecture**: Complete with path validation and sandboxed renderer
-- ✅ **TypeScript Migration**: 85% complete (main process fully migrated, renderer in progress)
-- ✅ **Testing Infrastructure**: 90% complete with Jest, unit tests, and CI/CD pipeline
-- ✅ **Core Features**: 95% complete with dual-mode editing, search, and file management
-- ✅ **Performance Optimization**: LRU caching, debouncing, and efficient file scanning
-- 🚧 **Renderer Refactoring**: Modular architecture with editor, preview, and file tree modules
-- 🚧 **Advanced Features**: Web workers and virtual scrolling planned
+Markit is actively developed with ~85% completion. For detailed information about completed features, in-progress work, and future plans, see the [Development Plan](docs/DEVELOPMENT_PLAN.md).
 
 ### CI/CD Pipeline
 - **Multi-platform testing**: Ubuntu and macOS with Node.js 18.x and 20.x
 - **Automated builds**: TypeScript compilation and packaging verification
 - **Code quality**: ESLint, Prettier, and test coverage reporting
 - **Security audits**: Dependency vulnerability scanning
-- **Package verification**: Cross-platform installer testing
+- **Package verification**: Cross-platform installer testing (Intel + Apple Silicon)
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical architecture and system design.
+See [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the complete development roadmap and feature status.
 
 ## Contributing
 
@@ -176,6 +182,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Detailed system architecture and design patterns
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines and contribution process
+- [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) - Development roadmap and future features
 
 ## Security Considerations
 
@@ -238,6 +245,9 @@ Markit implements multiple layers of security to protect users from malicious co
 - **marked-code-preview** 1.3.7 - Enhanced code block rendering
 - **marked-base-url** 1.1.7 - Base URL resolution for relative links
 
+### Security
+- **DOMPurify** 3.3.3 - HTML sanitization for XSS prevention
+
 ### Development Tools
 - **Jest** 30.2.0 - Testing framework with TypeScript support
 - **ESLint** 9.37.0 - Code linting and style enforcement
@@ -264,5 +274,6 @@ Jianli Zhang
 
 ---
 
-**Version**: 0.0.2  
-**Status**: Active Development
+**Version**: 0.0.4  
+**Status**: Active Development  
+**Platforms**: macOS (Intel + Apple Silicon), Linux
