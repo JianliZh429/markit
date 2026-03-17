@@ -147,7 +147,14 @@ export class FileTreeModule {
       $li.classList.add("file");
       $li.addEventListener("dblclick", this.fileDblClickListener);
     } else {
+      // Check if folder has children and add appropriate class
+      const folderContents = this.fileService.listDirectory(filePath);
+      const hasChildren = folderContents.length > 0;
+      
       $li.classList.add("folder");
+      if (hasChildren) {
+        $li.classList.add("folder-has-children");
+      }
       $li.addEventListener("dblclick", this.folderDblClickListener);
     }
     return $li;
