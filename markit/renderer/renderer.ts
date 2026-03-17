@@ -8,6 +8,7 @@ import { FileService } from "./services/fileService.js";
 import { MarkdownService } from "./services/markdownService.js";
 import { EditorModule } from "./modules/editor.js";
 import { PreviewModule } from "./modules/preview.js";
+import { SearchManager } from "./modules/searchManager.js";
 import { FileTreeModule } from "./modules/fileTree.js";
 import { AutosaveModule } from "./modules/autosave.js";
 
@@ -71,12 +72,14 @@ const $globalSearchInput = document.getElementById(
 const $globalSearchResult = document.getElementById(
   "global-search-result",
 ) as HTMLDivElement;
+const $main = document.getElementById("main") as HTMLDivElement;
 const $modeIndicator = document.getElementById("mode-indicator") as HTMLDivElement;
 const $modeIcon = document.getElementById("mode-icon") as HTMLSpanElement;
 
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService);
 const previewModule = new PreviewModule($previewer, markdownService);
+const searchManager = new SearchManager($editor, $localSearchResult);
 
 // Initialize autosave module
 const autosaveModule = new AutosaveModule(
@@ -416,10 +419,52 @@ ipcOn("local-search", () => {
     $previewer.style.display = "none";
     $editor.style.display = "none";
     hideGlobalSearch();
+    $main.classList.add("search-active");  // Hide mode indicator
   } else {
     $localSearch.style.display = "none";
     $previewer.style.display = "block";
     $editor.style.display = "none";
+    searchManager.clear();
+    $main.classList.remove("search-active");  // Show mode indicator
+  }
+});
+
+// Handle search input
+$localSearchInput.addEventListener("input", () => {
+  const searchTerm = $localSearchInput.value;
+  const content = currentContent();
+  searchManager.search(content, searchTerm);
+});
+
+// Handle Find Next (F3)
+$localSearchInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    if (event.shiftKey) {
+      searchManager.findPrevious();
+    } else {
+      searchManager.findNext();
+    }
+  }
+});
+
+// Global shortcut for Find Next/Previous (F3, Shift+F3)
+document.addEventListener("keydown", (event) => {
+  if (event.key === "F3") {
+    event.preventDefault();
+    if (searchManager.hasActiveSearch()) {
+      if (event.shiftKey) {
+        searchManager.findPrevious();
+      } else {
+        searchManager.findNext();
+      }
+    } else {
+      // If no active search, open search panel
+      $localSearch.style.display = "block";
+      $localSearchInput.focus();
+      $previewer.style.display = "none";
+      $editor.style.display = "none";
+    }
   }
 });
 
@@ -428,12 +473,14 @@ ipcOn("global-search", () => {
     hideGlobalSearch();
     $previewer.style.display = "block";
     $editor.style.display = "none";
+    $main.classList.remove("search-active");  // Show mode indicator
   } else {
     $globalSearch.style.display = "block";
     $globalSearchInput.focus();
     $globalSearchResult.innerHTML = currentContent();
     $previewer.style.display = "none";
     $editor.style.display = "none";
+    $main.classList.add("search-active");  // Hide mode indicator
   }
 });
 

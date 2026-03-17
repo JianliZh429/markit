@@ -224,6 +224,8 @@ Markit implements multiple layers of security to protect users from malicious co
 - `Cmd/Ctrl + B` - Toggle file explorer panel
 - `Cmd/Ctrl + F` - Local search within current document
 - `Cmd/Ctrl + Shift + F` - Global search across all files
+- `F3` - Find next match
+- `Shift + F3` - Find previous match
 
 ### Editor Features
 - Smart paste with HTML-to-Markdown conversion

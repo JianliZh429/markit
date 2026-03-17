@@ -172,7 +172,7 @@ body {
 
 #mode-indicator {
   position: absolute;
-  top: var(--spacing-md);
+  bottom: var(--spacing-md);
   right: var(--spacing-md);
   z-index: 100;
   display: flex;
@@ -195,6 +195,11 @@ body {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
+}
+
+/* Hide mode indicator when search is active */
+#main.search-active #mode-indicator {
+  display: none !important;
 }
 
 #mode-indicator.edit-mode {
@@ -270,7 +275,7 @@ code {
 #local-search-input,
 #global-search-input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm) var(--spacing-md);;
   font-size: var(--font-size-base);
   font-family: var(--font-family);
   color: var(--text-primary);
@@ -292,7 +297,6 @@ code {
 
 #local-search,
 #global-search {
-  padding: var(--spacing-md);
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
@@ -301,7 +305,7 @@ code {
 #global-search-result {
   padding: var(--spacing-md);
   overflow-y: auto;
-  max-height: 400px;
+  height: 100vh;
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
@@ -478,5 +482,21 @@ mark {
 }
 
 mark.current {
-  background-color: #ffeb3a;
+  background-color: #ff9800;  /* Orange for current match */
+  color: white;
+  font-weight: bold;
+}
+
+/* Search result styling */
+#local-search-result mark,
+#global-search-result mark {
+  background-color: #fff5b1;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+#local-search-result mark.current,
+#global-search-result mark.current {
+  background-color: #ff9800;
+  color: white;
 }
