@@ -9,12 +9,12 @@ body {
   display: flex;
   flex-flow: row nowrap;
   justify-content: flex-start;
+  overflow: hidden;
 }
 
 #explorer {
   flex: 1;
   height: 100vh;
-  overflow-y: auto;
   border-left: 1px solid #ccc;
   overflow: auto;
   min-width: 180px;
@@ -54,6 +54,8 @@ body {
 
 #main {
   flex: 4;
+  height: 100vh;
+  overflow: auto;
   padding: 0, 10px;
   border-left: 1px solid #ccc;
   display: flex;
@@ -62,17 +64,18 @@ body {
 }
 
 #mode-indicator {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  position: fixed;
+  top: 1px;
+  right: 18px;
   z-index: 100;
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 6px;
-  background-color: #d0d0d0;
+  padding: 2px;
+  background: none;
   border-radius: 8px;
   font-size: 11px;
+  color: #555;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -84,11 +87,13 @@ body {
 }
 
 #mode-indicator.edit-mode {
-  background-color: #bbdefb;
+  background: none;
+  color: #333;
 }
 
 #mode-indicator.preview-mode {
-  background-color: #e1bee7;
+  background: none;
+  color: #333;
 }
 
 #mode-icon {
@@ -97,8 +102,8 @@ body {
 
 #editor {
   flex: 1;
-  width: 100%;
-  padding: 5px;
+  width: 98%;
+  padding: 10px;
   font-size: 16px;
   border: none;
   resize: none;
@@ -106,8 +111,9 @@ body {
 
 #previewer {
   flex: 1;
-  width: 100%;
-  padding: 10px;
+  width: 98%;
+  padding-left: 10px;
+  padding-right: 10px;
   overflow-y: auto;
   border-left: 1px solid #ccc;
   word-wrap: break-word; /* Break long words to fit within the container */

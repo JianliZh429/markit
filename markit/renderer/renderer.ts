@@ -128,11 +128,11 @@ function updateModeIndicator(): void {
   
   // Update icon and styling based on mode
   if (isEditMode) {
-    $modeIcon.textContent = "✏️"; // Pencil icon for edit mode
+    $modeIcon.textContent = "✏️"; // Pencil icon for edit mode (monochrome)
     $modeIndicator.className = "edit-mode";
     $modeIndicator.title = "Edit Mode";
   } else {
-    $modeIcon.textContent = "👁️"; // Eye icon for preview mode
+    $modeIcon.textContent = "👀"; // Circle/eye icon for preview mode (monochrome)
     $modeIndicator.className = "preview-mode";
     $modeIndicator.title = "Preview Mode";
   }
