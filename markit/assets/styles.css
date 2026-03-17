@@ -309,12 +309,92 @@ code {
 #global-search-result {
   padding: var(--spacing-md);
   overflow-y: auto;
-  height: calc(100vh - 120px);  /* Adjust for search input and padding */
+  height: calc(100vh - 150px);  /* Adjust for search input and padding */
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   margin-top: var(--spacing-xs);
   box-shadow: var(--shadow-sm);
+}
+
+/* Global search file groups */
+.search-file-group {
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  
+  .search-file-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--bg-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;  /* Align to top for multi-line */
+    gap: var(--spacing-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+    
+    &:hover {
+      background-color: var(--hover-bg);
+    }
+    
+    .search-file-icon {
+      font-size: 10px;
+      transition: transform var(--transition-fast);
+      opacity: 0.7;
+      flex-shrink: 0;  /* Don't shrink icon */
+      margin-top: 4px;  /* Align with first line of text */
+    }
+    
+    &.expanded .search-file-icon {
+      transform: rotate(90deg);
+    }
+    
+    .search-file-path {
+      flex: 1;
+      word-break: break-all;  /* Allow breaking long paths */
+      white-space: pre-wrap;  /* Preserve wrapping */
+      line-height: 1.4;
+    }
+    
+    .search-match-count {
+      font-size: 0.85em;
+      color: var(--text-muted);
+      background-color: var(--bg-color);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--border-radius-sm);
+      flex-shrink: 0;  /* Don't shrink badge */
+      align-self: flex-start;  /* Align to top */
+    }
+  }
+  
+  .search-file-matches {
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+    
+    &.expanded {
+      display: block;
+    }
+    
+    .search-match-item {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-top: 1px solid var(--border-color);
+      cursor: pointer;
+      font-size: 0.9em;
+      line-height: 1.5;
+      
+      &:hover {
+        background-color: var(--hover-bg);
+      }
+      
+      mark {
+        background-color: #fff5b1;
+        padding: 0 2px;
+        border-radius: 2px;
+      }
+    }
+  }
 }
 
 .folder,

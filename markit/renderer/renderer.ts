@@ -246,7 +246,7 @@ async function loadFile(filePath: string): Promise<void> {
       previewMode();
     }
 
-    $title.textContent = filePath.split(/[\\/]/).pop() || filePath;
+    $title.textContent = filePath;
   } catch (err) {
     console.error("Error loading file:", err);
   }
@@ -295,16 +295,75 @@ async function globalSearch(keyword: string): Promise<void> {
   const results = await searchInFiles(rootDir, keyword);
   console.log("Search results:", results);
 
+  // Group results by file with collapsible sections
   $globalSearchResult.innerHTML = results
-    .map(
-      (result: any) => `
-        <div>
-          <h3>${result.file}</h3>
-          ${result.matches.map((match: any) => `<p>...${match.snippet}...</p>`).join("")}
+    .map((result: any) => {
+      const matchCount = result.matches.length;
+      
+      return `
+        <div class="search-file-group" data-file="${result.file}">
+          <div class="search-file-header">
+            <span class="search-file-icon">▶</span>
+            <span class="search-file-path">${result.file}</span>
+            <span class="search-match-count">${matchCount} match${matchCount > 1 ? 'es' : ''}</span>
+          </div>
+          <div class="search-file-matches">
+            ${result.matches.map((match: any) => `
+              <div class="search-match-item" data-line="${match.line}">
+                ...${match.snippet}...
+              </div>
+            `).join("")}
+          </div>
         </div>
-      `,
-    )
+      `;
+    })
     .join("");
+  
+  // Add click handlers for file groups (expand/collapse)
+  $globalSearchResult.querySelectorAll(".search-file-header").forEach((header) => {
+    header.addEventListener("click", () => {
+      const group = header.parentElement as HTMLElement;
+      const matches = group.querySelector(".search-file-matches") as HTMLElement;
+      const isExpanded = matches.classList.contains("expanded");
+      
+      // Toggle expanded state
+      matches.classList.toggle("expanded");
+      header.classList.toggle("expanded");
+    });
+    
+    // Double-click to open file
+    header.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      const group = header.parentElement as HTMLElement;
+      const filePath = group.dataset.file;
+      if (filePath) {
+        // Close search and open file
+        hideGlobalSearch();
+        $previewer.style.display = "block";
+        $editor.style.display = "none";
+        loadFile(filePath);
+      }
+    });
+  });
+  
+  // Add click handlers for match items (open file at specific location)
+  $globalSearchResult.querySelectorAll(".search-match-item").forEach((item) => {
+    item.addEventListener("dblclick", () => {
+      const group = item.closest(".search-file-group") as HTMLElement;
+      const filePath = group?.dataset.file;
+      const line = parseInt(item.dataset.line || "0", 10);
+      
+      if (filePath) {
+        // Close search and open file at specific line
+        hideGlobalSearch();
+        $previewer.style.display = "block";
+        $editor.style.display = "none";
+        loadFile(filePath);
+        // TODO: Scroll to specific line after file loads
+      }
+    });
+  });
+  
   $globalSearchResult.style.display = "block";
 }
 
@@ -487,14 +546,15 @@ ipcOn("global-search", () => {
     hideGlobalSearch();
     $previewer.style.display = "block";
     $editor.style.display = "none";
-    $main.classList.remove("search-active");  // Show mode indicator
+    $main.classList.remove("search-active");
   } else {
     $globalSearch.style.display = "block";
     $globalSearchInput.focus();
-    $globalSearchResult.innerHTML = currentContent();
+    $globalSearchResult.innerHTML = "";  // Clear previous results
+    $globalSearchResult.style.display = "none";
     $previewer.style.display = "none";
     $editor.style.display = "none";
-    $main.classList.add("search-active");  // Hide mode indicator
+    $main.classList.add("search-active");
   }
 });
 
