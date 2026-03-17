@@ -172,3 +172,17 @@ export async function measurePerformance<T>(
     throw error;
   }
 }
+
+/**
+ * Simple hash function for string content
+ * Uses FNV-1a algorithm for fast, consistent hashing
+ */
+export function hashContent(content: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < content.length; i++) {
+    hash ^= content.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  // Convert to unsigned and return as hex string
+  return (hash >>> 0).toString(16);
+}

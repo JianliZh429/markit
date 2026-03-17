@@ -71,6 +71,8 @@ const $globalSearchInput = document.getElementById(
 const $globalSearchResult = document.getElementById(
   "global-search-result",
 ) as HTMLDivElement;
+const $modeIndicator = document.getElementById("mode-indicator") as HTMLDivElement;
+const $modeIcon = document.getElementById("mode-icon") as HTMLSpanElement;
 
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService);
@@ -119,8 +121,26 @@ function currentContent(): string {
 }
 
 /**
+ * Update the mode indicator in header
+ */
+function updateModeIndicator(): void {
+  const isEditMode = stateManager.get("isEditMode");
+  
+  // Update icon and styling based on mode
+  if (isEditMode) {
+    $modeIcon.textContent = "✏️"; // Pencil icon for edit mode (monochrome)
+    $modeIndicator.className = "edit-mode";
+    $modeIndicator.title = "Edit Mode";
+  } else {
+    $modeIcon.textContent = "👀"; // Circle/eye icon for preview mode (monochrome)
+    $modeIndicator.className = "preview-mode";
+    $modeIndicator.title = "Preview Mode";
+  }
+}
+
+/**
  * Switch to preview mode
- * FIX: Sync cursor position from editor and center view
+ * Preview mode is READ-ONLY for viewing rendered markdown
  */
 function previewMode(): void {
   // Set mode switching flag to prevent input handler interference
@@ -128,14 +148,14 @@ function previewMode(): void {
 
   // Save cursor position from editor before switching
   const editorCursorOffset = editorModule.getCursorOffset();
-  
+
   // Get content from editor
   const markdownContent = editorModule.getContent();
   previewModule.setMarkdownContent(markdownContent);
 
-  // Hide editor, show preview
+  // Hide editor, show preview (READ-ONLY)
   editorModule.hide();
-  previewModule.show(true); // Make editable
+  previewModule.show(false); // Read-only mode
 
   // Sync cursor position to preview and center view
   // Note: We use a simple character offset sync
@@ -143,6 +163,9 @@ function previewMode(): void {
 
   stateManager.set("isEditMode", false);
   
+  // Update mode indicator
+  updateModeIndicator();
+
   // Clear mode switching flag after a brief delay
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
@@ -159,9 +182,9 @@ function editMode(): void {
 
   // Save cursor position from preview before switching
   const previewCursorOffset = previewModule.getCursorOffset();
-  
-  // Get plain text from preview (in case user edited it)
-  const plainText = previewModule.getMarkdownContent();
+
+  // Get content from editor (preview is read-only, no changes)
+  const plainText = editorModule.getContent();
   editorModule.setContent(plainText);
 
   // Hide preview, show editor
@@ -173,6 +196,9 @@ function editMode(): void {
 
   stateManager.set("isEditMode", true);
   
+  // Update mode indicator
+  updateModeIndicator();
+
   // Clear mode switching flag after a brief delay
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
@@ -217,7 +243,7 @@ async function loadFile(filePath: string): Promise<void> {
       previewMode();
     }
 
-    $title.textContent = filePath;
+    $title.textContent = filePath.split(/[\\/]/).pop() || filePath;
   } catch (err) {
     console.error("Error loading file:", err);
   }
@@ -413,4 +439,7 @@ ipcOn("global-search", () => {
 
 // Initialize
 console.log("Renderer process initialized");
+updateModeIndicator(); // Initialize mode indicator
+
+// Show mode indicator on main div hover (CSS handles this)
 ipcSend("open-recent-file");

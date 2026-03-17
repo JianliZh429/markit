@@ -3,7 +3,8 @@
  * Handles markdown parsing and conversion
  */
 
-import { LRUCache } from "../utils/performance.js";
+import { LRUCache, hashContent } from "../utils/performance.js";
+import DOMPurify from "dompurify";
 
 export interface MarkdownAPI {
   parseMarkdown: (content: string) => string;
@@ -26,14 +27,14 @@ interface WorkerResponse {
 export const WORKER_THRESHOLD = 10240; // 10KB
 
 export class MarkdownService {
-  private renderCache: LRUCache<string, string>;
+  private renderCache: LRUCache<string, string>; // Keyed by content hash
   private worker: Worker | null = null;
   private workerMessageId = 0;
   private workerPromises: Map<number, { resolve: (value: string) => void; reject: (error: Error) => void }> = new Map();
   private workerInitialized = false;
 
   constructor(private markdownAPI: MarkdownAPI) {
-    // Cache up to 100 rendered markdown documents
+    // Cache up to 100 rendered markdown documents, keyed by content hash
     this.renderCache = new LRUCache<string, string>(100);
   }
 
@@ -79,18 +80,21 @@ export class MarkdownService {
   }
 
   /**
-   * Parse markdown to HTML with caching
+   * Parse markdown to HTML with caching (keyed by content hash)
    */
   parse(content: string): string {
+    // Generate hash key for content
+    const contentHash = hashContent(content);
+    
     // Check cache first
-    const cached = this.renderCache.get(content);
+    const cached = this.renderCache.get(contentHash);
     if (cached) {
       return cached;
     }
 
     // Parse and cache the result
     const html = this.markdownAPI.parseMarkdown(content);
-    this.renderCache.set(content, html);
+    this.renderCache.set(contentHash, html);
     return html;
   }
 
@@ -255,19 +259,23 @@ export class MarkdownService {
 
   /**
    * Convert HTML to Markdown (for paste operations)
+   * Sanitizes HTML before conversion to prevent XSS attacks
    * Uses worker for large content, sync for small
    * @returns Promise resolving to markdown string
    */
   async htmlToMarkdown(html: string): Promise<string> {
+    // Sanitize HTML first to prevent XSS
+    const sanitizedHtml = DOMPurify.sanitize(html);
+    
     // For small content, use sync conversion (faster, no overhead)
-    if (html.length < WORKER_THRESHOLD) {
+    if (sanitizedHtml.length < WORKER_THRESHOLD) {
       const temp = document.createElement("div");
-      temp.innerHTML = html;
+      temp.innerHTML = sanitizedHtml;
       return this.processNodeSync(temp);
     }
 
     // For large content, use worker
-    return this.htmlToMarkdownAsync(html);
+    return this.htmlToMarkdownAsync(sanitizedHtml);
   }
 
   /**
