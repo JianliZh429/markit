@@ -54,8 +54,8 @@ export class SearchManager {
     this.state.currentMatchIndex = 
       (this.state.currentMatchIndex + 1) % this.state.matches.length;
     
-    this.scrollToCurrentMatch();
     this.highlightCurrentMatch();
+    this.scrollToCurrentMatch();
   }
 
   /**
@@ -70,8 +70,8 @@ export class SearchManager {
         ? matches.length - 1 
         : this.state.currentMatchIndex - 1;
     
-    this.scrollToCurrentMatch();
     this.highlightCurrentMatch();
+    this.scrollToCurrentMatch();
   }
 
   /**
@@ -145,46 +145,30 @@ export class SearchManager {
   }
 
   /**
-   * Scroll to current match
+   * Scroll to current match in result div
    */
   private scrollToCurrentMatch(): void {
     if (!this.state || this.state.currentMatchIndex === -1) return;
 
-    const matchPosition = this.state.matches[this.state.currentMatchIndex];
-    
-    // For editor (textarea)
-    if (this.editorElement.offsetParent !== null) {
-      this.scrollToMatchInEditor(matchPosition);
-    }
-  }
+    // Get all mark elements in the result div
+    const marks = this.resultElement.querySelectorAll("mark");
+    if (marks.length === 0 || this.state.currentMatchIndex >= marks.length) return;
 
-  /**
-   * Scroll editor to match position
-   */
-  private scrollToMatchInEditor(position: number): void {
-    // Calculate approximate line number
-    const content = this.editorElement.value;
-    const textBeforeMatch = content.substring(0, position);
-    const lineNumber = textBeforeMatch.split("\n").length - 1;
+    const currentMark = marks[this.state.currentMatchIndex];
     
-    // Calculate scroll position to center the match
-    const lineHeight = 24; // Approximate line height in pixels
-    const viewportLines = Math.floor(this.editorElement.clientHeight / lineHeight);
-    const currentScrollLine = Math.floor(this.editorElement.scrollTop / lineHeight);
+    // Scroll the result div to show the current match
+    const resultRect = this.resultElement.getBoundingClientRect();
+    const markRect = currentMark.getBoundingClientRect();
     
-    // Check if match is outside viewport
-    if (lineNumber < currentScrollLine || lineNumber >= currentScrollLine + viewportLines) {
+    // Check if mark is outside viewport
+    const isAbove = markRect.top < resultRect.top;
+    const isBelow = markRect.bottom > resultRect.bottom;
+    
+    if (isAbove || isBelow) {
       // Scroll to center the match
-      const targetScroll = (lineNumber - Math.floor(viewportLines / 2)) * lineHeight;
-      this.editorElement.scrollTop = Math.max(0, targetScroll);
+      this.resultElement.scrollTop = 
+        currentMark.offsetTop - (this.resultElement.clientHeight / 2);
     }
-    
-    // Select the matched text
-    this.editorElement.focus();
-    this.editorElement.setSelectionRange(
-      position,
-      position + (this.state?.searchTerm.length ?? 0)
-    );
   }
 
   /**

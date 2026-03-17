@@ -436,7 +436,7 @@ $localSearchInput.addEventListener("input", () => {
   searchManager.search(content, searchTerm);
 });
 
-// Handle Find Next (F3)
+// Handle Find Next (Enter in search box)
 $localSearchInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
