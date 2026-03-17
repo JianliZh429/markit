@@ -167,11 +167,17 @@ export class SearchManager {
     const textBeforeMatch = content.substring(0, position);
     const lineNumber = textBeforeMatch.split("\n").length - 1;
     
-    // Calculate scroll position
+    // Calculate scroll position to center the match
     const lineHeight = 24; // Approximate line height in pixels
-    const targetScroll = lineNumber * lineHeight - (this.editorElement.clientHeight / 2);
+    const viewportLines = Math.floor(this.editorElement.clientHeight / lineHeight);
+    const currentScrollLine = Math.floor(this.editorElement.scrollTop / lineHeight);
     
-    this.editorElement.scrollTop = Math.max(0, targetScroll);
+    // Check if match is outside viewport
+    if (lineNumber < currentScrollLine || lineNumber >= currentScrollLine + viewportLines) {
+      // Scroll to center the match
+      const targetScroll = (lineNumber - Math.floor(viewportLines / 2)) * lineHeight;
+      this.editorElement.scrollTop = Math.max(0, targetScroll);
+    }
     
     // Select the matched text
     this.editorElement.focus();

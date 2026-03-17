@@ -171,7 +171,7 @@ body {
 }
 
 #mode-indicator {
-  position: absolute;
+  position: fixed;  /* Changed from absolute to fixed for better positioning */
   bottom: var(--spacing-md);
   right: var(--spacing-md);
   z-index: 100;
@@ -184,11 +184,11 @@ body {
   border-radius: var(--border-radius-lg);
   font-size: 12px;
   color: var(--text-secondary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--transition-normal), transform var(--transition-fast);
-  transform: translateY(-4px);
+  transform: translateY(4px);  /* Slide up from bottom */
 }
 
 #main:hover #mode-indicator {
@@ -274,22 +274,22 @@ code {
 
 #local-search-input,
 #global-search-input {
-  width: 100%;
-  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm) var(--spacing-md);;
+  width: calc(100% - 16px);  /* Account for container padding */
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-base);
   font-family: var(--font-family);
   color: var(--text-primary);
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   outline: none;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  
+
   &:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px var(--selection-bg);
   }
-  
+
   &::placeholder {
     color: var(--text-muted);
   }
@@ -297,20 +297,24 @@ code {
 
 #local-search,
 #global-search {
+  padding: var(--spacing-md);
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 #local-search-result,
 #global-search-result {
   padding: var(--spacing-md);
   overflow-y: auto;
-  height: 100vh;
+  height: calc(100vh - 120px);  /* Adjust for search input and padding */
   background-color: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  margin-top: var(--spacing-md);
-  box-shadow: var(--shadow-md);
+  margin-top: var(--spacing-xs);
+  box-shadow: var(--shadow-sm);
 }
 
 .folder,

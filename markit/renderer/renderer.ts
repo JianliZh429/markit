@@ -448,8 +448,9 @@ $localSearchInput.addEventListener("keydown", (event) => {
   }
 });
 
-// Global shortcut for Find Next/Previous (F3, Shift+F3)
+// Global shortcut for Find Next/Previous (F3, Shift+F3, Cmd+G, Cmd+Shift+G)
 document.addEventListener("keydown", (event) => {
+  // F3 for Find Next/Previous
   if (event.key === "F3") {
     event.preventDefault();
     if (searchManager.hasActiveSearch()) {
@@ -464,6 +465,19 @@ document.addEventListener("keydown", (event) => {
       $localSearchInput.focus();
       $previewer.style.display = "none";
       $editor.style.display = "none";
+      $main.classList.add("search-active");
+    }
+  }
+  
+  // Cmd+G / Ctrl+G for Find Next
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "g") {
+    event.preventDefault();
+    if (searchManager.hasActiveSearch()) {
+      if (event.shiftKey) {
+        searchManager.findPrevious();
+      } else {
+        searchManager.findNext();
+      }
     }
   }
 });
