@@ -127,11 +127,9 @@ Markit is a modern, cross-platform Markdown editor built with Electron and TypeS
 - [x] Tree view highlights and scrolls to selected file
 - [x] File content loaded without rebuilding tree
 
-#### Enhanced Preview Mode
-- [ ] Live preview without mode switching
-   - Editable in preview mode, which is editing the text with Html styles
-   - Editing in Edit mode, which is editing the text Markdown syntax
-- [ ] Customizable preview themes
+#### Enhanced File Tree
+- [ ] Single click the icon of a folder, will expand the folder and show the sub-folders and files in it.
+- [ ] Single click the icon of a file, will load this file content to Preview/Editor, not reloading the file tree.
 
 #### Advanced Settings
 - [ ] Settings UI panel
@@ -175,6 +173,24 @@ Markit is a modern, cross-platform Markdown editor built with Electron and TypeS
 - [ ] Custom markdown renderers
 - [ ] Integration with external tools
 - [ ] API for third-party extensions
+
+#### v0.5.0 Live editing
+- [ ] Refactor: refactor the cooresponding variables and functions
+   - [ ] Change `Edit` mode related to be `Markdown` mode, such as editor.ts -> markdown-renderer.ts, editMode -> markdownMode
+   - [ ] Change `Preview` mode related to `Html` mode, such as preview.ts -> html->renderer.ts, previewMode -> htmlMode
+- [ ] Make htmlMode editable
+   - Which is editing the rendered Html
+   - Changes made in this mode should be converted to Markdown format when switch to markdownMode
+   - Changes made in this mode can be saved to the opened file as markdown format 
+- [ ] Markdown mode is still editable
+   - Which is editing the markdown text
+   - Chagnes made in this mode should be converted to Html format when switch to htmlMode
+   - Changes made in this mode can be saved to the opened file as markdown format
+- [ ] Autosave should work for both mode
+
+#### Customization
+- [ ] Customize the theme for both mode
+- [ ] Customize the shortcuts key bindings
 
 ---
 
