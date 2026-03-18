@@ -69,6 +69,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "global-search",
       "context-menu-command",
       "switch-recent-file",
+      "open-recent",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`

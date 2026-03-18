@@ -47,6 +47,24 @@ export class FileTreeModule {
   }
 
   /**
+   * Find and select a file in the tree without reloading
+   * Scrolls to the file and highlights it
+   */
+  public selectFileInTree(filePath: string): boolean {
+    const $fileLi = this.$tree.querySelector(`[data-full-path="${filePath}"]`);
+    if ($fileLi) {
+      const $li = $fileLi as HTMLLIElement;
+      this.changeSelected($li);
+      
+      // Scroll the file into view
+      $li.scrollIntoView({ behavior: "smooth", block: "center" });
+      
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Load file or folder to explorer
    */
   public loadFileOrFolder(filePath: string): void {

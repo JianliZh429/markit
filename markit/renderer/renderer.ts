@@ -247,6 +247,22 @@ async function loadFile(filePath: string): Promise<void> {
     }
 
     $title.textContent = filePath;
+    
+    // Track recent files (only when folder root exists)
+    if (hasFolderRoot() && fileService.isFile(filePath)) {
+      // Add to recent files list (at the beginning)
+      const index = recentFilesList.indexOf(filePath);
+      if (index !== -1) {
+        recentFilesList.splice(index, 1);
+      }
+      recentFilesList.unshift(filePath);
+      // Limit to 10 recent files
+      if (recentFilesList.length > 10) {
+        recentFilesList.pop();
+      }
+      currentRecentFileIndex = 0;
+      console.log(`Added to recent files: ${filePath} (total: ${recentFilesList.length})`);
+    }
   } catch (err) {
     console.error("Error loading file:", err);
   }
@@ -564,6 +580,7 @@ let recentFilesList: string[] = [];
 let currentRecentFileIndex = 0;
 let isModalVisible = false;
 let isControlKeyDown = false;
+let hasNavigated = false; // Track if user has navigated with Tab
 
 // Get modal DOM elements
 const $recentFilesModal = document.getElementById("recent-files-modal") as HTMLDivElement;
@@ -575,41 +592,22 @@ function hasFolderRoot(): boolean {
   return rootDir !== "" && rootDir !== null && rootDir !== undefined;
 }
 
-// Update recent files list when a file is opened
-const originalFileOpenedHandler = (args: string | string[]) => {
-  const filePath = typeof args === "string" ? args : args[0];
-  fileTreeModule.loadFileOrFolder(filePath);
-};
-
-// Override the file-opened handler to track recent files
+// Handle file-opened event from IPC
 ipcOn("file-opened", (args: string | string[]) => {
   console.log("file-opened:", args);
   const filePath = typeof args === "string" ? args : args[0];
-  
+
   // Check if opening a folder (sets root) or a file
   if (fileService.isDirectory(filePath)) {
     // Folder opened - set as root and clear recent files for new context
     stateManager.set("rootDirectory", filePath);
     recentFilesList = [];
     currentRecentFileIndex = 0;
-    originalFileOpenedHandler(args);
-  } else {
-    // File opened - only track if we have a folder root
-    if (hasFolderRoot()) {
-      // Add to recent files list (at the beginning)
-      const index = recentFilesList.indexOf(filePath);
-      if (index !== -1) {
-        recentFilesList.splice(index, 1);
-      }
-      recentFilesList.unshift(filePath);
-      // Limit to 10 recent files
-      if (recentFilesList.length > 10) {
-        recentFilesList.pop();
-      }
-      currentRecentFileIndex = 0;
-    }
-    originalFileOpenedHandler(args);
+    console.log(`Folder opened, recent files cleared: ${filePath}`);
   }
+  
+  // Load the file/folder through fileTreeModule
+  fileTreeModule.loadFileOrFolder(filePath);
 });
 
 // Show the recent files modal
@@ -620,42 +618,77 @@ function showRecentFilesModal(): void {
     return;
   }
   
-  if (recentFilesList.length === 0) {
-    // No recent files in current folder context
-    renderRecentFilesModal();
-  } else {
-    renderRecentFilesModal();
-  }
-  
+  renderRecentFilesModal();
   $recentFilesModal.style.display = "flex";
   isModalVisible = true;
+  hasNavigated = false; // Reset navigation flag
 }
 
 // Hide the recent files modal and open selected file
 function hideRecentFilesModal(): void {
   $recentFilesModal.style.display = "none";
   isModalVisible = false;
+  isControlKeyDown = false;
+  hasNavigated = false;
   
-  // Only open file if we have a folder root and recent files
-  if (!hasFolderRoot() || recentFilesList.length === 0) {
+  // Only open file if we have a folder root
+  if (!hasFolderRoot()) {
     return;
   }
   
-  // Open the currently selected file
+  // Open the currently selected file (if any)
   if (recentFilesList.length > 0) {
     const filePath = recentFilesList[currentRecentFileIndex];
-    try {
-      fileTreeModule.loadFileOrFolder(filePath);
-      console.log(`Opened recent file: ${filePath}`);
-    } catch (error) {
-      console.error(`Failed to load recent file ${filePath}:`, error);
-      // Remove invalid file from list
-      recentFilesList.splice(currentRecentFileIndex, 1);
-      if (recentFilesList.length > 0) {
-        currentRecentFileIndex = currentRecentFileIndex % recentFilesList.length;
+    // First, select and scroll to the file in the tree
+    const foundInTree = fileTreeModule.selectFileInTree(filePath);
+    if (foundInTree) {
+      console.log(`Selected recent file in tree: ${filePath}`);
+      // Load just the file content, don't reload the tree
+      loadFileContentOnly(filePath);
+    } else {
+      // File not in tree, load it normally (rebuilds tree)
+      try {
+        fileTreeModule.loadFileOrFolder(filePath);
+        console.log(`Loaded recent file: ${filePath}`);
+      } catch (error) {
+        console.error(`Failed to load recent file ${filePath}:`, error);
+        // Remove invalid file from list
+        recentFilesList.splice(currentRecentFileIndex, 1);
+        if (recentFilesList.length > 0) {
+          currentRecentFileIndex = currentRecentFileIndex % recentFilesList.length;
+        }
       }
     }
   }
+}
+
+/**
+ * Load file content only without reloading the tree
+ * Used for recent files switching
+ */
+async function loadFileContentOnly(filePath: string): Promise<void> {
+  try {
+    markdownService.setBaseUrl(filePath);
+    const content = await fileService.loadFile(filePath);
+    editorModule.setContent(content);
+
+    if (!stateManager.get("isEditMode")) {
+      previewMode();
+    }
+
+    $title.textContent = filePath;
+    console.log(`Loaded file content: ${filePath}`);
+  } catch (err) {
+    console.error("Error loading file content:", err);
+  }
+}
+
+// Cancel the modal without opening any file
+function cancelRecentFilesModal(): void {
+  $recentFilesModal.style.display = "none";
+  isModalVisible = false;
+  isControlKeyDown = false;
+  hasNavigated = false;
 }
 
 // Render the recent files modal content
@@ -703,6 +736,7 @@ function navigateNextRecentFile(): void {
   
   // Circular navigation: go to next, wrap around at end
   currentRecentFileIndex = (currentRecentFileIndex + 1) % recentFilesList.length;
+  hasNavigated = true;
   renderRecentFilesModal();
 }
 
@@ -712,6 +746,7 @@ function navigatePreviousRecentFile(): void {
   
   // Circular navigation: go to previous, wrap around at beginning
   currentRecentFileIndex = (currentRecentFileIndex - 1 + recentFilesList.length) % recentFilesList.length;
+  hasNavigated = true;
   renderRecentFilesModal();
 }
 
@@ -719,6 +754,12 @@ function navigatePreviousRecentFile(): void {
 document.addEventListener("keydown", (event) => {
   // Check if Ctrl or Cmd is held
   const isControlOrCmd = event.ctrlKey || event.metaKey;
+  
+  // Handle Ctrl/Cmd key press
+  if (event.key === "Control" || event.key === "Meta") {
+    isControlKeyDown = true;
+    return;
+  }
   
   // Handle Ctrl/Cmd + Tab for recent files modal
   if (isControlOrCmd && event.key === "Tab") {
@@ -743,23 +784,26 @@ document.addEventListener("keydown", (event) => {
         navigateNextRecentFile();
       }
     }
-    
-    isControlKeyDown = true;
   }
 });
 
 // Handle key release to confirm selection
 document.addEventListener("keyup", (event) => {
-  const isControlOrCmd = event.ctrlKey || event.metaKey;
-  
-  // When Ctrl/Cmd is released, hide modal and open selected file
-  if (isControlOrCmd && isModalVisible && !isControlKeyDown) {
-    hideRecentFilesModal();
-  }
-  
   // Track control key state
   if (event.key === "Control" || event.key === "Meta") {
+    const wasControlKeyDown = isControlKeyDown;
     isControlKeyDown = false;
+    
+    // When Ctrl/Cmd is released and modal is visible, open selected file or close
+    if (wasControlKeyDown && isModalVisible) {
+      if (recentFilesList.length > 0) {
+        // Open the selected file
+        hideRecentFilesModal();
+      } else {
+        // No recent files, just close the modal
+        cancelRecentFilesModal();
+      }
+    }
   }
 });
 
@@ -775,4 +819,4 @@ console.log("Renderer process initialized");
 updateModeIndicator(); // Initialize mode indicator
 
 // Show mode indicator on main div hover (CSS handles this)
-ipcSend("open-recent-file");
+ipcSend("open-recent");
