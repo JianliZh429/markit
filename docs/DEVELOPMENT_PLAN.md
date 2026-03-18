@@ -101,7 +101,16 @@ Markit is a modern, cross-platform Markdown editor built with Electron and TypeS
 - [x] Screen would scrolled to the matched text when the matched text is active
 
 #### Recent files
-- [ ] Add shortcu `Ctrl/CMD + Tab` to switching the recent opened files recently
+- [ ] Add shortcut `Ctrl + Tab` to switching the recent opened files recently
+      This recent files are different from the recent files in `Open Recent` menu. In `Open Recent` menu, it refers the recent folders and files open in Project level. But recent files here, indicates the files that opened in the `Editor/Previewer` div, only when the `Root` in the `Tree` is a folder. When the `Root` in `Tree` is a file, this feature cannot be triggered. The modal would be disabled, never shown.
+   1. Modal Popup - A centered modal with backdrop blur appears when you press Ctrl/Cmd + Tab
+   2. Keyboard Navigation:
+      - Ctrl + Tab - Navigate forward through recent files
+      - Ctrl + Shift + Tab - Navigate backward through recent files
+   3. Circular Navigation - Wraps around at the beginning/end of the list
+   4. Open on Key Release - Release Ctrl/Cmd to open the selected file
+   5. Click Support - Click on a file to select and open it immediately
+
 - [ ] The recent files must be under the same folder of the root directory opened in the tree view 
 
 #### Enhanced Preview Mode
@@ -195,7 +204,7 @@ Markit is a modern, cross-platform Markdown editor built with Electron and TypeS
 
 ## Release Schedule
 
-### v0.0.4 (Current) - ✅ Released
+### v0.0.6 (Current) - ✅ Released
 - UI/UX enhancements
 - Apple Silicon support
 - Security improvements
@@ -224,7 +233,7 @@ Markit is a modern, cross-platform Markdown editor built with Electron and TypeS
 ## Key Metrics
 
 ### Current Status
-- **Version:** 0.0.4
+- **Version:** 0.0.6
 - **Test Coverage:** ~40%
 - **Test Count:** 139 passing tests
 - **TypeScript Coverage:** 100%

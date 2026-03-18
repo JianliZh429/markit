@@ -19,7 +19,7 @@ export interface AppConfig {
   autosaveInterval: number; // in milliseconds
 
   // File management
-  recentFilesLimit: number;
+  recentOpensLimit: number;
 
   // Search settings
   searchCaseSensitive: boolean;
@@ -43,7 +43,7 @@ const DEFAULT_CONFIG: AppConfig = {
   fontFamily: "monospace",
   autosaveEnabled: true,
   autosaveInterval: 30000, // 30 seconds
-  recentFilesLimit: 10,
+  recentOpensLimit: 10,
   searchCaseSensitive: false,
   searchWholeWord: false,
   showLineNumbers: false,

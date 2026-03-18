@@ -13,7 +13,7 @@ import * as fsExtra from "fs-extra";
 import fg from "fast-glob";
 import * as shortcuts from "./shortcuts";
 import * as menu from "./menu";
-import * as recentFiles from "./recent-files";
+import * as recentOpens from "./recent-opens";
 import { MenuItem, SearchResult, SearchMatch } from "../../types";
 import { showErrorDialog, validatePath, validateMarkdownPath } from "./security";
 
@@ -69,7 +69,7 @@ ipcMain.on("open-file-dialog", async (event: IpcMainEvent) => {
     });
     if (!result.canceled && result.filePaths.length > 0) {
       event.reply("file-opened", result.filePaths);
-      recentFiles.add(result.filePaths[0]);
+      recentOpens.add(result.filePaths[0]);
       menu.initAppMenu(win);
     }
   } catch (err: unknown) {
@@ -88,7 +88,7 @@ ipcMain.on("open-folder-dialog", async (event: IpcMainEvent) => {
     });
     if (!result.canceled && result.filePaths.length > 0) {
       event.reply("file-opened", result.filePaths);
-      recentFiles.add(result.filePaths[0]);
+      recentOpens.add(result.filePaths[0]);
       menu.initAppMenu(win);
     }
   } catch (err: unknown) {
@@ -130,12 +130,27 @@ ipcMain.on(
   },
 );
 
-ipcMain.on("open-recent-file", async (event: IpcMainEvent) => {
-  const recentOpenFiles = recentFiles.load();
+ipcMain.on("open-recent", async (event: IpcMainEvent) => {
+  const recentOpenFiles = recentOpens.load();
   if (recentOpenFiles.length > 0) {
     event.reply("file-opened", recentOpenFiles[0]);
   }
 });
+
+// Get recent opens filtered by root directory
+ipcMain.handle(
+  "get-recent-opens",
+  async (_event, rootDirectory: string | null): Promise<string[]> => {
+    const allRecentOpens = recentOpens.load();
+    if (!rootDirectory) {
+      return allRecentOpens;
+    }
+    // Filter files that are under the root directory
+    return allRecentOpens.filter((filePath: string) =>
+      filePath.startsWith(rootDirectory),
+    );
+  },
+);
 
 ipcMain.on(
   "show-context-menu",

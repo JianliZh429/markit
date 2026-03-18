@@ -558,6 +558,218 @@ ipcOn("global-search", () => {
   }
 });
 
+// Recent Files Switcher Modal - macOS Style
+// Only works when a folder is opened as root in the tree view
+let recentFilesList: string[] = [];
+let currentRecentFileIndex = 0;
+let isModalVisible = false;
+let isControlKeyDown = false;
+
+// Get modal DOM elements
+const $recentFilesModal = document.getElementById("recent-files-modal") as HTMLDivElement;
+const $recentFilesList = document.getElementById("recent-files-list") as HTMLUListElement;
+
+// Check if we have a valid folder root (recent files only work with folder root)
+function hasFolderRoot(): boolean {
+  const rootDir = fileTreeModule.getRootDirectory();
+  return rootDir !== "" && rootDir !== null && rootDir !== undefined;
+}
+
+// Update recent files list when a file is opened
+const originalFileOpenedHandler = (args: string | string[]) => {
+  const filePath = typeof args === "string" ? args : args[0];
+  fileTreeModule.loadFileOrFolder(filePath);
+};
+
+// Override the file-opened handler to track recent files
+ipcOn("file-opened", (args: string | string[]) => {
+  console.log("file-opened:", args);
+  const filePath = typeof args === "string" ? args : args[0];
+  
+  // Check if opening a folder (sets root) or a file
+  if (fileService.isDirectory(filePath)) {
+    // Folder opened - set as root and clear recent files for new context
+    stateManager.set("rootDirectory", filePath);
+    recentFilesList = [];
+    currentRecentFileIndex = 0;
+    originalFileOpenedHandler(args);
+  } else {
+    // File opened - only track if we have a folder root
+    if (hasFolderRoot()) {
+      // Add to recent files list (at the beginning)
+      const index = recentFilesList.indexOf(filePath);
+      if (index !== -1) {
+        recentFilesList.splice(index, 1);
+      }
+      recentFilesList.unshift(filePath);
+      // Limit to 10 recent files
+      if (recentFilesList.length > 10) {
+        recentFilesList.pop();
+      }
+      currentRecentFileIndex = 0;
+    }
+    originalFileOpenedHandler(args);
+  }
+});
+
+// Show the recent files modal
+function showRecentFilesModal(): void {
+  // Only show modal if we have a folder root
+  if (!hasFolderRoot()) {
+    console.log("Recent files switcher only works when a folder is opened");
+    return;
+  }
+  
+  if (recentFilesList.length === 0) {
+    // No recent files in current folder context
+    renderRecentFilesModal();
+  } else {
+    renderRecentFilesModal();
+  }
+  
+  $recentFilesModal.style.display = "flex";
+  isModalVisible = true;
+}
+
+// Hide the recent files modal and open selected file
+function hideRecentFilesModal(): void {
+  $recentFilesModal.style.display = "none";
+  isModalVisible = false;
+  
+  // Only open file if we have a folder root and recent files
+  if (!hasFolderRoot() || recentFilesList.length === 0) {
+    return;
+  }
+  
+  // Open the currently selected file
+  if (recentFilesList.length > 0) {
+    const filePath = recentFilesList[currentRecentFileIndex];
+    try {
+      fileTreeModule.loadFileOrFolder(filePath);
+      console.log(`Opened recent file: ${filePath}`);
+    } catch (error) {
+      console.error(`Failed to load recent file ${filePath}:`, error);
+      // Remove invalid file from list
+      recentFilesList.splice(currentRecentFileIndex, 1);
+      if (recentFilesList.length > 0) {
+        currentRecentFileIndex = currentRecentFileIndex % recentFilesList.length;
+      }
+    }
+  }
+}
+
+// Render the recent files modal content
+function renderRecentFilesModal(): void {
+  // Check if we have a folder root
+  if (!hasFolderRoot()) {
+    $recentFilesList.innerHTML = '<li class="recent-files-empty">Recent files only available when a folder is opened</li>';
+    return;
+  }
+  
+  if (recentFilesList.length === 0) {
+    $recentFilesList.innerHTML = '<li class="recent-files-empty">No recent files in this folder</li>';
+    return;
+  }
+
+  $recentFilesList.innerHTML = recentFilesList
+    .map((filePath, index) => {
+      const parsedPath = path.parse(filePath);
+      const fileName = parsedPath.base;
+      const dirName = parsedPath.dir;
+      const isSelected = index === currentRecentFileIndex;
+      return `
+        <li class="${isSelected ? "selected" : ""}" data-index="${index}">
+          <span class="recent-file-icon">📄</span>
+          <span class="recent-file-path" title="${filePath}">${fileName}</span>
+          <span class="recent-file-name">${dirName}</span>
+        </li>
+      `;
+    })
+    .join("");
+
+  // Add click handlers
+  $recentFilesList.querySelectorAll("li").forEach((li) => {
+    li.addEventListener("click", () => {
+      const index = parseInt(li.getAttribute("data-index") || "0", 10);
+      currentRecentFileIndex = index;
+      hideRecentFilesModal();
+    });
+  });
+}
+
+// Navigate to next recent file (forward)
+function navigateNextRecentFile(): void {
+  if (recentFilesList.length === 0) return;
+  
+  // Circular navigation: go to next, wrap around at end
+  currentRecentFileIndex = (currentRecentFileIndex + 1) % recentFilesList.length;
+  renderRecentFilesModal();
+}
+
+// Navigate to previous recent file (backward)
+function navigatePreviousRecentFile(): void {
+  if (recentFilesList.length === 0) return;
+  
+  // Circular navigation: go to previous, wrap around at beginning
+  currentRecentFileIndex = (currentRecentFileIndex - 1 + recentFilesList.length) % recentFilesList.length;
+  renderRecentFilesModal();
+}
+
+// Handle keyboard events for modal navigation
+document.addEventListener("keydown", (event) => {
+  // Check if Ctrl or Cmd is held
+  const isControlOrCmd = event.ctrlKey || event.metaKey;
+  
+  // Handle Ctrl/Cmd + Tab for recent files modal
+  if (isControlOrCmd && event.key === "Tab") {
+    // Only handle if we have a folder root
+    if (!hasFolderRoot()) {
+      // Let the default behavior happen (browser tab switching)
+      return;
+    }
+    
+    event.preventDefault();
+    
+    if (!isModalVisible) {
+      // First Tab press: show modal
+      showRecentFilesModal();
+    } else {
+      // Subsequent Tab presses: navigate
+      if (event.shiftKey) {
+        // Ctrl+Shift+Tab: navigate backwards
+        navigatePreviousRecentFile();
+      } else {
+        // Ctrl+Tab: navigate forwards
+        navigateNextRecentFile();
+      }
+    }
+    
+    isControlKeyDown = true;
+  }
+});
+
+// Handle key release to confirm selection
+document.addEventListener("keyup", (event) => {
+  const isControlOrCmd = event.ctrlKey || event.metaKey;
+  
+  // When Ctrl/Cmd is released, hide modal and open selected file
+  if (isControlOrCmd && isModalVisible && !isControlKeyDown) {
+    hideRecentFilesModal();
+  }
+  
+  // Track control key state
+  if (event.key === "Control" || event.key === "Meta") {
+    isControlKeyDown = false;
+  }
+});
+
+// Listen for switch-recent-file command from menu accelerator (fallback)
+ipcOn("switch-recent-file", () => {
+  if (hasFolderRoot()) {
+    showRecentFilesModal();
+  }
+});
+
 // Initialize
 console.log("Renderer process initialized");
 updateModeIndicator(); // Initialize mode indicator

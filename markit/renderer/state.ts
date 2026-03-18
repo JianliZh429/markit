@@ -8,6 +8,7 @@ type StateChangeListener = (state: AppState) => void;
 export interface AppState {
   isEditMode: boolean;
   currentFilePath: string | null;
+  rootDirectory: string | null;
   selectedTreeNode: HTMLElement | null;
   editorScrollTop: number;
   editorSelectionStart: number;
@@ -29,6 +30,7 @@ class StateManager {
     this.state = {
       isEditMode: false,
       currentFilePath: null,
+      rootDirectory: null,
       selectedTreeNode: null,
       editorScrollTop: 0,
       editorSelectionStart: 0,

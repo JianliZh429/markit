@@ -44,7 +44,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "save-file-dialog",
       "save-file",
       "new-file-dialog",
-      "open-recent-file",
+      "open-recent",
+      "switch-recent-file",
     ];
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, ...args);
@@ -67,6 +68,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "local-search",
       "global-search",
       "context-menu-command",
+      "switch-recent-file",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
@@ -90,6 +92,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
       keyword,
       fileExtension,
     );
+  },
+
+  // Get recent opens filtered by root directory
+  getRecentOpens: async (rootDirectory: string | null): Promise<string[]> => {
+    return await ipcRenderer.invoke("get-recent-opens", rootDirectory);
   },
 
   // File system operations

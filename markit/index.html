@@ -37,6 +37,18 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
         <div id="global-search-result" style="display: none"></div>
       </div>
     </div>
+
+    <!-- Recent Files Switcher Modal -->
+    <div id="recent-files-modal" class="recent-files-modal" style="display: none;">
+      <div class="recent-files-modal-content">
+        <div class="recent-files-modal-header">
+          <span class="recent-files-modal-title">Recent Files</span>
+          <span class="recent-files-modal-hint">Ctrl/Cmd + Tab to navigate (folder root required)</span>
+        </div>
+        <ul id="recent-files-list" class="recent-files-list"></ul>
+      </div>
+    </div>
+
     <script src="./renderer/renderer.js"></script>
   </body>
 </html>

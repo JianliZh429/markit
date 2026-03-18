@@ -159,7 +159,7 @@ describe('IPC Integration Tests', () => {
         'save-file-dialog',
         'save-file',
         'new-file-dialog',
-        'open-recent-file',
+        'open-recent',
       ];
 
       validChannels.forEach(channel => {

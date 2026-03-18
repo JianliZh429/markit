@@ -18,6 +18,7 @@ describe("PreviewModule", () => {
   let mockMarkdownService: any;
   let mockGetSelection: jest.Mock;
   let mockCreateRange: jest.Mock;
+  let mockScrollTop: number;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -25,22 +26,28 @@ describe("PreviewModule", () => {
     // Create mocks
     mockGetSelection = jest.fn();
     mockCreateRange = jest.fn();
+    mockScrollTop = 0;
 
     // Spy on global methods
     jest.spyOn(window, 'getSelection').mockImplementation(mockGetSelection);
     jest.spyOn(document, 'createRange').mockImplementation(mockCreateRange);
 
-    // Create mock DOM element
+    // Create mock DOM element with proper scrollTop getter/setter
     mockElement = {
       style: { display: 'none' },
       contentEditable: 'false',
       innerHTML: '',
       innerText: '',
-      scrollTop: 0,
       clientHeight: 100,
       focus: jest.fn(),
       addEventListener: jest.fn(),
       getBoundingClientRect: jest.fn(() => ({ top: 0, height: 0 })),
+      get scrollTop() {
+        return mockScrollTop;
+      },
+      set scrollTop(value: number) {
+        mockScrollTop = value;
+      },
     };
 
     // Create mock markdown service
@@ -166,7 +173,7 @@ describe("PreviewModule", () => {
     });
 
     it("should save scroll position", () => {
-      mockElement.scrollTop = 200;
+      mockScrollTop = 200;
 
       previewModule.hide();
 

@@ -1,15 +1,15 @@
 import { Menu, BrowserWindow, MenuItemConstructorOptions } from "electron";
-import * as recentFiles from "./recent-files";
+import * as recentOpens from "./recent-opens";
 
 const isMac = process.platform === "darwin";
 
-const recentFilesMenu = (win: BrowserWindow): MenuItemConstructorOptions[] => {
-  const files = recentFiles.load();
+const recentOpensMenu = (win: BrowserWindow): MenuItemConstructorOptions[] => {
+  const files = recentOpens.load();
   return files.map((filePath: string, _index: number) => ({
     label: filePath,
     click: () => {
       win.webContents.send("file-opened", filePath);
-      recentFiles.add(filePath);
+      recentOpens.add(filePath);
     },
   }));
 };
@@ -64,7 +64,7 @@ const fileMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
       },
       {
         label: "Open Recent",
-        submenu: recentFilesMenu(win),
+        submenu: recentOpensMenu(win),
       },
       {
         type: "separator",
@@ -182,6 +182,13 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
           win.webContents.send("toggle-mode");
         },
         accelerator: "CommandOrControl+/",
+      },
+      {
+        label: "Switch Recent File",
+        click: () => {
+          win.webContents.send("switch-recent-file");
+        },
+        accelerator: "CommandOrControl+Tab",
       },
     ],
   };
