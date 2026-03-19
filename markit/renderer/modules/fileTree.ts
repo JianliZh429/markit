@@ -12,6 +12,7 @@ export interface FileTreeOptions {
   onFileUnload: (filePath: string) => void;
   getCurrentTitle: () => string;
   setTitle: (title: string) => void;
+  onFileIconClick?: (filePath: string) => void;
 }
 
 export class FileTreeModule {
@@ -24,6 +25,7 @@ export class FileTreeModule {
   private onFileUnloadCallback: (filePath: string) => void;
   private getCurrentTitleCallback: () => string;
   private setTitleCallback: (title: string) => void;
+  private onFileIconClickCallback?: (filePath: string) => void;
 
   constructor(treeElement: HTMLUListElement, options: FileTreeOptions) {
     this.fileService = options.fileService;
@@ -33,6 +35,7 @@ export class FileTreeModule {
     this.onFileUnloadCallback = options.onFileUnload;
     this.getCurrentTitleCallback = options.getCurrentTitle;
     this.setTitleCallback = options.setTitle;
+    this.onFileIconClickCallback = options.onFileIconClick;
 
     this.setupContextMenu();
   }
@@ -148,6 +151,65 @@ export class FileTreeModule {
   };
 
   /**
+   * Check if click is on the icon area (left side of the element)
+   * The icon is positioned with margin-right, so we check if click is within icon width
+   */
+  private isClickOnIcon(event: MouseEvent, $li: HTMLLIElement): boolean {
+    const rect = $li.getBoundingClientRect();
+    const iconWidth = 16; // Approximate icon width in pixels (1em at typical font size)
+    const clickX = event.clientX - rect.left;
+    return clickX <= iconWidth;
+  }
+
+  /**
+   * Folder single-click listener (icon only)
+   * Toggles folder expand/collapse state
+   */
+  private folderIconClickListener = (event: MouseEvent): void => {
+    const $li = event.currentTarget as HTMLLIElement;
+    
+    // Only handle clicks on the icon area
+    if (!this.isClickOnIcon(event, $li)) {
+      return;
+    }
+
+    const filePath = $li.dataset.fullPath!;
+    this.switchFolderState($li);
+    const $ul = $li.getElementsByTagName("ul")[0];
+    if ($ul) {
+      $li.removeChild($ul);
+    } else {
+      this.unfoldDir($li, filePath);
+    }
+    event.stopPropagation();
+  };
+
+  /**
+   * File single-click listener (icon only)
+   * Loads file content without rebuilding the tree
+   */
+  private fileIconClickListener = (event: MouseEvent): void => {
+    const $li = event.currentTarget as HTMLLIElement;
+    
+    // Only handle clicks on the icon area
+    if (!this.isClickOnIcon(event, $li)) {
+      return;
+    }
+
+    const filePath = $li.dataset.fullPath!;
+    this.changeSelected($li);
+    
+    // Call the icon click handler if provided
+    if (this.onFileIconClickCallback) {
+      this.onFileIconClickCallback(filePath);
+    } else {
+      // Fallback to regular select
+      this.onFileSelectCallback(filePath);
+    }
+    event.stopPropagation();
+  };
+
+  /**
    * Append a node to the tree
    */
   private appendNode(
@@ -159,21 +221,24 @@ export class FileTreeModule {
     const $li = document.createElement("li");
     $li.appendChild(document.createTextNode(parsedPath.base));
     $li.dataset.fullPath = filePath;
+    $li.dataset.isMarkdown = isFile ? "true" : "false";
     $ul.appendChild($li);
 
     if (isFile) {
       $li.classList.add("file");
       $li.addEventListener("dblclick", this.fileDblClickListener);
+      $li.addEventListener("click", this.fileIconClickListener);
     } else {
       // Check if folder has children and add appropriate class
       const folderContents = this.fileService.listDirectory(filePath);
       const hasChildren = folderContents.length > 0;
-      
+
       $li.classList.add("folder");
       if (hasChildren) {
         $li.classList.add("folder-has-children");
       }
       $li.addEventListener("dblclick", this.folderDblClickListener);
+      $li.addEventListener("click", this.folderIconClickListener);
     }
     return $li;
   }

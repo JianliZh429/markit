@@ -112,6 +112,12 @@ const fileTreeModule = new FileTreeModule($tree, {
   setTitle: (title: string) => {
     $title.textContent = title;
   },
+  onFileIconClick: (filePath: string) => {
+    // Single click on file icon - load content without rebuilding tree
+    hideLocalSearch();
+    hideGlobalSearch();
+    loadFileContentOnly(filePath);
+  },
 });
 
 /**
