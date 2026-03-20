@@ -132,11 +132,11 @@ Markit is a modern, cross-platform Markdown editor built with Electron and TypeS
 - [ ] Single click the icon of a file, will load this file content to Preview/Editor, not reloading the file tree.
 
 #### Advanced Settings
-- [ ] Settings UI panel
-- [ ] Customizable keyboard shortcuts
-- [ ] Theme customization (dark mode)
-- [ ] Font family and size preferences
-- [ ] Autosave interval configuration
+- [x] Settings UI panel
+- [x] Customizable keyboard shortcuts
+- [x] Theme customization (dark mode)
+- [x] Font family and size preferences
+- [x] Autosave interval configuration
 
 #### Documentation
 - [ ] User manual
