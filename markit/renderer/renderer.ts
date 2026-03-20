@@ -981,6 +981,36 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+// Keyboard Shortcuts Modal
+const $keyboardShortcutsModal = document.getElementById("keyboard-shortcuts-modal") as HTMLDivElement;
+const $keyboardShortcutsCloseBtn = document.getElementById("keyboard-shortcuts-close-btn") as HTMLButtonElement;
+
+function showKeyboardShortcutsModal(): void {
+  $keyboardShortcutsModal.style.display = "flex";
+}
+
+function hideKeyboardShortcutsModal(): void {
+  $keyboardShortcutsModal.style.display = "none";
+}
+
+$keyboardShortcutsCloseBtn.addEventListener("click", hideKeyboardShortcutsModal);
+
+$keyboardShortcutsModal.addEventListener("click", (event) => {
+  if (event.target === $keyboardShortcutsModal) {
+    hideKeyboardShortcutsModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && $keyboardShortcutsModal.style.display === "flex") {
+    hideKeyboardShortcutsModal();
+  }
+});
+
+ipcOn("show-keyboard-shortcuts", () => {
+  showKeyboardShortcutsModal();
+});
+
 // Initialize
 console.log("Renderer process initialized");
 updateModeIndicator(); // Initialize mode indicator

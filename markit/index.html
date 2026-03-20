@@ -69,7 +69,7 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
               </select>
             </div>
           </div>
-
+          
           <!-- Font Settings -->
           <div class="settings-section">
             <h3 class="settings-section-title">Editor</h3>
@@ -88,7 +88,7 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
               <input type="range" id="setting-font-size" class="settings-range" min="10" max="24" value="14" />
             </div>
           </div>
-
+          
           <!-- Autosave Settings -->
           <div class="settings-section">
             <h3 class="settings-section-title">Autosave</h3>
@@ -105,6 +105,104 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
         <div class="settings-modal-footer">
           <button id="settings-reset-btn" class="settings-btn settings-btn-secondary">Reset to Defaults</button>
           <button id="settings-save-btn" class="settings-btn settings-btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="keyboard-shortcuts-modal" class="keyboard-shortcuts-modal" style="display: none;">
+      <div class="keyboard-shortcuts-modal-content">
+        <div class="keyboard-shortcuts-modal-header">
+          <span class="keyboard-shortcuts-modal-title">Keyboard Shortcuts</span>
+          <button id="keyboard-shortcuts-close-btn" class="keyboard-shortcuts-close-btn" aria-label="Close shortcuts">&times;</button>
+        </div>
+        <div class="keyboard-shortcuts-modal-body">
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">File Operations</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>N</kbd></span>
+              <span class="shortcut-desc">New File</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>O</kbd></span>
+              <span class="shortcut-desc">Open File</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>D</kbd></span>
+              <span class="shortcut-desc">Open Folder</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>S</kbd></span>
+              <span class="shortcut-desc">Save File</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Shift</kbd> + <kbd>Cmd/Ctrl</kbd> + <kbd>S</kbd></span>
+              <span class="shortcut-desc">Save As</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>A</kbd></span>
+              <span class="shortcut-desc">Select All</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">View & Navigation</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>E</kbd></span>
+              <span class="shortcut-desc">Toggle Edit/Preview Mode</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>B</kbd></span>
+              <span class="shortcut-desc">Toggle File Explorer</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Tab</kbd></span>
+              <span class="shortcut-desc">Switch Recent Files</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>,</kbd></span>
+              <span class="shortcut-desc">Open Settings</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">Search</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>F</kbd></span>
+              <span class="shortcut-desc">Local Search</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd></span>
+              <span class="shortcut-desc">Global Search</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>F3</kbd> or <kbd>Cmd/Ctrl</kbd> + <kbd>G</kbd></span>
+              <span class="shortcut-desc">Find Next Match</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Shift</kbd> + <kbd>F3</kbd> or <kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd></span>
+              <span class="shortcut-desc">Find Previous Match</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">Window</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>0</kbd></span>
+              <span class="shortcut-desc">Reset Zoom</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>+</kbd></span>
+              <span class="shortcut-desc">Zoom In</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>-</kbd></span>
+              <span class="shortcut-desc">Zoom Out</span>
+            </div>
+          </div>
+        </div>
+        <div class="keyboard-shortcuts-modal-footer">
+          <p class="shortcuts-hint">Press <kbd>Esc</kbd> to close</p>
         </div>
       </div>
     </div>

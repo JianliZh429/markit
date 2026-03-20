@@ -71,6 +71,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "switch-recent-file",
       "open-recent",
       "open-settings",
+      "show-keyboard-shortcuts",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
