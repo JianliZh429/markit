@@ -218,10 +218,20 @@ const winMenu = (): MenuItemConstructorOptions => {
   };
 };
 
-const helpMenu = (): MenuItemConstructorOptions => {
+const helpMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
   return {
     role: "help",
     submenu: [
+      {
+        label: "Keyboard Shortcuts",
+        click: () => {
+          win.webContents.send("show-keyboard-shortcuts");
+        },
+        accelerator: "CmdOrCtrl+?",
+      },
+      {
+        type: "separator",
+      },
       {
         label: "Learn More",
       },
@@ -235,7 +245,7 @@ const buildTemplate = (win: BrowserWindow): MenuItemConstructorOptions[] => {
     editMenu(win),
     viewMenu(win),
     winMenu(),
-    helpMenu(),
+    helpMenu(win),
   ];
   if (isMac) {
     menus = [appMenu()].concat(menus);

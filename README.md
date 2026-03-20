@@ -219,10 +219,12 @@ Markit implements multiple layers of security to protect users from malicious co
 
 ## Keyboard Shortcuts
 
+See [**Keyboard Shortcuts**](docs/KEYBOARD_SHORTCUTS.md) for the complete list.
+
 ### File Operations
 - `Cmd/Ctrl + N` - Create new file
 - `Cmd/Ctrl + O` - Open file dialog
-- `Cmd/Ctrl + Shift + O` - Open folder dialog
+- `Cmd/Ctrl + D` - Open folder dialog
 - `Cmd/Ctrl + S` - Save current file
 - `Cmd/Ctrl + A` - Select all content
 
@@ -239,6 +241,9 @@ Markit implements multiple layers of security to protect users from malicious co
 - Auto-save with configurable intervals
 - Context menu with file operations
 - Scroll synchronization between editor and preview
+
+### In App
+- Press `Cmd/Ctrl + ?` or go to **Help → Keyboard Shortcuts** to view all shortcuts in the app
 
 ## Technology Stack
 
