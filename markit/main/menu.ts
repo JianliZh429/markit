@@ -187,6 +187,13 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         accelerator: "CommandOrControl+B",
       },
       {
+        label: "Show / Hide Table of Contents",
+        click: () => {
+          win.webContents.send("toggle-toc");
+        },
+        accelerator: "CommandOrControl+Shift+T",
+      },
+      {
         label: "View / Edit Mode",
         click: () => {
           win.webContents.send("toggle-mode");

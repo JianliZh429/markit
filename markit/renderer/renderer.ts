@@ -11,6 +11,7 @@ import { PreviewModule } from "./modules/preview.js";
 import { SearchManager } from "./modules/searchManager.js";
 import { FileTreeModule } from "./modules/fileTree.js";
 import { AutosaveModule } from "./modules/autosave.js";
+import { TocModule } from "./modules/toc.js";
 
 // Get electron API from window
 const {
