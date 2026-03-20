@@ -139,12 +139,23 @@ body.theme-dark .settings-modal {
       &::before {
         margin-right: var(--spacing-sm);
         opacity: 0.7;
-        transition: opacity var(--transition-fast);
+        transition: opacity var(--transition-fast), transform var(--transition-fast);
         line-height: var(--spacing-md);
       }
-      
+
       &:hover::before {
         opacity: 1;
+      }
+
+      /* Enhanced hover effect for folder icons */
+      &.folder:hover::before,
+      &.folder-open:hover::before {
+        transform: scale(1.1);
+      }
+
+      /* Enhanced hover effect for file icons */
+      &.file:hover::before {
+        transform: scale(1.05);
       }
     }
     
