@@ -180,9 +180,16 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ## Documentation
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Detailed system architecture and design patterns
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines and contribution process
-- [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) - Development roadmap and future features
+### For Users
+- [**User Manual**](docs/USER_MANUAL.md) - Complete guide to using Markit
+- [**Changelog**](CHANGELOG.md) - Version history and release notes
+- [**Keyboard Shortcuts**](#keyboard-shortcuts) - Quick reference for all shortcuts
+
+### For Developers
+- [**API Documentation**](docs/API.md) - Technical API reference
+- [**Architecture**](docs/ARCHITECTURE.md) - System architecture and design patterns
+- [**Contributing Guide**](docs/CONTRIBUTING.md) - Development guidelines
+- [**Development Plan**](docs/DEVELOPMENT_PLAN.md) - Roadmap and feature status
 
 ## Security Considerations
 
@@ -276,6 +283,6 @@ Jianli Zhang
 
 ---
 
-**Version**: 0.0.4  
-**Status**: Active Development  
+**Version**: 0.0.8
+**Status**: Active Development (~92% Complete)
 **Platforms**: macOS (Intel + Apple Silicon), Linux

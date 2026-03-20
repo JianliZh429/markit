@@ -14,6 +14,7 @@ import fg from "fast-glob";
 import * as shortcuts from "./shortcuts";
 import * as menu from "./menu";
 import * as recentOpens from "./recent-opens";
+import * as settings from "./settings";
 import { MenuItem, SearchResult, SearchMatch } from "../../types";
 import { showErrorDialog, validatePath, validateMarkdownPath } from "./security";
 
@@ -258,3 +259,25 @@ ipcMain.on(
     }
   },
 );
+
+// Settings IPC handlers
+ipcMain.handle("get-settings", (): settings.Settings => {
+  return settings.loadSettings();
+});
+
+ipcMain.handle("save-settings", (_event: Electron.IpcMainInvokeEvent, settingsData: settings.Settings): void => {
+  settings.saveSettings(settingsData);
+});
+
+ipcMain.handle("update-settings", (_event: Electron.IpcMainInvokeEvent, partialSettings: Partial<settings.Settings>): void => {
+  settings.updateSettings(partialSettings);
+});
+
+// Register global shortcut for opening settings (Ctrl/Cmd + ,)
+app.whenReady().then(() => {
+  globalShortcut.register("CommandOrControl+,", () => {
+    if (win) {
+      win.webContents.send("open-settings");
+    }
+  });
+});

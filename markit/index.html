@@ -49,6 +49,66 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
       </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal" style="display: none;">
+      <div class="settings-modal-content">
+        <div class="settings-modal-header">
+          <span class="settings-modal-title">Settings</span>
+          <button id="settings-close-btn" class="settings-close-btn" aria-label="Close settings">&times;</button>
+        </div>
+        <div class="settings-modal-body">
+          <!-- Theme Settings -->
+          <div class="settings-section">
+            <h3 class="settings-section-title">Appearance</h3>
+            <div class="settings-row">
+              <label for="setting-theme">Theme</label>
+              <select id="setting-theme" class="settings-select">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto (System)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Font Settings -->
+          <div class="settings-section">
+            <h3 class="settings-section-title">Editor</h3>
+            <div class="settings-row">
+              <label for="setting-font-family">Font Family</label>
+              <select id="setting-font-family" class="settings-select">
+                <option value="monospace">Monospace</option>
+                <option value="system-ui">System UI</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <label for="setting-font-size">Font Size: <span id="setting-font-size-value">14</span>px</label>
+              <input type="range" id="setting-font-size" class="settings-range" min="10" max="24" value="14" />
+            </div>
+          </div>
+
+          <!-- Autosave Settings -->
+          <div class="settings-section">
+            <h3 class="settings-section-title">Autosave</h3>
+            <div class="settings-row">
+              <label for="setting-autosave-enabled">Enable Autosave</label>
+              <input type="checkbox" id="setting-autosave-enabled" class="settings-checkbox" />
+            </div>
+            <div class="settings-row">
+              <label for="setting-autosave-interval">Autosave Interval: <span id="setting-autosave-interval-value">30</span>s</label>
+              <input type="range" id="setting-autosave-interval" class="settings-range" min="5" max="300" step="5" value="30" />
+            </div>
+          </div>
+        </div>
+        <div class="settings-modal-footer">
+          <button id="settings-reset-btn" class="settings-btn settings-btn-secondary">Reset to Defaults</button>
+          <button id="settings-save-btn" class="settings-btn settings-btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
     <script src="./renderer/renderer.js"></script>
   </body>
 </html>

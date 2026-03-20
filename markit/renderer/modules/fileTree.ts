@@ -156,7 +156,7 @@ export class FileTreeModule {
    */
   private isClickOnIcon(event: MouseEvent, $li: HTMLLIElement): boolean {
     const rect = $li.getBoundingClientRect();
-    const iconWidth = 16; // Approximate icon width in pixels (1em at typical font size)
+    const iconWidth = 24; // Icon area width in pixels (includes icon + padding)
     const clickX = event.clientX - rect.left;
     return clickX <= iconWidth;
   }
