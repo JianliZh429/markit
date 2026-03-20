@@ -115,7 +115,8 @@ body {
         margin-right: var(--spacing-sm);
         opacity: 0.7;
         transition: opacity var(--transition-fast), transform var(--transition-fast);
-        line-height: var(--spacing-md);
+        position: relative;
+        top: 1px;
       }
 
       &:hover::before {
@@ -417,7 +418,8 @@ code {
     width: 1em;
     height: 1em;
     margin-right: var(--spacing-sm);
-    vertical-align: middle;  /* Changed from text-bottom */
+    position: relative;
+    top: 1px;
     opacity: 0.7;
   }
 }
