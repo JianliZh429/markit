@@ -15,13 +15,15 @@ const SETTINGS_FILE = path.join(SETTINGS_DIR, "config.json");
 const DEFAULT_SETTINGS: Settings = {
   theme: "light",
   fontSize: 14,
+  fontFamily: "monospace",
   autosaveEnabled: true,
   autosaveInterval: 30000,
 };
 
 export interface Settings {
-  theme: "light" | "dark";
+  theme: "light" | "dark" | "auto";
   fontSize: number;
+  fontFamily: string;
   autosaveEnabled: boolean;
   autosaveInterval: number;
 }

@@ -70,11 +70,25 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "context-menu-command",
       "switch-recent-file",
       "open-recent",
+      "open-settings",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
       ipcRenderer.on(channel, (_event, ...args) => func(...args));
     }
+  },
+
+  // Settings API
+  settings: {
+    get: async () => {
+      return await ipcRenderer.invoke("get-settings");
+    },
+    save: async (settingsData: unknown) => {
+      return await ipcRenderer.invoke("save-settings", settingsData);
+    },
+    update: async (partialSettings: unknown) => {
+      return await ipcRenderer.invoke("update-settings", partialSettings);
+    },
   },
 
   showContextMenu: (menuItems: MenuItem[]): void => {
