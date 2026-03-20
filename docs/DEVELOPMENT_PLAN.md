@@ -33,9 +33,7 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 
 ### 🚧 In Progress
 
-#### Documentation
-- [ ] Video tutorials
-- [ ] Migration guide from other editors
+None - Core features complete.
 
 ---
 
