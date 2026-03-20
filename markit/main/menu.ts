@@ -77,6 +77,16 @@ const fileMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         accelerator: "CommandOrControl+S",
       },
       {
+        type: "separator",
+      },
+      {
+        label: "Settings",
+        click: () => {
+          win.webContents.send("open-settings");
+        },
+        accelerator: "CommandOrControl+,",
+      },
+      {
         label: "Save As",
         click: () => {
           win.webContents.send("save-file-dialog");
