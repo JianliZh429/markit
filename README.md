@@ -10,11 +10,14 @@ A modern, cross-platform Markdown editor built with Electron and TypeScript. Mar
 ### Core Editing
 - **Dual-mode editing**: Switch between raw markdown editor and live preview
 - **Real-time preview**: Instant markdown rendering with syntax highlighting
+- **Smart paste**: Automatic HTML-to-Markdown conversion when pasting
+- **State preservation**: Maintains scroll position and cursor location across mode switches
 - **Mode indicator**: Floating badge showing current edit/preview mode
 
 ### File Management
 - **File explorer**: Built-in tree view with folder navigation
 - **Recent files**: Quick access to recently opened files and folders
+- **Recent Files Switcher**: macOS-style modal with Cmd/Ctrl+Tab navigation
 - **File operations**: Create, rename, delete files and directories
 - **Folder indicators**: Visual distinction between empty and populated folders
 - **Horizontal scrolling**: View complete long filenames
@@ -23,17 +26,21 @@ A modern, cross-platform Markdown editor built with Electron and TypeScript. Mar
 ### Search & Navigation
 - **Local search**: Search within current document with highlighting
 - **Global search**: Search across all files in the current directory
+- **Table of Contents**: Auto-generated from markdown headings with Unicode support
 - **Fast file scanning**: Powered by fast-glob for efficient directory traversal
 - **Context-aware results**: Shows search matches with surrounding context
 
 ### Advanced Features
 - **Markdown extensions**: Support for emoji, code preview, and base URL handling
+- **Heading ID generation**: Anchor links for TOC navigation in preview mode
 - **Keyboard shortcuts**: Comprehensive shortcuts for efficient workflow
 - **Autosave**: Automatic saving with configurable intervals
 - **Performance optimization**: LRU caching, content hash-based caching, and Web Workers
 - **Security**: DOMPurify sanitization, path validation, sandboxed renderer, and IPC channel whitelisting
 
 ### UI/UX
+- **Settings modal**: Theme, font, and autosave customization
+- **Keyboard shortcuts modal**: View all shortcuts in-app (Cmd/Ctrl+?)
 - **Modern design system**: CSS variables for consistent theming
 - **Custom scrollbars**: Styled scrollbars for better aesthetics
 - **Improved typography**: System fonts for native feel
@@ -155,7 +162,7 @@ markit/
 
 ## Development Status
 
-Markit is actively developed with ~85% completion. For detailed information about completed features, in-progress work, and future plans, see the [Development Plan](docs/DEVELOPMENT_PLAN.md).
+Markit v0.1.0 is the latest stable release with core features complete. For detailed information about completed features, in-progress work, and future plans, see the [Development Plan](docs/DEVELOPMENT_PLAN.md).
 
 ### CI/CD Pipeline
 - **Multi-platform testing**: Ubuntu and macOS with Node.js 18.x and 20.x
@@ -229,6 +236,7 @@ See [**Keyboard Shortcuts**](docs/KEYBOARD_SHORTCUTS.md) for the complete list.
 ### View & Navigation
 - `Cmd/Ctrl + E` - Toggle between edit and preview mode
 - `Cmd/Ctrl + B` - Toggle file explorer panel
+- `Cmd/Ctrl + Shift + T` - Toggle table of contents panel
 - `Cmd/Ctrl + F` - Local search within current document
 - `Cmd/Ctrl + Shift + F` - Global search across all files
 - `F3` or `Cmd/Ctrl + G` - Find next match
@@ -285,6 +293,7 @@ Jianli Zhang
 
 ---
 
-**Version**: 0.0.8
-**Status**: Active Development (~92% Complete)
+**Version**: 0.1.0
+**Status**: Stable Release
 **Platforms**: macOS (Intel + Apple Silicon), Linux
+**Release Date**: March 21, 2026

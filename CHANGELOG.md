@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0] - March 21, 2026
+
+### 🎉 Major Release - Table of Contents & Unicode Support
+
+This release consolidates all v0.0.x features and adds significant new functionality.
+
+### ✨ Added
+
+#### Table of Contents (NEW)
+- **TOC Panel** - Generate table of contents from markdown headings (# to ######)
+- **Auto-Explorer Toggle** - Explorer panel auto-hides when TOC opens, shows when TOC closes
+- **Click-to-Scroll** - Click TOC headings to scroll to section in both edit and preview modes
+- **Unicode Support** - Full support for CJK (Chinese, Japanese, Korean) and other non-Latin scripts
+- **Keyboard Shortcut** - `Cmd/Ctrl + Shift + T` to toggle TOC panel
+- **TOC Close Button** - X button in TOC header closes panel and restores Explorer
+- **Auto-Update** - TOC updates automatically as you type (when panel is visible)
+- **Heading ID Generation** - marked renderer generates anchor IDs for all headings
+
+#### Previous Features (Consolidated from v0.0.1-v0.0.8)
+- Dual-mode editing (Editor ↔ Preview) with real-time preview
+- Smart paste with HTML-to-Markdown conversion (DOMPurify sanitized)
+- File explorer with tree view and folder navigation
+- Recent Files Switcher modal (Cmd/Ctrl + Tab)
+- Recent Opens menu (persistent project-level)
+- Local and global search with highlighting
+- Settings modal (theme, font, autosave customization)
+- Keyboard shortcuts modal (Cmd/Ctrl + ?)
+- Markdown extensions (emoji, code preview, base URL)
+- Multi-platform support (macOS Intel/Apple Silicon, Linux)
+- Security features (path validation, sandboxed renderer, IPC whitelisting)
+- Performance optimizations (Web Workers, LRU caching, content hash caching)
+
+### 🔧 Changed
+
+- **Version Consolidation** - All v0.0.x features merged into v0.1.0
+- **Slugify Function** - Unicode-safe slugify using `\p{L}\p{N}` property escapes
+- **TOC Module** - Fixed panel class toggling (now toggles outer panel, not inner container)
+- **Scroll Behavior** - Smooth scroll with `scrollIntoView` in preview mode
+- **CSS Escape** - Use `CSS.escape()` for safe querySelector with special characters
+
+### 🐛 Fixed
+
+- TOC panel not showing (fixed class toggling on correct element)
+- TOC headings not generating for non-ASCII characters (Chinese, Japanese, Korean)
+- Preview mode scrolling not working (added heading ID generation in marked renderer)
+- `querySelector` error with empty IDs (added empty ID checks and CSS.escape)
+- Explorer panel not restoring after TOC close (both X button and shortcut now restore)
+
+### 📦 Technical
+
+- Added `scrollToLine()` method to EditorModule
+- Updated marked renderer with custom heading function
+- Added `toggleToc()` and `updateToc()` helper functions
+- Added `scrollToSection()` for cross-mode navigation
+- TOC module now receives both panel and container elements
+
+---
+
 ## [0.0.8] - March 20, 2026
 
 ### Added
@@ -162,29 +220,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
-| Version | Date | Status |
-|---------|------|--------|
-| 0.0.8 | March 20, 2026 | Current |
-| 0.0.7 | March 18, 2026 | Released |
-| 0.0.6 | March 15, 2026 | Released |
-| 0.0.5 | March 10, 2026 | Released |
-| 0.0.4 | March 5, 2026 | Released |
-| 0.0.3 | February 28, 2026 | Released |
-| 0.0.2 | February 20, 2026 | Released |
-| 0.0.1 | February 15, 2026 | Initial |
+| Version | Date | Status | Key Features |
+|---------|------|--------|--------------|
+| 0.1.0 | March 21, 2026 | **Current** | TOC, Unicode support, consolidated release |
+| 0.0.8 | March 20, 2026 | Released | Settings, documentation, enhanced file tree |
+| 0.0.7 | March 18, 2026 | Released | Recent Files Switcher, Recent Opens menu |
+| 0.0.6 | March 15, 2026 | Released | Multi-platform, security, performance |
+| 0.0.5 | March 10, 2026 | Released | Local & global search |
+| 0.0.4 | March 5, 2026 | Released | File management, markdown extensions |
+| 0.0.3 | February 28, 2026 | Released | Basic editor functionality |
+| 0.0.2 | February 20, 2026 | Released | Initial Electron app |
+| 0.0.1 | February 15, 2026 | Initial | Project setup |
 
 ---
 
 ## Upcoming Features
 
-### v0.1.0 (Q2 2026) - Planned
-- Table of contents generation
+### v0.2.0 (Q3 2026) - Planned
 - Word count and reading time
 - Export to PDF/HTML
 - Print support
 - Multiple tabs for multiple files
 
-### v0.2.0 (Q3 2026) - Planned
+### v0.3.0 (Q4 2026) - Planned
 - Markdown table editor
 - Image drag-and-drop
 - Image upload to cloud storage
