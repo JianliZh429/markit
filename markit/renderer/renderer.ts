@@ -182,7 +182,7 @@ function previewMode(): void {
   editorModule.hide();
   previewModule.show(false); // Read-only mode
 
-  // Sync by line number
+  // Sync by line number and center in view
   if (editorLine >= 0) {
     previewModule.setCursorLine(editorLine);
   }
@@ -202,13 +202,14 @@ function previewMode(): void {
  * Switch to edit mode
  * FIX: Sync by line number instead of character offset
  * Uses mouse hover line if available, otherwise cursor line
+ * Centers the target line in the viewport
  */
 function editMode(): void {
   // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
 
   // Get current line from preview mode
-  // Prefer hover line (mouse position) if available, otherwise use cursor line
+  // Prefer hover line (mouse position) if available, otherwise cursor line
   let previewLine = stateManager.get('previewHoverLine') as number | null;
   if (previewLine === null || previewLine < 0) {
     previewLine = previewModule.getCursorLine();
@@ -222,7 +223,7 @@ function editMode(): void {
   previewModule.hide();
   editorModule.show();
 
-  // Sync by line number
+  // Sync by line number and center in view
   if (previewLine !== null && previewLine >= 0) {
     editorModule.setCursorLine(previewLine);
   }

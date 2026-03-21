@@ -68,58 +68,114 @@ export class PreviewModule {
    */
   private handleMouseMove(event: MouseEvent): void {
     const line = this.getLineNumberAtMouse(event);
-    if (line >= 0) {
-      // Store the line number for later use when switching modes
-      stateManager.set('previewHoverLine', line);
-    }
+    // Store the line number for later use when switching modes
+    stateManager.set('previewHoverLine', line);
   }
 
   /**
-   * Get line number at mouse position using event target
+   * Get line number at mouse position using element text matching
+   * Maps hovered HTML element to markdown source line
    */
   private getLineNumberAtMouse(event: MouseEvent): number {
+    // Get the element at mouse position
     const target = event.target as HTMLElement;
     
-    // Find the closest block-level parent element
-    const blockElement = target.closest('p, li, h1, h2, h3, h4, h5, h6, blockquote, pre, tr');
+    // Find the closest block-level element that contains actual text
+    const blockElement = target.closest('p, li, h1, h2, h3, h4, h5, h6, blockquote, pre, code, tr, td, th');
     
-    if (blockElement && blockElement.parentElement === this.previewElement) {
-      // Direct child of previewer - count elements before it
-      const siblings = Array.from(this.previewElement.children);
-      const index = siblings.indexOf(blockElement);
-      if (index >= 0) {
-        // Count lines before this element
-        let lineCount = 0;
-        for (let i = 0; i < index; i++) {
-          const sibling = siblings[i] as HTMLElement;
-          const tag = sibling.tagName.toLowerCase();
-          // Block elements that take full lines
-          if (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'table'].includes(tag)) {
-            lineCount++;
-          } else if (tag === 'ul' || tag === 'ol') {
-            lineCount += sibling.querySelectorAll('li').length;
+    if (blockElement) {
+      // Get the text content of this element
+      const elementText = blockElement.textContent?.trim() || '';
+      
+      if (elementText) {
+        // Get the markdown content from shadow (source of truth)
+        const markdownContent = this.shadowMarkdown || '';
+        const markdownLines = markdownContent.split('\n');
+        
+        // Search for this text in markdown lines
+        for (let i = 0; i < markdownLines.length; i++) {
+          const line = markdownLines[i].trim();
+          // Check for partial match (at least 10 chars to avoid false positives)
+          if (line.length >= 10 && elementText.length >= 10) {
+            // Check if lines share significant common text
+            const commonText = this.findCommonText(line, elementText);
+            if (commonText.length >= 10) {
+              return i;
+            }
           }
         }
-        return lineCount;
       }
     }
     
-    // For nested elements (like li inside ul), calculate from text position
-    if (blockElement) {
-      const allText = this.previewElement.innerText || "";
-      const elementText = blockElement.textContent || "";
-      const elementTextTrimmed = elementText.trim();
-      
-      // Find where this text appears in the full text
-      const textBefore = allText.split(elementTextTrimmed)[0];
-      if (textBefore !== undefined && textBefore.length >= 0) {
-        const linesBefore = textBefore.split('\n');
-        return linesBefore.length - 1;
+    // Fallback: use caret range method
+    return this.getLineNumberFromCaret(event);
+  }
+
+  /**
+   * Find common text between two strings (ignoring markdown formatting)
+   */
+  private findCommonText(str1: string, str2: string): string {
+    // Remove markdown formatting for comparison
+    const clean1 = str1.replace(/[`*_~\[\]()]/g, '');
+    const clean2 = str2.replace(/[`*_~\[\]()]/g, '');
+    
+    // Find longest common substring
+    let longest = '';
+    for (let i = 0; i < clean1.length; i++) {
+      for (let j = i + 10; j <= clean1.length; j++) {
+        const substr = clean1.substring(i, j);
+        if (clean2.includes(substr) && substr.length > longest.length) {
+          longest = substr;
+        }
       }
     }
     
-    // Fallback: calculate based on Y position and line height
-    return this.calculateLineFromYPosition(event.clientY);
+    return longest;
+  }
+
+  /**
+   * Get line number from caret position (fallback method)
+   */
+  private getLineNumberFromCaret(event: MouseEvent): number {
+    const range = document.caretRangeFromPoint(event.clientX, event.clientY);
+    
+    if (!range) {
+      return this.calculateLineFromYPosition(event.clientY);
+    }
+    
+    const textNode = range.startContainer;
+    
+    let currentNode: Node | null = textNode;
+    while (currentNode && currentNode !== this.previewElement) {
+      currentNode = currentNode.parentNode;
+    }
+    
+    if (!currentNode) {
+      return this.calculateLineFromYPosition(event.clientY);
+    }
+    
+    const walker = document.createTreeWalker(
+      this.previewElement,
+      NodeFilter.SHOW_TEXT,
+      null,
+    );
+    
+    let charCount = 0;
+    let node: Node | null;
+    
+    while ((node = walker.nextNode())) {
+      if (node === textNode) {
+        charCount += range.startOffset;
+        break;
+      }
+      charCount += node.textContent?.length || 0;
+    }
+    
+    const markdownContent = this.shadowMarkdown || this.previewElement.innerText || '';
+    const textBefore = markdownContent.substring(0, charCount);
+    const lineNumber = (textBefore.match(/\n/g) || []).length;
+    
+    return Math.max(0, lineNumber);
   }
 
   /**
@@ -130,7 +186,7 @@ export class PreviewModule {
     const scrollTop = this.previewElement.scrollTop;
     const relativeY = clientY - containerRect.top + scrollTop;
     const lineHeight = parseFloat(getComputedStyle(this.previewElement).lineHeight) || 24;
-    return Math.floor(relativeY / lineHeight);
+    return Math.max(0, Math.floor(relativeY / lineHeight));
   }
 
   private async handlePaste(event: ClipboardEvent): Promise<void> {
@@ -279,6 +335,7 @@ export class PreviewModule {
     const html = this.markdownService.parse(markdown);
     this.previewElement.innerHTML = html;
     this.markdownContent = markdown;
+    this.shadowMarkdown = markdown;  // Store markdown source for line mapping
   }
   /**
    * Get plain text content (markdown source)

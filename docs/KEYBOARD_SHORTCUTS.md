@@ -57,7 +57,7 @@ Quick reference for all Markit keyboard shortcuts.
 
 - **Recent Files**: Hold `Cmd/Ctrl` and press `Tab` repeatedly to cycle through recent files
 - **Search Navigation**: Use `F3` / `Shift + F3` to navigate search results quickly
-- **Mode Toggle**: Press `Cmd/Ctrl + E` to quickly switch between editing and preview
+- **Mode Toggle**: Press `Cmd/Ctrl + /` to quickly switch between editing and preview
 
 ---
 
