@@ -296,6 +296,26 @@ export class PreviewModule {
   }
 
   /**
+   * Get current cursor line number
+   */
+  getCursorLine(): number {
+    const text = this.previewElement.innerText || "";
+    const offset = this.getCursorOffset();
+    const lines = text.substring(0, offset).split("\n");
+    return lines.length - 1;
+  }
+
+  /**
+   * Set cursor to specific line
+   */
+  setCursorLine(line: number): void {
+    const text = this.previewElement.innerText || "";
+    const offset = this.lineColumnToOffset(text, line, 0);
+    this.restoreCursorPosition(offset);
+    this.centerCursorInView();
+  }
+
+  /**
    * Save cursor position to state
    */
   saveCursorPosition(): void {

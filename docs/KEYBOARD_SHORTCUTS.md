@@ -19,7 +19,7 @@ Quick reference for all Markit keyboard shortcuts.
 
 | Shortcut | Action |
 |----------|--------|
-| `Cmd/Ctrl + E` | Toggle Edit/Preview Mode |
+| `Cmd/Ctrl + /` | Toggle Edit/Preview Mode |
 | `Cmd/Ctrl + B` | Toggle File Explorer |
 | `Cmd/Ctrl + Tab` | Switch Recent Files |
 | `Cmd/Ctrl + ,` | Open Settings |

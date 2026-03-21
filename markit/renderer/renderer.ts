@@ -165,13 +165,14 @@ function updateModeIndicator(): void {
 /**
  * Switch to preview mode
  * Preview mode is READ-ONLY for viewing rendered markdown
+ * FIX: Sync by line number instead of character offset
  */
 function previewMode(): void {
   // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
 
-  // Save cursor position from editor before switching
-  const editorCursorOffset = editorModule.getCursorOffset();
+  // Save cursor line from editor before switching
+  const editorLine = editorModule.getCursorLine();
 
   // Get content from editor
   const markdownContent = editorModule.getContent();
@@ -181,12 +182,13 @@ function previewMode(): void {
   editorModule.hide();
   previewModule.show(false); // Read-only mode
 
-  // Sync cursor position to preview and center view
-  // Note: We use a simple character offset sync
-  previewModule.setCursorPosition(editorCursorOffset);
+  // Sync by line number
+  if (editorLine >= 0) {
+    previewModule.setCursorLine(editorLine);
+  }
 
   stateManager.set("isEditMode", false);
-  
+
   // Update mode indicator
   updateModeIndicator();
 
@@ -198,14 +200,15 @@ function previewMode(): void {
 
 /**
  * Switch to edit mode
- * FIX: Sync cursor position from preview and center view
+ * FIX: Sync by line number instead of character offset
+ * because markdown and HTML have different lengths
  */
 function editMode(): void {
   // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
 
-  // Save cursor position from preview before switching
-  const previewCursorOffset = previewModule.getCursorOffset();
+  // Get current line from preview mode
+  const previewLine = previewModule.getCursorLine();
 
   // Get content from editor (preview is read-only, no changes)
   const plainText = editorModule.getContent();
@@ -215,11 +218,13 @@ function editMode(): void {
   previewModule.hide();
   editorModule.show();
 
-  // Sync cursor position to editor and center view
-  editorModule.setCursorPosition(previewCursorOffset);
+  // Sync by line number
+  if (previewLine >= 0) {
+    editorModule.setCursorLine(previewLine);
+  }
 
   stateManager.set("isEditMode", true);
-  
+
   // Update mode indicator
   updateModeIndicator();
 

@@ -215,7 +215,7 @@ When pasting content:
 | `Cmd/Ctrl + A` | Select All |
 | `Cmd/Ctrl + Z` | Undo |
 | `Cmd/Ctrl + Y` | Redo |
-| `Cmd/Ctrl + E` | Toggle Edit/Preview Mode |
+| `Cmd/Ctrl + /` | Toggle Edit/Preview Mode |
 
 ### Navigation
 
