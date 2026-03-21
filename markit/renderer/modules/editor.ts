@@ -51,17 +51,9 @@ export class EditorModule {
       // Convert HTML to Markdown (async for large content)
       const markdown = await this.markdownService.htmlToMarkdown(htmlData);
 
-      // Insert at cursor position
-      const start = this.editorElement.selectionStart;
-      const end = this.editorElement.selectionEnd;
-      const text = this.editorElement.value;
-
-      this.editorElement.value =
-        text.substring(0, start) + markdown + text.substring(end);
-
-      // Set cursor position after inserted text
-      const newPosition = start + markdown.length;
-      this.editorElement.setSelectionRange(newPosition, newPosition);
+      // Use execCommand for proper undo support
+      // This ensures CMD+Z works correctly
+      document.execCommand('insertText', false, markdown);
     }
     // Otherwise, let default paste behavior handle plain text
   }
