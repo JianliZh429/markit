@@ -92,14 +92,8 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 
 ### 📋 Planned Features
 
-#### v0.2.0 (Q3 2026) - Productivity
-- ✅ Word count and reading time
-- ✅ Export to HTML
-- ~~Print support~~ (Completed via HTML export - users can print HTML to PDF using browser)
-- [ ] Multiple tabs for multiple files (Moved to future)
-
 #### v0.3.0 (Q4 2026) - Advanced Editing
-- [ ] Markdown table editor
+- ✅ Markdown table editor
 - [ ] Image drag-and-drop
 - [ ] Image upload to cloud storage
 - [ ] Link checker
@@ -177,12 +171,17 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 
 ## Key Metrics
 
-### Current Status (v0.1.0)
-- **Version:** 0.1.0
+### Current Status (v0.3.0)
+- **Version:** 0.3.0
 - **Test Coverage:** ~40% overall
 - **Test Count:** 139 passing tests
 - **TypeScript Coverage:** 100%
-- **Platforms:** macOS (x64/arm64), Linux (x64)
+- **Platforms:** macOS (x64/arm64), Linux
+
+### Completed in v0.3.0
+- Markdown table editor with visual insertion dialog
+- Undo/redo support for table insertion
+- Keyboard shortcut (`Cmd/Ctrl + Alt + T`) (x64)
 
 ### Performance Targets
 - **Startup Time:** < 2 seconds

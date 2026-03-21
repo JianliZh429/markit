@@ -9,8 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned for v0.2.0
-- Multiple tabs for multiple files
+### Planned for v0.3.0
+- Image drag-and-drop
+- Image upload to cloud storage
+- Link checker
+- Spell checker integration
+
+---
+
+## [0.3.0] - March 21, 2026
+
+### ✨ Added
+
+#### Markdown Table Editor (NEW)
+- **Insert Table Dialog** - Visual table creation with configurable rows, columns, and header text
+- **Menu Item** - Edit → Insert Table...
+- **Keyboard Shortcut** - `Cmd/Ctrl + Alt + T`
+- **Undo/Redo Support** - Full integration with browser undo/redo (`Cmd+Z` / `Cmd+Y`)
+- **Auto-generated Content** - Tables include placeholder text (Cell row-col format)
+- **Table Size Limits** - Up to 20 rows and 10 columns
+
+#### How to Insert a Table
+1. Press `Cmd/Ctrl + Alt + T` or go to Edit → Insert Table...
+2. Configure table size (rows, columns, header text)
+3. Click "Insert Table" → Markdown table inserted at cursor
+
+#### Example Output
+```markdown
+| Header 1 | Header 2 | Header 3 |
+| --- | --- | --- |
+| Cell 1-1 | Cell 1-2 | Cell 1-3 |
+| Cell 2-1 | Cell 2-2 | Cell 2-3 |
+```
 
 ---
 
