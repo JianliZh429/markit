@@ -1,7 +1,7 @@
 {
   "name": "markit",
   "productName": "Markit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "./dist/markit/main/app.js",
   "scripts": {
     "build": "npm run build:main && npm run build:renderer && npm run build:worker && npm run copy:assets",
