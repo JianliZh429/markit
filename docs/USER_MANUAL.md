@@ -115,8 +115,8 @@ Markit offers two viewing modes:
 
 | Mode | Description | Toggle |
 |------|-------------|--------|
-| **Edit Mode** | Raw markdown editor with syntax highlighting | Cmd/Ctrl + E |
-| **Preview Mode** | Rendered markdown with live formatting | Cmd/Ctrl + E |
+| **Edit Mode** | Raw markdown editor with syntax highlighting | Cmd/Ctrl + / |
+| **Preview Mode** | Rendered markdown with live formatting | Cmd/Ctrl + / |
 
 ### Smart Paste
 
@@ -215,7 +215,7 @@ When pasting content:
 | `Cmd/Ctrl + A` | Select All |
 | `Cmd/Ctrl + Z` | Undo |
 | `Cmd/Ctrl + Y` | Redo |
-| `Cmd/Ctrl + E` | Toggle Edit/Preview Mode |
+| `Cmd/Ctrl + /` | Toggle Edit/Preview Mode |
 
 ### Navigation
 

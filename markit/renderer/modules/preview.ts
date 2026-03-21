@@ -35,6 +35,11 @@ export class PreviewModule {
       stateManager.set("previewScrollTop", this.previewElement.scrollTop);
     });
 
+    // Track mouse position for line highlighting and cursor sync
+    this.previewElement.addEventListener("mousemove", (event) => {
+      this.handleMouseMove(event);
+    });
+
     // Handle paste in preview mode
     this.previewElement.addEventListener("paste", (event) => {
       this.handlePaste(event);
@@ -56,6 +61,132 @@ export class PreviewModule {
         debouncedSync();
       }
     });
+  }
+
+  /**
+   * Handle mouse move to track current line
+   */
+  private handleMouseMove(event: MouseEvent): void {
+    const line = this.getLineNumberAtMouse(event);
+    // Store the line number for later use when switching modes
+    stateManager.set('previewHoverLine', line);
+  }
+
+  /**
+   * Get line number at mouse position using element text matching
+   * Maps hovered HTML element to markdown source line
+   */
+  private getLineNumberAtMouse(event: MouseEvent): number {
+    // Get the element at mouse position
+    const target = event.target as HTMLElement;
+    
+    // Find the closest block-level element that contains actual text
+    const blockElement = target.closest('p, li, h1, h2, h3, h4, h5, h6, blockquote, pre, code, tr, td, th');
+    
+    if (blockElement) {
+      // Get the text content of this element
+      const elementText = blockElement.textContent?.trim() || '';
+      
+      if (elementText) {
+        // Get the markdown content from shadow (source of truth)
+        const markdownContent = this.shadowMarkdown || '';
+        const markdownLines = markdownContent.split('\n');
+        
+        // Search for this text in markdown lines
+        for (let i = 0; i < markdownLines.length; i++) {
+          const line = markdownLines[i].trim();
+          // Check for partial match (at least 10 chars to avoid false positives)
+          if (line.length >= 10 && elementText.length >= 10) {
+            // Check if lines share significant common text
+            const commonText = this.findCommonText(line, elementText);
+            if (commonText.length >= 10) {
+              return i;
+            }
+          }
+        }
+      }
+    }
+    
+    // Fallback: use caret range method
+    return this.getLineNumberFromCaret(event);
+  }
+
+  /**
+   * Find common text between two strings (ignoring markdown formatting)
+   */
+  private findCommonText(str1: string, str2: string): string {
+    // Remove markdown formatting for comparison
+    const clean1 = str1.replace(/[`*_~\[\]()]/g, '');
+    const clean2 = str2.replace(/[`*_~\[\]()]/g, '');
+    
+    // Find longest common substring
+    let longest = '';
+    for (let i = 0; i < clean1.length; i++) {
+      for (let j = i + 10; j <= clean1.length; j++) {
+        const substr = clean1.substring(i, j);
+        if (clean2.includes(substr) && substr.length > longest.length) {
+          longest = substr;
+        }
+      }
+    }
+    
+    return longest;
+  }
+
+  /**
+   * Get line number from caret position (fallback method)
+   */
+  private getLineNumberFromCaret(event: MouseEvent): number {
+    const range = document.caretRangeFromPoint(event.clientX, event.clientY);
+    
+    if (!range) {
+      return this.calculateLineFromYPosition(event.clientY);
+    }
+    
+    const textNode = range.startContainer;
+    
+    let currentNode: Node | null = textNode;
+    while (currentNode && currentNode !== this.previewElement) {
+      currentNode = currentNode.parentNode;
+    }
+    
+    if (!currentNode) {
+      return this.calculateLineFromYPosition(event.clientY);
+    }
+    
+    const walker = document.createTreeWalker(
+      this.previewElement,
+      NodeFilter.SHOW_TEXT,
+      null,
+    );
+    
+    let charCount = 0;
+    let node: Node | null;
+    
+    while ((node = walker.nextNode())) {
+      if (node === textNode) {
+        charCount += range.startOffset;
+        break;
+      }
+      charCount += node.textContent?.length || 0;
+    }
+    
+    const markdownContent = this.shadowMarkdown || this.previewElement.innerText || '';
+    const textBefore = markdownContent.substring(0, charCount);
+    const lineNumber = (textBefore.match(/\n/g) || []).length;
+    
+    return Math.max(0, lineNumber);
+  }
+
+  /**
+   * Fallback: calculate line from Y position
+   */
+  private calculateLineFromYPosition(clientY: number): number {
+    const containerRect = this.previewElement.getBoundingClientRect();
+    const scrollTop = this.previewElement.scrollTop;
+    const relativeY = clientY - containerRect.top + scrollTop;
+    const lineHeight = parseFloat(getComputedStyle(this.previewElement).lineHeight) || 24;
+    return Math.max(0, Math.floor(relativeY / lineHeight));
   }
 
   private async handlePaste(event: ClipboardEvent): Promise<void> {
@@ -204,6 +335,7 @@ export class PreviewModule {
     const html = this.markdownService.parse(markdown);
     this.previewElement.innerHTML = html;
     this.markdownContent = markdown;
+    this.shadowMarkdown = markdown;  // Store markdown source for line mapping
   }
   /**
    * Get plain text content (markdown source)
@@ -293,6 +425,26 @@ export class PreviewModule {
       range.startContainer,
       range.startOffset,
     );
+  }
+
+  /**
+   * Get current cursor line number
+   */
+  getCursorLine(): number {
+    const text = this.previewElement.innerText || "";
+    const offset = this.getCursorOffset();
+    const lines = text.substring(0, offset).split("\n");
+    return lines.length - 1;
+  }
+
+  /**
+   * Set cursor to specific line
+   */
+  setCursorLine(line: number): void {
+    const text = this.previewElement.innerText || "";
+    const offset = this.lineColumnToOffset(text, line, 0);
+    this.restoreCursorPosition(offset);
+    this.centerCursorInView();
   }
 
   /**

@@ -150,6 +150,8 @@ export class EditorModule {
   setCursorLine(line: number): void {
     const offset = this.lineToOffset(line);
     this.editorElement.setSelectionRange(offset, offset);
+    // Also scroll to make the line visible
+    this.scrollToLine(line);
   }
 
   /**
