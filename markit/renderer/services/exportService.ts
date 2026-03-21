@@ -34,8 +34,8 @@ export class ExportService {
   <title>${this.escapeHtml(title)}</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      line-height: 1.6;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, 'Noto Sans CJK SC', 'Noto Sans CJK TC', 'Noto Sans CJK JP', 'Noto Sans CJK KR', sans-serif;
+      line-height: 1.8;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
@@ -121,14 +121,76 @@ export class ExportService {
       border: 0;
     }
     @media print {
-      body { 
-        padding: 0;
-        max-width: none;
-      }
-      a { text-decoration: none; }
       @page {
         size: A4;
         margin: 20mm;
+      }
+      body { 
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #000;
+        background: #fff;
+        font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans CJK TC', 'Noto Sans CJK JP', 'Noto Sans CJK KR', 'SimSun', sans-serif !important;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+        page-break-inside: avoid;
+      }
+      h1 { font-size: 18pt; }
+      h2 { font-size: 16pt; }
+      h3 { font-size: 14pt; }
+      h4 { font-size: 12pt; }
+      h5 { font-size: 11pt; }
+      h6 { font-size: 10pt; }
+      p {
+        orphans: 3;
+        widows: 3;
+      }
+      pre, code {
+        font-size: 9pt;
+        background: #f5f5f5 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        page-break-inside: avoid;
+      }
+      blockquote {
+        page-break-inside: avoid;
+        border-left: 3px solid #ccc !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      table {
+        page-break-inside: avoid;
+      }
+      table th, table td {
+        font-size: 9pt;
+      }
+      img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+      }
+      a {
+        color: #000;
+        text-decoration: underline;
+      }
+      a[href]:after {
+        content: " (" attr(href) ")";
+        font-size: 8pt;
+      }
+      hr {
+        border-top: 1px solid #000;
+        background: none;
+      }
+      /* Hide elements not needed in print */
+      .no-print {
+        display: none !important;
       }
     }
   </style>

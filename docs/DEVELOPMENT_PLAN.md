@@ -93,8 +93,8 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 ### 📋 Planned Features
 
 #### v0.2.0 (Q3 2026) - Productivity
-- ✅  Word count and reading time
-- [ ] Export to PDF/HTML
+- ✅ Word count and reading time
+- ✅ Export to HTML
 - [ ] Print support
 - [ ] Multiple tabs for multiple files
 
