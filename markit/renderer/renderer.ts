@@ -14,6 +14,7 @@ import { AutosaveModule } from "./modules/autosave.js";
 import { TocModule } from "./modules/toc.js";
 import { WordCountModule } from "./modules/wordCount.js";
 import { ExportService } from "./services/exportService.js";
+import { TableEditorModule } from "./modules/tableEditor.js";
 
 // Get electron API from window
 const {
@@ -1243,6 +1244,60 @@ document.addEventListener("keydown", (event) => {
 
 ipcOn("export-document", () => {
   showExportModal();
+});
+
+ipcOn("insert-table", () => {
+  showInsertTableModal();
+});
+
+// Insert Table Modal
+const $insertTableModal = document.getElementById("insert-table-modal") as HTMLDivElement;
+const $insertTableCloseBtn = document.getElementById("insert-table-close-btn") as HTMLButtonElement;
+const $insertTableCancelBtn = document.getElementById("insert-table-cancel-btn") as HTMLButtonElement;
+const $insertTableConfirmBtn = document.getElementById("insert-table-confirm-btn") as HTMLButtonElement;
+const $tableRows = document.getElementById("table-rows") as HTMLInputElement;
+const $tableColumns = document.getElementById("table-columns") as HTMLInputElement;
+const $tableHeader = document.getElementById("table-header") as HTMLInputElement;
+
+// Initialize table editor
+const tableEditor = new TableEditorModule($editor);
+
+function showInsertTableModal(): void {
+  $insertTableModal.style.display = "flex";
+}
+
+function hideInsertTableModal(): void {
+  $insertTableModal.style.display = "none";
+}
+
+function insertTable(): void {
+  const rows = parseInt($tableRows.value, 10) || 3;
+  const columns = parseInt($tableColumns.value, 10) || 3;
+  const headerText = $tableHeader.value || 'Header';
+
+  hideInsertTableModal();
+
+  tableEditor.insertTable({
+    rows: Math.min(Math.max(rows, 1), 20),
+    columns: Math.min(Math.max(columns, 1), 10),
+    headerText
+  });
+}
+
+$insertTableCloseBtn.addEventListener("click", hideInsertTableModal);
+$insertTableCancelBtn.addEventListener("click", hideInsertTableModal);
+$insertTableConfirmBtn.addEventListener("click", insertTable);
+
+$insertTableModal.addEventListener("click", (event) => {
+  if (event.target === $insertTableModal) {
+    hideInsertTableModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && $insertTableModal.style.display === "flex") {
+    hideInsertTableModal();
+  }
 });
 
 // Initialize

@@ -96,7 +96,7 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 - ✅ Word count and reading time
 - ✅ Export to HTML
 - ~~Print support~~ (Completed via HTML export - users can print HTML to PDF using browser)
-- [ ] Multiple tabs for multiple files
+- [ ] Multiple tabs for multiple files (Moved to future)
 
 #### v0.3.0 (Q4 2026) - Advanced Editing
 - [ ] Markdown table editor
@@ -104,6 +104,13 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 - [ ] Image upload to cloud storage
 - [ ] Link checker
 - [ ] Spell checker integration
+
+#### v0.4.0 (Future) - Collaboration & Advanced Features
+- [ ] Multiple tabs for multiple files
+- [ ] Real-time collaboration
+- [ ] Document sharing
+- [ ] Comment and suggestion mode
+- [ ] Version history
 
 #### v0.4.0 (Future) - Collaboration
 - [ ] Real-time collaboration
