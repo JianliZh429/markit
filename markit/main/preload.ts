@@ -92,6 +92,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "open-settings",
       "show-keyboard-shortcuts",
       "toggle-toc",
+      "toggle-word-count",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`

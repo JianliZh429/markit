@@ -194,6 +194,13 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         accelerator: "CommandOrControl+Shift+T",
       },
       {
+        label: "Show / Hide Word Count",
+        click: () => {
+          win.webContents.send("toggle-word-count");
+        },
+        accelerator: "CommandOrControl+Shift+W",
+      },
+      {
         label: "View / Edit Mode",
         click: () => {
           win.webContents.send("toggle-mode");
