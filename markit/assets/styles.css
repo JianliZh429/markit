@@ -1121,6 +1121,27 @@ mark.current {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
+.settings-input {
+  width: 150px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast);
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.settings-input[type="number"] {
+  width: 80px;
+}
+
 .settings-range {
   width: 150px;
   height: 6px;

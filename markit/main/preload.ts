@@ -94,6 +94,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "toggle-toc",
       "toggle-word-count",
       "export-document",
+      "insert-table",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`

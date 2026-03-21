@@ -154,6 +154,16 @@ const editMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         accelerator: "CommandOrControl+F",
       },
       {
+        type: "separator",
+      },
+      {
+        label: "Insert Table...",
+        click: () => {
+          win.webContents.send("insert-table");
+        },
+        accelerator: "CommandOrControl+Alt+T",
+      },
+      {
         label: "Find in Files",
         click: () => {
           win.webContents.send("global-search");
