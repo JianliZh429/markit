@@ -15,6 +15,7 @@ export interface AppState {
   editorSelectionEnd: number;
   previewScrollTop: number;
   previewCursorOffset: number;
+  previewHoverLine: number;
   isExplorerVisible: boolean;
   isLocalSearchVisible: boolean;
   isGlobalSearchVisible: boolean;
@@ -37,6 +38,7 @@ class StateManager {
       editorSelectionEnd: 0,
       previewScrollTop: 0,
       previewCursorOffset: 0,
+      previewHoverLine: -1,
       isExplorerVisible: true,
       isLocalSearchVisible: false,
       isGlobalSearchVisible: false,

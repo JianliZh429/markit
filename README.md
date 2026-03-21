@@ -234,7 +234,7 @@ See [**Keyboard Shortcuts**](docs/KEYBOARD_SHORTCUTS.md) for the complete list.
 - `Cmd/Ctrl + A` - Select all content
 
 ### View & Navigation
-- `Cmd/Ctrl + E` - Toggle between edit and preview mode
+- `Cmd/Ctrl + /` - Toggle between edit and preview mode
 - `Cmd/Ctrl + B` - Toggle file explorer panel
 - `Cmd/Ctrl + Shift + T` - Toggle table of contents panel
 - `Cmd/Ctrl + F` - Local search within current document

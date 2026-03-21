@@ -504,11 +504,23 @@ body.theme-dark #word-count-bar {
   user-select: text;
   -webkit-user-select: text;
   -ms-user-select: text;
-  
+
+  /* Highlight all block-level elements on hover */
+  p, li, h1, h2, h3, h4, h5, h6, blockquote, pre, table, tr, code {
+    padding: 2px 4px;
+    border-radius: var(--border-radius-sm);
+    transition: background-color var(--transition-fast);
+  }
+
+  p:hover, li:hover, h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover, 
+  blockquote:hover, pre:hover, tr:hover, code:hover {
+    background-color: var(--hover-bg);
+  }
+
   p {
     width: 100%;
     margin: var(--spacing-md) 0;
-    
+
     img {
       max-width: 100%;
       height: auto;
@@ -517,6 +529,14 @@ body.theme-dark #word-count-bar {
   }
   h1:first-child {
     margin-top: 0;
+  }
+
+  ul, ol {
+    padding-left: var(--spacing-lg);
+    
+    li {
+      margin: var(--spacing-xs) 0;
+    }
   }
 }
 
