@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <title>Markdown Editor</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div id="explorer">
+        <div id="global-search" style="display: none">
+          <input
+            id="global-search-input"
+            type="text"
+            placeholder="Input the keyworks you want to search"
+          />
+        </div>
+        <ul id="tree"></ul>
+      </div>
+      <div id="toc-panel" class="toc-panel toc-hidden">
+        <div class="toc-panel-header">
+          <span class="toc-panel-title">Table of Contents</span>
+          <button id="toc-close-btn" class="toc-close-btn" aria-label="Close TOC">&times;</button>
+        </div>
+        <div id="toc-container" class="toc-container"></div>
+      </div>
+      <div id="main">
+        <div id="mode-indicator" title="Current mode">
+          <span id="mode-icon">✏️</span>
+        </div>
+        <div id="local-search" style="display: none">
+          <input
+            id="local-search-input"
+            type="text"
+            placeholder="Input the keyworks you want to search"
+          />
+          <div id="local-search-result"></div>
+        </div>
+        <textarea id="editor" placeholder="Please input here"></textarea>
+        <div id="previewer" style="display: none"></div>
+        <div id="global-search-result" style="display: none"></div>
+      </div>
+    </div>
+
+    <!-- Recent Files Switcher Modal -->
+    <div id="recent-files-modal" class="recent-files-modal" style="display: none;">
+      <div class="recent-files-modal-content">
+        <div class="recent-files-modal-header">
+          <span class="recent-files-modal-title">Recent Files</span>
+          <span class="recent-files-modal-hint">Ctrl/Cmd + Tab to navigate (folder root required)</span>
+        </div>
+        <ul id="recent-files-list" class="recent-files-list"></ul>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal" style="display: none;">
+      <div class="settings-modal-content">
+        <div class="settings-modal-header">
+          <span class="settings-modal-title">Settings</span>
+          <button id="settings-close-btn" class="settings-close-btn" aria-label="Close settings">&times;</button>
+        </div>
+        <div class="settings-modal-body">
+          <!-- Theme Settings -->
+          <div class="settings-section">
+            <h3 class="settings-section-title">Appearance</h3>
+            <div class="settings-row">
+              <label for="setting-theme">Theme</label>
+              <select id="setting-theme" class="settings-select">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto (System)</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Font Settings -->
+          <div class="settings-section">
+            <h3 class="settings-section-title">Editor</h3>
+            <div class="settings-row">
+              <label for="setting-font-family">Font Family</label>
+              <select id="setting-font-family" class="settings-select">
+                <option value="monospace">Monospace</option>
+                <option value="system-ui">System UI</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <label for="setting-font-size">Font Size: <span id="setting-font-size-value">14</span>px</label>
+              <input type="range" id="setting-font-size" class="settings-range" min="10" max="24" value="14" />
+            </div>
+          </div>
+          
+          <!-- Autosave Settings -->
+          <div class="settings-section">
+            <h3 class="settings-section-title">Autosave</h3>
+            <div class="settings-row">
+              <label for="setting-autosave-enabled">Enable Autosave</label>
+              <input type="checkbox" id="setting-autosave-enabled" class="settings-checkbox" />
+            </div>
+            <div class="settings-row">
+              <label for="setting-autosave-interval">Autosave Interval: <span id="setting-autosave-interval-value">30</span>s</label>
+              <input type="range" id="setting-autosave-interval" class="settings-range" min="5" max="300" step="5" value="30" />
+            </div>
+          </div>
+        </div>
+        <div class="settings-modal-footer">
+          <button id="settings-reset-btn" class="settings-btn settings-btn-secondary">Reset to Defaults</button>
+          <button id="settings-save-btn" class="settings-btn settings-btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="keyboard-shortcuts-modal" class="keyboard-shortcuts-modal" style="display: none;">
+      <div class="keyboard-shortcuts-modal-content">
+        <div class="keyboard-shortcuts-modal-header">
+          <span class="keyboard-shortcuts-modal-title">Keyboard Shortcuts</span>
+          <button id="keyboard-shortcuts-close-btn" class="keyboard-shortcuts-close-btn" aria-label="Close shortcuts">&times;</button>
+        </div>
+        <div class="keyboard-shortcuts-modal-body">
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">File Operations</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>N</kbd></span>
+              <span class="shortcut-desc">New File</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>O</kbd></span>
+              <span class="shortcut-desc">Open File</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>D</kbd></span>
+              <span class="shortcut-desc">Open Folder</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>S</kbd></span>
+              <span class="shortcut-desc">Save File</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Shift</kbd> + <kbd>Cmd/Ctrl</kbd> + <kbd>S</kbd></span>
+              <span class="shortcut-desc">Save As</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>A</kbd></span>
+              <span class="shortcut-desc">Select All</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">View & Navigation</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>E</kbd></span>
+              <span class="shortcut-desc">Toggle Edit/Preview Mode</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>B</kbd></span>
+              <span class="shortcut-desc">Toggle File Explorer</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Tab</kbd></span>
+              <span class="shortcut-desc">Switch Recent Files</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>,</kbd></span>
+              <span class="shortcut-desc">Open Settings</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">Search</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>F</kbd></span>
+              <span class="shortcut-desc">Local Search</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd></span>
+              <span class="shortcut-desc">Global Search</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>F3</kbd> or <kbd>Cmd/Ctrl</kbd> + <kbd>G</kbd></span>
+              <span class="shortcut-desc">Find Next Match</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Shift</kbd> + <kbd>F3</kbd> or <kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>G</kbd></span>
+              <span class="shortcut-desc">Find Previous Match</span>
+            </div>
+          </div>
+
+          <div class="shortcuts-section">
+            <h3 class="shortcuts-section-title">Window</h3>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>0</kbd></span>
+              <span class="shortcut-desc">Reset Zoom</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>+</kbd></span>
+              <span class="shortcut-desc">Zoom In</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>-</kbd></span>
+              <span class="shortcut-desc">Zoom Out</span>
+            </div>
+          </div>
+        </div>
+        <div class="keyboard-shortcuts-modal-footer">
+          <p class="shortcuts-hint">Press <kbd>Esc</kbd> to close</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="./renderer/renderer.js"></script>
+  </body>
+</html>
