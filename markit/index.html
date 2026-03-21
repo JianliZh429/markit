@@ -226,6 +226,25 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
       </div>
     </div>
 
+    <!-- Export Modal -->
+    <div id="export-modal" class="settings-modal" style="display: none;">
+      <div class="settings-modal-content">
+        <div class="settings-modal-header">
+          <span class="settings-modal-title">Export to HTML</span>
+          <button id="export-close-btn" class="settings-close-btn" aria-label="Close export">&times;</button>
+        </div>
+        <div class="settings-modal-body">
+          <div class="settings-section">
+            <p class="settings-hint">Export your markdown as a styled HTML file. You can open it in any browser and print to PDF if needed.</p>
+          </div>
+        </div>
+        <div class="settings-modal-footer">
+          <button id="export-cancel-btn" class="settings-btn settings-btn-secondary">Cancel</button>
+          <button id="export-confirm-btn" class="settings-btn settings-btn-primary">Export HTML</button>
+        </div>
+      </div>
+    </div>
+
     <script src="./renderer/renderer.js"></script>
   </body>
 </html>

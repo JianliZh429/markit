@@ -13,6 +13,7 @@ import { FileTreeModule } from "./modules/fileTree.js";
 import { AutosaveModule } from "./modules/autosave.js";
 import { TocModule } from "./modules/toc.js";
 import { WordCountModule } from "./modules/wordCount.js";
+import { ExportService } from "./services/exportService.js";
 
 // Get electron API from window
 const {
@@ -23,6 +24,7 @@ const {
   searchInFiles,
   parseMarkdown,
   setMarkdownBaseUrl,
+  export: ipcExport,
 } = (window as any).electronAPI;
 
 // Initialize services
@@ -31,6 +33,7 @@ const markdownService = new MarkdownService({
   parseMarkdown,
   setMarkdownBaseUrl,
 });
+const exportService = new ExportService(parseMarkdown);
 
 // Default settings (can be overridden by main process via IPC)
 const DEFAULT_SETTINGS = {
@@ -1179,6 +1182,67 @@ document.addEventListener("keydown", (event) => {
 
 ipcOn("show-keyboard-shortcuts", () => {
   showKeyboardShortcutsModal();
+});
+
+// Export Modal
+const $exportModal = document.getElementById("export-modal") as HTMLDivElement;
+const $exportCloseBtn = document.getElementById("export-close-btn") as HTMLButtonElement;
+const $exportCancelBtn = document.getElementById("export-cancel-btn") as HTMLButtonElement;
+const $exportConfirmBtn = document.getElementById("export-confirm-btn") as HTMLButtonElement;
+
+function showExportModal(): void {
+  $exportModal.style.display = "flex";
+}
+
+function hideExportModal(): void {
+  $exportModal.style.display = "none";
+}
+
+async function exportDocument(): Promise<void> {
+  const markdown = editorModule.getContent();
+  const fullFileName = $title.textContent || 'exported-document';
+  
+  // Extract just the filename from the full path
+  const fileName = fullFileName.split(/[\\/]/).pop()?.replace(/\.md$/, '') || 'exported-document';
+
+  hideExportModal();
+
+  // Export to HTML with styled content
+  const html = await exportService.exportToHtml(markdown, fileName);
+
+  try {
+    const filePath = await ipcExport.toHtml(html, fileName + '.html');
+    if (filePath) {
+      console.log('Exported to:', filePath);
+    } else {
+      // IPC canceled, use download fallback
+      exportService.downloadHtml(html, fileName + '.html');
+    }
+  } catch (error) {
+    // IPC failed, use download fallback
+    console.log('IPC export failed, using download:', error);
+    exportService.downloadHtml(html, fileName + '.html');
+  }
+}
+
+$exportCloseBtn.addEventListener("click", hideExportModal);
+$exportCancelBtn.addEventListener("click", hideExportModal);
+$exportConfirmBtn.addEventListener("click", exportDocument);
+
+$exportModal.addEventListener("click", (event) => {
+  if (event.target === $exportModal) {
+    hideExportModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && $exportModal.style.display === "flex") {
+    hideExportModal();
+  }
+});
+
+ipcOn("export-document", () => {
+  showExportModal();
 });
 
 // Initialize
