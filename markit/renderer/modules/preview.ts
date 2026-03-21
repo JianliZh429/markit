@@ -35,6 +35,11 @@ export class PreviewModule {
       stateManager.set("previewScrollTop", this.previewElement.scrollTop);
     });
 
+    // Track mouse position for line highlighting and cursor sync
+    this.previewElement.addEventListener("mousemove", (event) => {
+      this.handleMouseMove(event);
+    });
+
     // Handle paste in preview mode
     this.previewElement.addEventListener("paste", (event) => {
       this.handlePaste(event);
@@ -56,6 +61,76 @@ export class PreviewModule {
         debouncedSync();
       }
     });
+  }
+
+  /**
+   * Handle mouse move to track current line
+   */
+  private handleMouseMove(event: MouseEvent): void {
+    const line = this.getLineNumberAtMouse(event);
+    if (line >= 0) {
+      // Store the line number for later use when switching modes
+      stateManager.set('previewHoverLine', line);
+    }
+  }
+
+  /**
+   * Get line number at mouse position using event target
+   */
+  private getLineNumberAtMouse(event: MouseEvent): number {
+    const target = event.target as HTMLElement;
+    
+    // Find the closest block-level parent element
+    const blockElement = target.closest('p, li, h1, h2, h3, h4, h5, h6, blockquote, pre, tr');
+    
+    if (blockElement && blockElement.parentElement === this.previewElement) {
+      // Direct child of previewer - count elements before it
+      const siblings = Array.from(this.previewElement.children);
+      const index = siblings.indexOf(blockElement);
+      if (index >= 0) {
+        // Count lines before this element
+        let lineCount = 0;
+        for (let i = 0; i < index; i++) {
+          const sibling = siblings[i] as HTMLElement;
+          const tag = sibling.tagName.toLowerCase();
+          // Block elements that take full lines
+          if (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'table'].includes(tag)) {
+            lineCount++;
+          } else if (tag === 'ul' || tag === 'ol') {
+            lineCount += sibling.querySelectorAll('li').length;
+          }
+        }
+        return lineCount;
+      }
+    }
+    
+    // For nested elements (like li inside ul), calculate from text position
+    if (blockElement) {
+      const allText = this.previewElement.innerText || "";
+      const elementText = blockElement.textContent || "";
+      const elementTextTrimmed = elementText.trim();
+      
+      // Find where this text appears in the full text
+      const textBefore = allText.split(elementTextTrimmed)[0];
+      if (textBefore !== undefined && textBefore.length >= 0) {
+        const linesBefore = textBefore.split('\n');
+        return linesBefore.length - 1;
+      }
+    }
+    
+    // Fallback: calculate based on Y position and line height
+    return this.calculateLineFromYPosition(event.clientY);
+  }
+
+  /**
+   * Fallback: calculate line from Y position
+   */
+  private calculateLineFromYPosition(clientY: number): number {
+    const containerRect = this.previewElement.getBoundingClientRect();
+    const scrollTop = this.previewElement.scrollTop;
+    const relativeY = clientY - containerRect.top + scrollTop;
+    const lineHeight = parseFloat(getComputedStyle(this.previewElement).lineHeight) || 24;
+    return Math.floor(relativeY / lineHeight);
   }
 
   private async handlePaste(event: ClipboardEvent): Promise<void> {

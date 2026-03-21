@@ -84,11 +84,12 @@ describe("PreviewModule", () => {
   describe("constructor", () => {
     it("should initialize with provided element and service", () => {
       expect(previewModule).toBeDefined();
-      expect(mockElement.addEventListener).toHaveBeenCalledTimes(4);
+      expect(mockElement.addEventListener).toHaveBeenCalledTimes(5);
     });
 
     it("should set up event listeners", () => {
       expect(mockElement.addEventListener).toHaveBeenCalledWith("scroll", expect.any(Function));
+      expect(mockElement.addEventListener).toHaveBeenCalledWith("mousemove", expect.any(Function));
       expect(mockElement.addEventListener).toHaveBeenCalledWith("paste", expect.any(Function));
       expect(mockElement.addEventListener).toHaveBeenCalledWith("keydown", expect.any(Function));
       expect(mockElement.addEventListener).toHaveBeenCalledWith("input", expect.any(Function));

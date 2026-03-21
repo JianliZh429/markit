@@ -201,14 +201,18 @@ function previewMode(): void {
 /**
  * Switch to edit mode
  * FIX: Sync by line number instead of character offset
- * because markdown and HTML have different lengths
+ * Uses mouse hover line if available, otherwise cursor line
  */
 function editMode(): void {
   // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
 
   // Get current line from preview mode
-  const previewLine = previewModule.getCursorLine();
+  // Prefer hover line (mouse position) if available, otherwise use cursor line
+  let previewLine = stateManager.get('previewHoverLine') as number | null;
+  if (previewLine === null || previewLine < 0) {
+    previewLine = previewModule.getCursorLine();
+  }
 
   // Get content from editor (preview is read-only, no changes)
   const plainText = editorModule.getContent();
@@ -219,7 +223,7 @@ function editMode(): void {
   editorModule.show();
 
   // Sync by line number
-  if (previewLine >= 0) {
+  if (previewLine !== null && previewLine >= 0) {
     editorModule.setCursorLine(previewLine);
   }
 
