@@ -1381,3 +1381,14 @@ body.theme-dark kbd {
   border-color: #4e4e52;
 }
 
+/* Export Modal - uses same styles as settings modal */
+#export-modal {
+  /* Inherits from settings-modal */
+}
+
+.settings-hint {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin: var(--spacing-sm) 0;
+}
+

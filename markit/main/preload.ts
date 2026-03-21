@@ -93,6 +93,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "show-keyboard-shortcuts",
       "toggle-toc",
       "toggle-word-count",
+      "export-document",
     ];
     if (validChannels.includes(channel)) {
       // Deliberately strip event as it includes `sender`
@@ -110,6 +111,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
     },
     update: async (partialSettings: unknown) => {
       return await ipcRenderer.invoke("update-settings", partialSettings);
+    },
+  },
+
+  // Export API
+  export: {
+    toHtml: async (html: string, defaultFileName?: string): Promise<string | null> => {
+      return await ipcRenderer.invoke("export-html", html, defaultFileName);
     },
   },
 

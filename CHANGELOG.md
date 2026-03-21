@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Planned for v0.2.0
+- Multiple tabs for multiple files
+
+---
+
+## [0.2.0] - March 21, 2026
+
+### ✨ Added
+
+#### Export to HTML (NEW)
+- **Export Menu Item** - File → Export to HTML... or `Cmd/Ctrl+E`
+- **Styled HTML Output** - Professional GitHub-style formatting
+- **CJK Font Support** - Full support for Chinese, Japanese, Korean characters
+- **Print-Ready** - A4 page size with proper margins for PDF export
+- **Smart Filename** - Uses opened file's name as default
+- **Fallback Download** - Downloads as blob if file dialog fails
+
+#### How to Export to PDF
+1. Export markdown to HTML (`Cmd/Ctrl+E`)
+2. Open HTML file in any browser
+3. Use browser's Print dialog (`Cmd/Ctrl+P`)
+4. Select "Save as PDF" as destination
+
+### 🔧 Changed
+
+- **Print Support** - Removed native print feature; users can print HTML to PDF via browser
+
+---
+
 ## [0.1.0] - March 21, 2026
 
 ### 🎉 Major Release - Table of Contents & Unicode Support

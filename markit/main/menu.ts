@@ -93,6 +93,19 @@ const fileMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         },
         accelerator: "Shift+CommandOrControl+S",
       },
+      {
+        type: "separator",
+      },
+      {
+        label: "Export to HTML...",
+        click: () => {
+          win.webContents.send("export-document");
+        },
+        accelerator: "CommandOrControl+E",
+      },
+      {
+        type: "separator",
+      },
       isMac ? { role: "close" } : { role: "quit" },
     ],
   };

@@ -273,11 +273,42 @@ ipcMain.handle("update-settings", (_event: Electron.IpcMainInvokeEvent, partialS
   settings.updateSettings(partialSettings);
 });
 
+// Export to HTML
+ipcMain.handle("export-html", async (event: Electron.IpcMainInvokeEvent, html: string, defaultFileName: string): Promise<string | null> => {
+  try {
+    const result = await dialog.showSaveDialog({
+      title: "Export to HTML",
+      defaultPath: defaultFileName || "exported-document.html",
+      filters: [
+        { name: "HTML Files", extensions: ["html"] },
+        { name: "All Files", extensions: ["*"] }
+      ]
+    });
+
+    if (result.canceled || !result.filePath) {
+      return null;
+    }
+
+    await fsExtra.writeFile(result.filePath, html, "utf-8");
+    return result.filePath;
+  } catch (error) {
+    console.error("Export HTML error:", error);
+    return null;
+  }
+});
+
 // Register global shortcut for opening settings (Ctrl/Cmd + ,)
 app.whenReady().then(() => {
   globalShortcut.register("CommandOrControl+,", () => {
     if (win) {
       win.webContents.send("open-settings");
+    }
+  });
+  
+  // Register global shortcut for export (Ctrl/Cmd + E)
+  globalShortcut.register("CommandOrControl+E", () => {
+    if (win) {
+      win.webContents.send("export-document");
     }
   });
 });

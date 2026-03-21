@@ -33,6 +33,7 @@ A modern, cross-platform Markdown editor built with Electron and TypeScript. Mar
 ### Advanced Features
 - **Markdown extensions**: Support for emoji, code preview, and base URL handling
 - **Heading ID generation**: Anchor links for TOC navigation in preview mode
+- **Export to HTML**: Export styled HTML with CJK font support and print-ready formatting
 - **Keyboard shortcuts**: Comprehensive shortcuts for efficient workflow
 - **Autosave**: Automatic saving with configurable intervals
 - **Performance optimization**: LRU caching, content hash-based caching, and Web Workers
@@ -293,7 +294,7 @@ Jianli Zhang
 
 ---
 
-**Version**: 0.1.0
+**Version**: 0.2.0
 **Status**: Stable Release
 **Platforms**: macOS (Intel + Apple Silicon), Linux
 **Release Date**: March 21, 2026
