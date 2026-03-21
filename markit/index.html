@@ -19,6 +19,18 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
           />
         </div>
         <ul id="tree"></ul>
+        <div id="word-count-bar" class="word-count-bar">
+          <div class="word-count-row">
+            <div class="word-count-items">
+              <span id="word-count-words" class="word-count-item">0 words</span>
+              <span id="word-count-chars" class="word-count-item">0 chars</span>
+            </div>
+            <button id="word-count-toggle" class="word-count-toggle" aria-label="Toggle word count" title="Toggle word count">📊</button>
+          </div>
+          <div class="word-count-row" id="word-count-reading-time-row">
+            <span id="word-count-reading-time" class="word-count-item">~1 min read</span>
+          </div>
+        </div>
       </div>
       <div id="toc-panel" class="toc-panel toc-hidden">
         <div class="toc-panel-header">

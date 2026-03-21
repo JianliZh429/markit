@@ -12,6 +12,7 @@ import { SearchManager } from "./modules/searchManager.js";
 import { FileTreeModule } from "./modules/fileTree.js";
 import { AutosaveModule } from "./modules/autosave.js";
 import { TocModule } from "./modules/toc.js";
+import { WordCountModule } from "./modules/wordCount.js";
 
 // Get electron API from window
 const {
@@ -71,6 +72,14 @@ const $tocPanel = document.getElementById("toc-panel") as HTMLDivElement;
 const $tocContainer = document.getElementById("toc-container") as HTMLDivElement;
 const $tocCloseBtn = document.getElementById("toc-close-btn") as HTMLButtonElement;
 
+// Word Count elements
+const $wordCountBar = document.getElementById("word-count-bar") as HTMLDivElement;
+const $wordCountWords = document.getElementById("word-count-words") as HTMLSpanElement;
+const $wordCountChars = document.getElementById("word-count-chars") as HTMLSpanElement;
+const $wordCountReadingTime = document.getElementById("word-count-reading-time") as HTMLSpanElement;
+const $wordCountReadingTimeRow = document.getElementById("word-count-reading-time-row") as HTMLDivElement;
+const $wordCountToggle = document.getElementById("word-count-toggle") as HTMLButtonElement;
+
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService);
 const previewModule = new PreviewModule($previewer, markdownService);
@@ -82,6 +91,16 @@ const tocModule = new TocModule($tocPanel, $tocContainer, (id: string) => {
   scrollToSection(id);
 });
 
+// Initialize Word Count module
+const wordCountModule = new WordCountModule(
+  $wordCountBar,
+  $wordCountWords,
+  $wordCountChars,
+  $wordCountReadingTime,
+  $wordCountReadingTimeRow,
+  $wordCountToggle
+);
+
 // TOC panel close button
 $tocCloseBtn.addEventListener("click", () => {
   tocModule.hide();
@@ -89,11 +108,12 @@ $tocCloseBtn.addEventListener("click", () => {
   $explorer.style.display = "block";
 });
 
-// Update TOC when editor content changes
+// Update TOC and Word Count when editor content changes
 $editor.addEventListener("input", () => {
   if (tocModule.visible) {
     updateToc();
   }
+  wordCountModule.update(editorModule.getContent());
 });
 
 // Initialize autosave module
@@ -192,6 +212,9 @@ function previewMode(): void {
   // Update mode indicator
   updateModeIndicator();
 
+  // Update word count
+  wordCountModule.update(markdownContent);
+
   // Clear mode switching flag after a brief delay
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
@@ -232,6 +255,9 @@ function editMode(): void {
 
   // Update mode indicator
   updateModeIndicator();
+
+  // Update word count
+  wordCountModule.update(plainText);
 
   // Clear mode switching flag after a brief delay
   setTimeout(() => {
@@ -358,6 +384,9 @@ async function loadFile(filePath: string): Promise<void> {
       updateToc();
     }
 
+    // Update word count
+    wordCountModule.update(content);
+
     if (!stateManager.get("isEditMode")) {
       previewMode();
     }
@@ -391,6 +420,10 @@ function unloadFile(filePath: string): void {
   if ($title.textContent === filePath) {
     $title.textContent = "Markdown Editor";
     editorModule.setContent("");
+    
+    // Reset word count
+    wordCountModule.update("");
+    
     if (!stateManager.get("isEditMode")) {
       previewMode();
     }
@@ -606,6 +639,10 @@ ipcOn("toggle-toc", () => {
   toggleToc();
 });
 
+ipcOn("toggle-word-count", () => {
+  wordCountModule.toggle();
+});
+
 ipcOn("local-search", () => {
   if ($localSearch.style.display === "none") {
     $localSearch.style.display = "block";
@@ -791,6 +828,14 @@ async function loadFileContentOnly(filePath: string): Promise<void> {
     markdownService.setBaseUrl(filePath);
     const content = await fileService.loadFile(filePath);
     editorModule.setContent(content);
+
+    // Update TOC if visible
+    if (tocModule.visible) {
+      updateToc();
+    }
+
+    // Update word count
+    wordCountModule.update(content);
 
     if (!stateManager.get("isEditMode")) {
       previewMode();
