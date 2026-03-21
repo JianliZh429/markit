@@ -161,6 +161,17 @@ export class EditorModule {
   }
 
   /**
+   * Scroll to specific line without changing cursor position
+   */
+  scrollToLine(line: number): void {
+    const lineHeight = this.getLineHeight();
+    const targetY = line * lineHeight;
+    
+    // Scroll to bring the line into view
+    this.editorElement.scrollTop = targetY - (this.editorElement.clientHeight / 2) + (lineHeight / 2);
+  }
+
+  /**
    * Center the cursor in viewport
    */
   centerCursorInView(): void {

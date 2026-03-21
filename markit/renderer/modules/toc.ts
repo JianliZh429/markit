@@ -11,11 +11,13 @@ export interface TocItem {
 }
 
 export class TocModule {
+  private $tocPanel: HTMLElement;
   private $tocContainer: HTMLElement;
   private onTocItemClick: (id: string) => void;
   private isVisible: boolean = false;
 
-  constructor(tocContainer: HTMLElement, onTocItemClick: (id: string) => void) {
+  constructor(tocPanel: HTMLElement, tocContainer: HTMLElement, onTocItemClick: (id: string) => void) {
+    this.$tocPanel = tocPanel;
     this.$tocContainer = tocContainer;
     this.onTocItemClick = onTocItemClick;
   }
@@ -34,6 +36,11 @@ export class TocModule {
         const level = match[1].length;
         const text = match[2].trim();
         const id = this.slugify(text);
+
+        // Skip headings that result in empty IDs
+        if (!id) {
+          continue;
+        }
 
         const item: TocItem = { id, text, level };
 
@@ -113,15 +120,18 @@ export class TocModule {
   }
 
   /**
-   * Generate slug from text
+   * Generate slug from text (supports Unicode including CJK characters)
    */
   private slugify(text: string): string {
+    // First, try to preserve Unicode characters by using URL encoding for non-ASCII
+    // This ensures Chinese, Japanese, Korean, and other scripts work correctly
     return text
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
+      .trim()
+      .replace(/[^\p{L}\p{N}\s-]/gu, '') // Keep Unicode letters, numbers, spaces, hyphens
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-      .trim();
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
   }
 
   /**
@@ -129,8 +139,8 @@ export class TocModule {
    */
   public show(): void {
     this.isVisible = true;
-    this.$tocContainer.classList.add('toc-visible');
-    this.$tocContainer.classList.remove('toc-hidden');
+    this.$tocPanel.classList.add('toc-visible');
+    this.$tocPanel.classList.remove('toc-hidden');
   }
 
   /**
@@ -138,8 +148,8 @@ export class TocModule {
    */
   public hide(): void {
     this.isVisible = false;
-    this.$tocContainer.classList.add('toc-hidden');
-    this.$tocContainer.classList.remove('toc-visible');
+    this.$tocPanel.classList.add('toc-hidden');
+    this.$tocPanel.classList.remove('toc-visible');
   }
 
   /**

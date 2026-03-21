@@ -12,6 +12,17 @@ import { validatePath, showErrorDialog } from "./security";
 // Create Octokit instance here instead of passing the class
 const octokit = new Octokit();
 
+// Slugify function for generating heading IDs (Unicode-safe for CJK and other scripts)
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}\s-]/gu, '') // Keep Unicode letters, numbers, spaces, hyphens
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+}
+
 // Initialize marked with plugins once emojis are fetched
 let markedInitialized = false;
 async function initializeMarked(): Promise<void> {
@@ -24,7 +35,15 @@ async function initializeMarked(): Promise<void> {
         markedEmoji({
           emojis: response.data,
         }),
-      );
+      )
+      .use({
+        renderer: {
+          heading(token: { text: string; depth: number; tokens: any[] }): string {
+            const id = slugify(token.text);
+            return `<h${token.depth} id="${id}">${token.text}</h${token.depth}>\n`;
+          },
+        },
+      });
     markedInitialized = true;
   }
 }

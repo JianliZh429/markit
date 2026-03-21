@@ -66,10 +66,35 @@ const $main = document.getElementById("main") as HTMLDivElement;
 const $modeIndicator = document.getElementById("mode-indicator") as HTMLDivElement;
 const $modeIcon = document.getElementById("mode-icon") as HTMLSpanElement;
 
+// TOC Panel elements
+const $tocPanel = document.getElementById("toc-panel") as HTMLDivElement;
+const $tocContainer = document.getElementById("toc-container") as HTMLDivElement;
+const $tocCloseBtn = document.getElementById("toc-close-btn") as HTMLButtonElement;
+
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService);
 const previewModule = new PreviewModule($previewer, markdownService);
 const searchManager = new SearchManager($editor, $localSearchResult);
+
+// Initialize TOC module
+const tocModule = new TocModule($tocPanel, $tocContainer, (id: string) => {
+  // Handle TOC item click - scroll to section
+  scrollToSection(id);
+});
+
+// TOC panel close button
+$tocCloseBtn.addEventListener("click", () => {
+  tocModule.hide();
+  // Show Explorer when TOC is closed
+  $explorer.style.display = "block";
+});
+
+// Update TOC when editor content changes
+$editor.addEventListener("input", () => {
+  if (tocModule.visible) {
+    updateToc();
+  }
+});
 
 // Initialize autosave module
 const autosaveModule = new AutosaveModule(
@@ -220,6 +245,86 @@ function hideGlobalSearch(): void {
 }
 
 /**
+ * Scroll to section in editor or preview
+ */
+function scrollToSection(id: string): void {
+  // Skip if id is empty
+  if (!id) {
+    return;
+  }
+
+  const isEditMode = stateManager.get("isEditMode");
+
+  if (isEditMode) {
+    // In edit mode, scroll to the heading in the textarea
+    const content = editorModule.getContent();
+    const lines = content.split('\n');
+    let targetLine = -1;
+
+    // Find the line with the heading
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Match heading with the given id (slugified)
+      const match = line.match(/^#{1,6}\s+(.+)$/);
+      if (match) {
+        const headingText = match[1].trim();
+        // Use same slugify logic as TOC module (Unicode-safe)
+        const slug = headingText
+          .toLowerCase()
+          .trim()
+          .replace(/[^\p{L}\p{N}\s-]/gu, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        if (slug === id) {
+          targetLine = i;
+          break;
+        }
+      }
+    }
+
+    if (targetLine !== -1) {
+      editorModule.scrollToLine(targetLine);
+    }
+  } else {
+    // In preview mode, scroll to the element in the preview
+    const $previewElement = $previewer.querySelector(`#${CSS.escape(id)}`);
+    if ($previewElement) {
+      $previewElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+}
+
+/**
+ * Toggle TOC panel visibility
+ */
+function toggleToc(): void {
+  const wasVisible = tocModule.visible;
+  tocModule.toggle();
+  
+  // Toggle Explorer panel opposite to TOC
+  if (!wasVisible) {
+    // TOC is now shown, hide Explorer
+    $explorer.style.display = "none";
+  } else {
+    // TOC is now hidden, show Explorer
+    $explorer.style.display = "block";
+  }
+  
+  // Update TOC content when toggled
+  const content = editorModule.getContent();
+  tocModule.update(content);
+}
+
+/**
+ * Update TOC from current content
+ */
+function updateToc(): void {
+  const content = editorModule.getContent();
+  tocModule.update(content);
+}
+
+/**
  * Check if global search is active
  */
 function isGlobalSearchOn(): boolean {
@@ -238,12 +343,17 @@ async function loadFile(filePath: string): Promise<void> {
     const content = await fileService.loadFile(filePath);
     editorModule.setContent(content);
 
+    // Update TOC if visible
+    if (tocModule.visible) {
+      updateToc();
+    }
+
     if (!stateManager.get("isEditMode")) {
       previewMode();
     }
 
     $title.textContent = filePath;
-    
+
     // Track recent files (only when folder root exists)
     if (hasFolderRoot() && fileService.isFile(filePath)) {
       // Add to recent files list (at the beginning)
@@ -480,6 +590,10 @@ ipcOn("toggle-explorer", () => {
   } else {
     $explorer.style.display = "none";
   }
+});
+
+ipcOn("toggle-toc", () => {
+  toggleToc();
 });
 
 ipcOn("local-search", () => {
