@@ -5,18 +5,186 @@
 
 import { stateManager } from "../state.js";
 import { MarkdownService } from "../services/markdownService.js";
+import { FileService } from "../services/fileService.js";
 
 export class EditorModule {
   private editorElement: HTMLTextAreaElement;
   private markdownService: MarkdownService;
+  private fileService: FileService | null = null;
+  private currentFilePath: string | null = null;
+  private folderRoot: string | null = null;
+  private imageApi: { save: (dataUrl: string, filePath: string) => Promise<boolean> } | null = null;
 
   constructor(
     editorElement: HTMLTextAreaElement,
     markdownService: MarkdownService,
+    fileService?: FileService,
+    imageApi?: { save: (dataUrl: string, filePath: string) => Promise<boolean> },
   ) {
     this.editorElement = editorElement;
     this.markdownService = markdownService;
+    if (fileService) {
+      this.fileService = fileService;
+    }
+    if (imageApi) {
+      this.imageApi = imageApi;
+    }
     this.setupEventListeners();
+  }
+
+  /**
+   * Set the current file path for image drop handling
+   */
+  public setCurrentFilePath(filePath: string | null): void {
+    this.currentFilePath = filePath;
+  }
+
+  /**
+   * Set the folder root for image drop handling (used when no file is open)
+   */
+  public setFolderRoot(root: string | null): void {
+    this.folderRoot = root;
+  }
+
+  /**
+   * Setup drag and drop event listeners for image files
+   */
+  private setupDragAndDrop(): void {
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      this.editorElement.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+
+    // Add visual feedback
+    this.editorElement.addEventListener('dragenter', () => {
+      this.editorElement.classList.add('drag-over');
+    });
+
+    this.editorElement.addEventListener('dragleave', () => {
+      this.editorElement.classList.remove('drag-over');
+    });
+
+    // Handle drop
+    this.editorElement.addEventListener('drop', (e) => {
+      this.editorElement.classList.remove('drag-over');
+      this.handleDrop(e);
+    });
+  }
+
+  /**
+   * Handle dropped files
+   */
+  private async handleDrop(e: DragEvent): Promise<void> {
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      if (file.type.startsWith('image/')) {
+        await this.handleImageDrop(file);
+      }
+    }
+  }
+
+  /**
+   * Handle dropped image file
+   */
+  private async handleImageDrop(file: File): Promise<void> {
+    // Determine the base directory for saving images
+    let baseDir: string | null = null;
+    let markdownPath: string = '';
+
+    if (this.currentFilePath && this.fileService) {
+      const path = this.fileService.path;
+      const fileDir = path.dirname(this.currentFilePath);
+
+      // Images are saved in the same directory as the file
+      baseDir = fileDir;
+      markdownPath = '.assets';
+    } else if (this.folderRoot && this.fileService) {
+      // Fallback to folder root if no file is open
+      baseDir = this.folderRoot;
+      markdownPath = '.assets';
+    }
+
+    if (!baseDir) {
+      // Fallback: insert file path
+      this.insertText(`![${file.name}](file://${file.name})\n`);
+      return;
+    }
+
+    try {
+      const path = this.fileService!.path;
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const newFileName = `${timestamp}-${safeName}`;
+
+      // Build full file path for saving
+      const newFilePath = path.join(baseDir, markdownPath, newFileName);
+
+      // Build markdown path (always use forward slashes)
+      const markdownImagePath = `${markdownPath}/${newFileName}`;
+
+      // Read the file as data URL
+      const dataUrl = await this.readFileAsDataURL(file);
+
+      // Save the image file via IPC
+      let saved = false;
+      if (this.imageApi) {
+        saved = await this.imageApi.save(dataUrl, newFilePath);
+      }
+
+      // Insert the markdown reference
+      const markdown = `![${file.name}](${markdownImagePath})\n\n`;
+      this.insertText(markdown);
+
+      if (!saved) {
+        console.warn('Image saved locally but not via IPC:', file.name);
+      }
+    } catch (error) {
+      console.error('Error handling image drop:', error);
+      this.insertText(`![${file.name}](file://${file.name})\n`);
+    }
+  }
+
+  /**
+   * Read file as data URL
+   */
+  private readFileAsDataURL(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Insert text at cursor position
+   */
+  private insertText(text: string): void {
+    this.editorElement.focus();
+    
+    const start = this.editorElement.selectionStart;
+    const end = this.editorElement.selectionEnd;
+    const content = this.editorElement.value;
+
+    this.editorElement.value = content.substring(0, start) + text + content.substring(end);
+    
+    const newPosition = start + text.length;
+    this.editorElement.setSelectionRange(newPosition, newPosition);
+    
+    // Trigger input event for undo tracking and preview update
+    this.editorElement.dispatchEvent(new InputEvent('input', {
+      inputType: 'insertText',
+      data: text,
+      bubbles: true,
+      cancelable: true
+    }));
   }
 
   private setupEventListeners(): void {
@@ -36,6 +204,9 @@ export class EditorModule {
     this.editorElement.addEventListener("paste", (event) => {
       this.handlePaste(event);
     });
+
+    // Handle drag and drop for images
+    this.setupDragAndDrop();
   }
 
   private async handlePaste(event: ClipboardEvent): Promise<void> {

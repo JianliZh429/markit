@@ -26,6 +26,7 @@ const {
   parseMarkdown,
   setMarkdownBaseUrl,
   export: ipcExport,
+  image: ipcImage,
 } = (window as any).electronAPI;
 
 // Initialize services
@@ -85,7 +86,7 @@ const $wordCountReadingTimeRow = document.getElementById("word-count-reading-tim
 const $wordCountToggle = document.getElementById("word-count-toggle") as HTMLButtonElement;
 
 // Initialize modules
-const editorModule = new EditorModule($editor, markdownService);
+const editorModule = new EditorModule($editor, markdownService, fileService, ipcImage);
 const previewModule = new PreviewModule($previewer, markdownService);
 const searchManager = new SearchManager($editor, $localSearchResult);
 
@@ -158,6 +159,9 @@ const fileTreeModule = new FileTreeModule($tree, {
     loadFileContentOnly(filePath);
   },
 });
+
+// Store folder root for relative paths
+let folderRoot: string | null = null;
 
 /**
  * Get current content based on mode
@@ -379,9 +383,19 @@ function isGlobalSearchOn(): boolean {
  */
 async function loadFile(filePath: string): Promise<void> {
   try {
-    markdownService.setBaseUrl(filePath);
+    // Set base URL to the file's directory for relative paths (images in .assets)
+    const path = fileService.path;
+    const fileDir = path.dirname(filePath);
+    
+    // Use file:// protocol for local file paths
+    const baseUrl = 'file://' + fileDir + '/';
+    markdownService.setBaseUrl(baseUrl);
+
     const content = await fileService.loadFile(filePath);
     editorModule.setContent(content);
+
+    // Set current file path for image drop handling
+    editorModule.setCurrentFilePath(filePath);
 
     // Update TOC if visible
     if (tocModule.visible) {
@@ -755,18 +769,26 @@ function hasFolderRoot(): boolean {
 
 // Handle file-opened event from IPC
 ipcOn("file-opened", (args: string | string[]) => {
-  console.log("file-opened:", args);
   const filePath = typeof args === "string" ? args : args[0];
 
   // Check if opening a folder (sets root) or a file
   if (fileService.isDirectory(filePath)) {
     // Folder opened - set as root and clear recent files for new context
+    folderRoot = filePath;
     stateManager.set("rootDirectory", filePath);
     recentFilesList = [];
     currentRecentFileIndex = 0;
-    console.log(`Folder opened, recent files cleared: ${filePath}`);
+
+    // Set base URL to folder root (for when no file is open)
+    const baseUrl = 'file://' + folderRoot + '/';
+    markdownService.setBaseUrl(baseUrl);
+    
+    // Update editor's folder root for image drop
+    editorModule.setFolderRoot(folderRoot);
+
+    console.log(`Folder opened: ${filePath}`);
   }
-  
+
   // Load the file/folder through fileTreeModule
   fileTreeModule.loadFileOrFolder(filePath);
 });
@@ -829,9 +851,19 @@ function hideRecentFilesModal(): void {
  */
 async function loadFileContentOnly(filePath: string): Promise<void> {
   try {
-    markdownService.setBaseUrl(filePath);
+    // Set base URL to the file's directory for relative paths (images in .assets)
+    const path = fileService.path;
+    const fileDir = path.dirname(filePath);
+    
+    // Use file:// protocol for local file paths
+    const baseUrl = 'file://' + fileDir + '/';
+    markdownService.setBaseUrl(baseUrl);
+    
     const content = await fileService.loadFile(filePath);
     editorModule.setContent(content);
+
+    // Set current file path for image drop handling
+    editorModule.setCurrentFilePath(filePath);
 
     // Update TOC if visible
     if (tocModule.visible) {

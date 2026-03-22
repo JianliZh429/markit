@@ -34,6 +34,7 @@ A modern, cross-platform Markdown editor built with Electron and TypeScript. Mar
 - **Markdown extensions**: Support for emoji, code preview, and base URL handling
 - **Heading ID generation**: Anchor links for TOC navigation in preview mode
 - **Export to HTML**: Export styled HTML with CJK font support and print-ready formatting
+- **Image Drag-and-Drop**: Drag images from Finder/Explorer, auto-saved to `.assets/` folders
 - **Table Editor**: Insert markdown tables visually with configurable size
 - **Keyboard shortcuts**: Comprehensive shortcuts for efficient workflow
 - **Autosave**: Automatic saving with configurable intervals

@@ -122,6 +122,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
     },
   },
 
+  // Image API
+  image: {
+    save: async (dataUrl: string, filePath: string): Promise<boolean> => {
+      return await ipcRenderer.invoke("save-image", dataUrl, filePath);
+    },
+  },
+
   showContextMenu: (menuItems: MenuItem[]): void => {
     ipcRenderer.send("show-context-menu", menuItems);
   },
@@ -276,6 +283,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
     },
     join: (...paths: string[]): string => {
       return path.join(...paths);
+    },
+    dirname: (filePath: string): string => {
+      return path.dirname(filePath);
+    },
+    relative: (from: string, to: string): string => {
+      return path.relative(from, to);
     },
   },
 
