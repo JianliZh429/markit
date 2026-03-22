@@ -284,16 +284,42 @@ ipcMain.handle("export-html", async (event: Electron.IpcMainInvokeEvent, html: s
         { name: "All Files", extensions: ["*"] }
       ]
     });
-
+    
     if (result.canceled || !result.filePath) {
       return null;
     }
-
+    
     await fsExtra.writeFile(result.filePath, html, "utf-8");
     return result.filePath;
   } catch (error) {
     console.error("Export HTML error:", error);
     return null;
+  }
+});
+
+// Save dropped image
+ipcMain.handle("save-image", async (event: Electron.IpcMainInvokeEvent, dataUrl: string, filePath: string): Promise<boolean> => {
+  try {
+    // Extract base64 data from data URL
+    const matches = dataUrl.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,(.*)$/);
+    if (!matches || matches.length !== 3) {
+      console.error('Invalid data URL format');
+      return false;
+    }
+    
+    // Ensure directory exists
+    const path = require('path');
+    const dir = path.dirname(filePath);
+    await fsExtra.ensureDir(dir);
+    
+    // Write the image file
+    const imageBuffer = Buffer.from(matches[2], 'base64');
+    await fsExtra.writeFile(filePath, imageBuffer);
+    console.log('Image saved to:', filePath);
+    return true;
+  } catch (error) {
+    console.error("Save image error:", error);
+    return false;
   }
 });
 

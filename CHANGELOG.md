@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned for v0.3.0
-- Image drag-and-drop
+### Planned for v0.4.0
 - Image upload to cloud storage
 - Link checker
 - Spell checker integration
@@ -18,6 +17,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [0.3.0] - March 21, 2026
+
+### ✨ Added
+
+#### Image Drag-and-Drop (NEW)
+- **Drag images from Finder/Explorer** directly into the editor
+- **Automatic .assets folder creation** - Images saved to `.assets/` subfolder relative to each file
+- **Smart path resolution** - Each file uses its own `.assets/` folder for organization
+- **Hidden folders** - `.assets` folders are hidden by default (dotfile convention)
+- **Undo/Redo support** - Image insertion can be undone/redone
+- **File format support** - PNG, JPEG, GIF, WebP
+
+#### How It Works
+- File in root (`README.md`) → Images saved to `project/.assets/`
+- File in subfolder (`chapter1.md`) → Images saved to `chapter1/.assets/`
+- Markdown reference: `![image.png](.assets/image.png)`
+
+#### How to Use
+1. Open a markdown file
+2. Drag an image from Finder/Explorer into the editor
+3. Image is saved to `.assets/` folder in the same directory
+4. Markdown reference inserted at cursor position
+5. Switch to preview (`Cmd+/`) to see the image
+
+#### Export to HTML (NEW)
+- **Export Menu Item** - File → Export to HTML... or `Cmd/Ctrl+E`
+- **Styled HTML Output** - Professional GitHub-style formatting
+- **CJK Font Support** - Full support for Chinese, Japanese, Korean characters
+- **Print-Ready** - A4 page size with proper margins for PDF export
+- **Smart Filename** - Uses opened file's name as default
+- **Fallback Download** - Downloads as blob if file dialog fails
+
+#### How to Export to PDF
+1. Export markdown to HTML (`Cmd/Ctrl+E`)
+2. Open HTML file in any browser
+3. Use browser's Print dialog (`Cmd/Ctrl+P`)
+4. Select "Save as PDF" as destination
+
+### 🔧 Changed
+
+- **Print Support** - Removed native print feature; users can print HTML to PDF via browser
+
+---
+
+## [0.2.0] - March 21, 2026
 
 ### ✨ Added
 

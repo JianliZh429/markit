@@ -1,8 +1,8 @@
 # Markit Development Plan
 
 **Last Updated:** March 21, 2026
-**Current Version:** v0.1.0
-**Status:** v0.1.0 Release Ready
+**Current Version:** v0.3.0
+**Status:** v0.3.0 Release Ready
 
 ---
 
@@ -16,9 +16,9 @@ This document tracks the development roadmap and future plans for Markit.
 
 ## Feature Status
 
-### ✅ Completed (v0.1.0)
+### ✅ Completed (v0.3.0)
 
-All features from v0.0.1-v0.0.8 have been consolidated and enhanced in v0.1.0:
+All features from v0.0.1-v0.0.8 have been consolidated and enhanced:
 
 #### Core Editing
 - ✅ Dual-mode editing (Editor ↔ Preview)
@@ -43,10 +43,10 @@ All features from v0.0.1-v0.0.8 have been consolidated and enhanced in v0.1.0:
 - ✅ Global search across all files in directory
 - ✅ Fast file scanning powered by fast-glob
 - ✅ Search result highlighting and context
-- ✅ **Table of Contents generation** (NEW in v0.1.0)
-- ✅ **Unicode support for CJK headings** (NEW in v0.1.0)
-- ✅ **TOC panel with auto-Explorer toggle** (NEW in v0.1.0)
-- ✅ **Click TOC headings to scroll in edit/preview modes** (NEW in v0.1.0)
+- ✅ Table of Contents generation
+- ✅ Unicode support for CJK headings
+- ✅ TOC panel with auto-Explorer toggle
+- ✅ Click TOC headings to scroll in edit/preview modes
 
 #### Settings & Customization
 - ✅ Settings modal with appearance, editor, and autosave options
@@ -59,7 +59,14 @@ All features from v0.0.1-v0.0.8 have been consolidated and enhanced in v0.1.0:
 - ✅ Emoji support via marked-emoji
 - ✅ Code preview via marked-code-preview
 - ✅ Base URL resolution via marked-base-url
-- ✅ **Heading ID generation for anchor links** (NEW in v0.1.0)
+- ✅ Heading ID generation for anchor links
+- ✅ **Image drag-and-drop** (NEW in v0.3.0)
+- ✅ **Smart .assets folder organization** (NEW in v0.3.0)
+
+#### Export
+- ✅ **Export to HTML** (NEW in v0.3.0)
+- ✅ **CJK font support** (NEW in v0.3.0)
+- ✅ **Print-ready formatting** (NEW in v0.3.0)
 
 #### Platform Support
 - ✅ Native Apple Silicon (arm64) support
@@ -92,33 +99,25 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 
 ### 📋 Planned Features
 
-#### v0.3.0 (Q4 2026) - Advanced Editing
-- ✅ Markdown table editor
-- [ ] Image drag-and-drop
+#### v0.4.0 (Q4 2026) - Advanced Editing
 - [ ] Image upload to cloud storage
 - [ ] Link checker
 - [ ] Spell checker integration
 
-#### v0.4.0 (Future) - Collaboration & Advanced Features
+#### v0.5.0 (Future) - Collaboration & Advanced Features
 - [ ] Multiple tabs for multiple files
 - [ ] Real-time collaboration
 - [ ] Document sharing
 - [ ] Comment and suggestion mode
 - [ ] Version history
 
-#### v0.4.0 (Future) - Collaboration
-- [ ] Real-time collaboration
-- [ ] Document sharing
-- [ ] Comment and suggestion mode
-- [ ] Version history
-
-#### v0.5.0 (Future) - Extensions & Plugins
+#### v0.6.0 (Future) - Extensions & Plugins
 - [ ] Plugin system
 - [ ] Custom markdown renderers
 - [ ] Integration with external tools
 - [ ] API for third-party extensions
 
-#### v0.6.0 (Future) - Live Editing
+#### v0.7.0 (Future) - Live Editing
 - [ ] Refactor corresponding variables and functions
    - [ ] Change `Edit` mode to `Markdown` mode (editor.ts → markdown-renderer.ts)
    - [ ] Change `Preview` mode to `Html` mode (preview.ts → html-renderer.ts)
@@ -176,12 +175,15 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 - **Test Coverage:** ~40% overall
 - **Test Count:** 139 passing tests
 - **TypeScript Coverage:** 100%
-- **Platforms:** macOS (x64/arm64), Linux
+- **Platforms:** macOS (x64/arm64), Linux (x64)
 
 ### Completed in v0.3.0
-- Markdown table editor with visual insertion dialog
-- Undo/redo support for table insertion
-- Keyboard shortcut (`Cmd/Ctrl + Alt + T`) (x64)
+- Image drag-and-drop with automatic `.assets/` folder creation
+- Smart path resolution (each file has its own `.assets/` folder)
+- Undo/redo support for image insertion
+- Support for PNG, JPEG, GIF, WebP formats
+- Export to HTML with CJK font support
+- Print-ready formatting
 
 ### Performance Targets
 - **Startup Time:** < 2 seconds
