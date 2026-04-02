@@ -1,6 +1,6 @@
 /**
  * Search Manager Module
- * Handles find next/previous functionality with auto-scroll
+ * Handles find next/previous functionality with auto-scroll and replace
  */
 
 export interface SearchState {
@@ -8,6 +8,8 @@ export interface SearchState {
   currentMatchIndex: number;
   searchTerm: string;
   content: string;
+  caseSensitive: boolean;
+  useRegex: boolean;
 }
 
 export class SearchManager {
@@ -24,24 +26,36 @@ export class SearchManager {
   }
 
   /**
+   * Get current search options
+   */
+  getSearchOptions(): { caseSensitive: boolean; useRegex: boolean } {
+    return {
+      caseSensitive: this.state?.caseSensitive ?? false,
+      useRegex: this.state?.useRegex ?? false,
+    };
+  }
+
+  /**
    * Perform initial search and find all matches
    */
-  search(content: string, searchTerm: string): void {
+  search(content: string, searchTerm: string, caseSensitive: boolean = false, useRegex: boolean = false): void {
     if (!searchTerm) {
       this.clear();
       return;
     }
 
-    const matches = this.findAllMatches(content, searchTerm);
-    
+    const matches = this.findAllMatches(content, searchTerm, caseSensitive, useRegex);
+
     this.state = {
       matches,
       currentMatchIndex: matches.length > 0 ? 0 : -1,
       searchTerm,
       content,
+      caseSensitive,
+      useRegex,
     };
 
-    this.highlightMatches(content, searchTerm);
+    this.highlightMatches(content, searchTerm, useRegex);
     this.scrollToCurrentMatch();
   }
 
@@ -97,6 +111,58 @@ export class SearchManager {
   }
 
   /**
+   * Replace current match
+   */
+  replaceCurrent(replacement: string): boolean {
+    if (!this.state || this.state.currentMatchIndex === -1) return false;
+
+    const matchOffset = this.state.matches[this.state.currentMatchIndex];
+    const matchLength = this.state.searchTerm.length;
+
+    // Replace in content
+    const before = this.state.content.substring(0, matchOffset);
+    const after = this.state.content.substring(matchOffset + matchLength);
+    this.state.content = before + replacement + after;
+
+    // Update editor content
+    this.editorElement.value = this.state.content;
+
+    // Re-run search on updated content
+    this.search(this.state.content, this.state.searchTerm, this.state.caseSensitive, this.state.useRegex);
+
+    return true;
+  }
+
+  /**
+   * Replace all matches
+   */
+  replaceAll(replacement: string): number {
+    if (!this.state || this.state.matches.length === 0) return 0;
+
+    const { caseSensitive, useRegex, searchTerm } = this.state;
+    const flags = caseSensitive ? "g" : "gi";
+    
+    let pattern: string;
+    if (useRegex) {
+      pattern = searchTerm;
+    } else {
+      pattern = this.escapeRegex(searchTerm);
+    }
+
+    const regex = new RegExp(pattern, flags);
+    const newContent = this.state.content.replace(regex, replacement);
+    
+    // Update editor content
+    this.editorElement.value = newContent;
+    this.state.content = newContent;
+
+    // Clear search after replace all
+    this.search(newContent, searchTerm, caseSensitive, useRegex);
+
+    return this.state.matches.length;
+  }
+
+  /**
    * Check if search is active
    */
   hasActiveSearch(): boolean {
@@ -104,11 +170,27 @@ export class SearchManager {
   }
 
   /**
+   * Get current search state (for external access)
+   */
+  getState(): SearchState | null {
+    return this.state;
+  }
+
+  /**
    * Find all matches in content
    */
-  private findAllMatches(content: string, searchTerm: string): number[] {
+  private findAllMatches(content: string, searchTerm: string, caseSensitive: boolean, useRegex: boolean): number[] {
     const matches: number[] = [];
-    const regex = new RegExp(searchTerm, "gi");
+    const flags = caseSensitive ? "g" : "gi";
+    
+    let pattern: string;
+    if (useRegex) {
+      pattern = searchTerm;
+    } else {
+      pattern = this.escapeRegex(searchTerm);
+    }
+    
+    const regex = new RegExp(pattern, flags);
     let match: RegExpExecArray | null;
 
     while ((match = regex.exec(content)) !== null) {
@@ -121,8 +203,18 @@ export class SearchManager {
   /**
    * Highlight all matches in result element
    */
-  private highlightMatches(content: string, searchTerm: string): void {
-    const regex = new RegExp(`(${this.escapeRegex(searchTerm)})`, "gi");
+  private highlightMatches(content: string, searchTerm: string, useRegex: boolean): void {
+    const { caseSensitive } = this.state || { caseSensitive: false };
+    const flags = caseSensitive ? "g" : "gi";
+    
+    let pattern: string;
+    if (useRegex) {
+      pattern = `(${searchTerm})`;
+    } else {
+      pattern = `(${this.escapeRegex(searchTerm)})`;
+    }
+    
+    const regex = new RegExp(pattern, flags);
     const highlighted = content.replace(regex, "<mark>$1</mark>");
     this.resultElement.innerHTML = highlighted;
   }

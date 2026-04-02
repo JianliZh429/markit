@@ -1,7 +1,7 @@
 /**
  * Preview Module
  * Handles markdown preview functionality
- * 
+ *
  * FIX: Preview mode input stability - we now keep a shadow markdown source
  * and only sync when necessary, avoiding constant re-rendering that corrupts
  * the contentEditable state.
@@ -13,19 +13,26 @@ import { debounce } from "../utils/performance.js";
 
 export class PreviewModule {
   private previewElement: HTMLDivElement;
+  private previewContainer: HTMLDivElement;
+  private lineNumbersGutter: HTMLDivElement;
   private markdownService: MarkdownService;
   private markdownContent: string = "";
   // Shadow copy of the markdown source text for stable editing
   private shadowMarkdown: string = "";
   // Flag to prevent recursive updates
   private isUpdating: boolean = false;
+  private isLineNumbersVisible: boolean = false;
 
   constructor(
     previewElement: HTMLDivElement,
     markdownService: MarkdownService,
+    previewContainer?: HTMLDivElement,
+    lineNumbersGutter?: HTMLDivElement,
   ) {
     this.previewElement = previewElement;
     this.markdownService = markdownService;
+    this.previewContainer = previewContainer || previewElement;
+    this.lineNumbersGutter = lineNumbersGutter || document.createElement('div');
     this.setupEventListeners();
   }
 
@@ -33,6 +40,9 @@ export class PreviewModule {
     // Save scroll position
     this.previewElement.addEventListener("scroll", () => {
       stateManager.set("previewScrollTop", this.previewElement.scrollTop);
+      if (this.isLineNumbersVisible) {
+        this.syncGutterScroll();
+      }
     });
 
     // Track mouse position for line highlighting and cursor sync
@@ -59,6 +69,10 @@ export class PreviewModule {
       // Don't sync during mode switching or when updating internally
       if (!stateManager.get("isModeSwitching") && !this.isUpdating) {
         debouncedSync();
+      }
+      // Update line numbers on input
+      if (this.isLineNumbersVisible) {
+        this.updateLineNumbers();
       }
     });
   }
@@ -469,5 +483,92 @@ export class PreviewModule {
     const currentScroll = this.previewElement.scrollTop;
     const targetScroll = currentScroll + cursorCenter - containerHeight / 2;
     this.previewElement.scrollTop = Math.max(0, targetScroll);
+  }
+
+  /**
+   * Show line numbers in preview mode
+   */
+  showLineNumbers(): void {
+    this.isLineNumbersVisible = true;
+    this.lineNumbersGutter.classList.add('visible');
+    this.updateLineNumbers();
+  }
+
+  /**
+   * Hide line numbers in preview mode
+   */
+  hideLineNumbers(): void {
+    this.isLineNumbersVisible = false;
+    this.lineNumbersGutter.classList.remove('visible');
+  }
+
+  /**
+   * Toggle line numbers visibility in preview mode
+   */
+  toggleLineNumbers(): void {
+    if (this.isLineNumbersVisible) {
+      this.hideLineNumbers();
+    } else {
+      this.showLineNumbers();
+    }
+  }
+
+  /**
+   * Check if line numbers are visible in preview mode
+   */
+  get lineNumbersVisible(): boolean {
+    return this.isLineNumbersVisible;
+  }
+
+  /**
+   * Update line numbers based on preview content
+   */
+  private updateLineNumbers(): void {
+    if (!this.isLineNumbersVisible) return;
+
+    const lines = this.shadowMarkdown.split('\n');
+    const lineCount = lines.length;
+
+    // Generate line numbers
+    let lineNumbersHTML = '';
+    for (let i = 1; i <= lineCount; i++) {
+      lineNumbersHTML += `<div class="line-number">${i}</div>`;
+    }
+
+    this.lineNumbersGutter.innerHTML = lineNumbersHTML;
+    this.syncGutterScroll();
+  }
+
+  /**
+   * Sync gutter scroll with preview scroll
+   */
+  private syncGutterScroll(): void {
+    if (!this.isLineNumbersVisible) return;
+    this.lineNumbersGutter.scrollTop = this.previewElement.scrollTop;
+  }
+
+  /**
+   * Highlight a specific line number in preview mode
+   */
+  highlightLine(line: number): void {
+    if (!this.isLineNumbersVisible) return;
+
+    // Remove previous highlights
+    const previousHighlights = this.lineNumbersGutter.querySelectorAll('.line-number.highlighted');
+    previousHighlights.forEach(el => el.classList.remove('highlighted'));
+
+    // Highlight the target line
+    const lineElements = this.lineNumbersGutter.querySelectorAll('.line-number');
+    if (line > 0 && line <= lineElements.length) {
+      lineElements[line - 1].classList.add('highlighted');
+    }
+  }
+
+  /**
+   * Clear all line highlights in preview mode
+   */
+  clearLineHighlights(): void {
+    const highlights = this.lineNumbersGutter.querySelectorAll('.line-number.highlighted');
+    highlights.forEach(el => el.classList.remove('highlighted'));
   }
 }

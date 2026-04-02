@@ -17,6 +17,24 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
             type="text"
             placeholder="Input the keyworks you want to search"
           />
+          <div class="search-options">
+            <label class="search-option">
+              <input type="checkbox" id="global-search-case-sensitive" />
+              <span>Case Sensitive</span>
+            </label>
+            <label class="search-option">
+              <input type="checkbox" id="global-search-regex" />
+              <span>Regex</span>
+            </label>
+          </div>
+          <input
+            id="global-replace-input"
+            type="text"
+            placeholder="Replace with..."
+          />
+          <div class="search-actions">
+            <button id="global-replace-all-btn" class="search-btn" title="Replace all in all files">Replace All in Files</button>
+          </div>
         </div>
         <ul id="tree"></ul>
         <div id="word-count-bar" class="word-count-bar">
@@ -49,10 +67,35 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
             type="text"
             placeholder="Input the keyworks you want to search"
           />
+          <div class="search-options">
+            <label class="search-option">
+              <input type="checkbox" id="local-search-case-sensitive" />
+              <span>Case Sensitive</span>
+            </label>
+            <label class="search-option">
+              <input type="checkbox" id="local-search-regex" />
+              <span>Regex</span>
+            </label>
+          </div>
+          <input
+            id="local-replace-input"
+            type="text"
+            placeholder="Replace with..."
+          />
+          <div class="search-actions">
+            <button id="local-replace-btn" class="search-btn" title="Replace current match">Replace</button>
+            <button id="local-replace-all-btn" class="search-btn" title="Replace all matches">Replace All</button>
+          </div>
           <div id="local-search-result"></div>
         </div>
-        <textarea id="editor" placeholder="Please input here"></textarea>
-        <div id="previewer" style="display: none"></div>
+        <div id="editor-container">
+          <div id="line-numbers-gutter"></div>
+          <textarea id="editor" placeholder="Please input here"></textarea>
+        </div>
+        <div id="previewer-container" style="display: none">
+          <div id="preview-line-numbers-gutter"></div>
+          <div id="previewer"></div>
+        </div>
         <div id="global-search-result" style="display: none"></div>
       </div>
     </div>
@@ -193,6 +236,14 @@ content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
             <div class="shortcut-item">
               <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>B</kbd></span>
               <span class="shortcut-desc">Toggle File Explorer</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd></span>
+              <span class="shortcut-desc">Toggle Line Numbers</span>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>T</kbd></span>
+              <span class="shortcut-desc">Toggle Table of Contents</span>
             </div>
             <div class="shortcut-item">
               <span class="shortcut-keys"><kbd>Cmd/Ctrl</kbd> + <kbd>Tab</kbd></span>

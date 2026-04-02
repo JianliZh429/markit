@@ -20,6 +20,14 @@ export interface ElectronAPI {
     parse: (path: string) => { base: string; ext: string; dir: string; name: string; root: string };
   };
   searchInFiles: (directory: string, keyword: string) => Promise<SearchResult[]>;
+  replaceInFiles: (
+    directory: string,
+    searchTerm: string,
+    replacement: string,
+    fileExtension?: string,
+    caseSensitive?: boolean,
+    useRegex?: boolean,
+  ) => Promise<{ file: string; replacements: number }[]>;
   parseMarkdown: (content: string) => string;
   setMarkdownBaseUrl: (filePath: string) => void;
 }

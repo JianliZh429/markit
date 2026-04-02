@@ -224,6 +224,13 @@ const viewMenu = (win: BrowserWindow): MenuItemConstructorOptions => {
         accelerator: "CommandOrControl+Shift+W",
       },
       {
+        label: "Show / Hide Line Numbers",
+        click: () => {
+          win.webContents.send("toggle-line-numbers");
+        },
+        accelerator: "CommandOrControl+Shift+L",
+      },
+      {
         label: "View / Edit Mode",
         click: () => {
           win.webContents.send("toggle-mode");

@@ -19,6 +19,7 @@ export interface AppState {
   isExplorerVisible: boolean;
   isLocalSearchVisible: boolean;
   isGlobalSearchVisible: boolean;
+  isLineNumbersVisible: boolean;
   // Track if we're in the middle of a mode switch
   isModeSwitching: boolean;
 }
@@ -42,6 +43,7 @@ class StateManager {
       isExplorerVisible: true,
       isLocalSearchVisible: false,
       isGlobalSearchVisible: false,
+      isLineNumbersVisible: false,
       isModeSwitching: false,
     };
   }
