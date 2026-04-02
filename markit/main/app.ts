@@ -242,6 +242,74 @@ ipcMain.handle(
   },
 );
 
+// Handle replace-in-files requests
+ipcMain.handle(
+  "replace-in-files",
+  async (
+    _event,
+    directory: string,
+    searchTerm: string,
+    replacement: string,
+    fileExtension: string = "md",
+    caseSensitive: boolean = false,
+    useRegex: boolean = false,
+  ): Promise<{ file: string; replacements: number }[]> => {
+    try {
+      const validatedDir = validatePath(directory);
+
+      // Define the pattern to match only files with specified extension
+      const pattern = `${validatedDir}/**/*.${fileExtension}`;
+      const files = await fg(pattern);
+
+      const results: { file: string; replacements: number }[] = [];
+      for (const file of files) {
+        try {
+          // Read the content of the file
+          const content = await fsExtra.readFile(file, "utf-8");
+
+          // Build regex with appropriate flags
+          const flags = caseSensitive ? "g" : "gi";
+          let pattern: string;
+          if (useRegex) {
+            pattern = searchTerm;
+          } else {
+            // Escape regex special characters
+            pattern = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          }
+
+          const regex = new RegExp(pattern, flags);
+          
+          // Count matches before replacement
+          const matches = [...content.matchAll(regex)];
+          const matchCount = matches.length;
+
+          if (matchCount > 0) {
+            // Perform replacement
+            const newContent = content.replace(regex, replacement);
+            
+            // Write back to file
+            await fsExtra.writeFile(file, newContent);
+            
+            results.push({ file, replacements: matchCount });
+          }
+        } catch (err: unknown) {
+          // Silently skip files that cannot be read
+        }
+      }
+
+      return results;
+    } catch (error: unknown) {
+      // Log errors in development mode only
+      if (process.env.NODE_ENV !== "production") {
+        const message =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        console.error("Replace failed:", message);
+      }
+      throw error;
+    }
+  },
+);
+
 // Handle autosave requests
 ipcMain.on(
   "autosave-file",

@@ -93,6 +93,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       "show-keyboard-shortcuts",
       "toggle-toc",
       "toggle-word-count",
+      "toggle-line-numbers",
       "export-document",
       "insert-table",
     ];
@@ -144,6 +145,26 @@ contextBridge.exposeInMainWorld("electronAPI", {
       directory,
       keyword,
       fileExtension,
+    );
+  },
+
+  // Replace in files
+  replaceInFiles: async (
+    directory: string,
+    searchTerm: string,
+    replacement: string,
+    fileExtension?: string,
+    caseSensitive?: boolean,
+    useRegex?: boolean,
+  ): Promise<unknown> => {
+    return await ipcRenderer.invoke(
+      "replace-in-files",
+      directory,
+      searchTerm,
+      replacement,
+      fileExtension,
+      caseSensitive,
+      useRegex,
     );
   },
 

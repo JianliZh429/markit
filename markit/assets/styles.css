@@ -471,6 +471,46 @@ body.theme-dark #word-count-bar {
   line-height: 1;
 }
 
+#editor-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+#line-numbers-gutter {
+  width: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size);
+  line-height: var(--line-height-base);
+  color: var(--text-muted);
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  overflow: hidden;
+  user-select: none;
+  transition: width var(--transition-fast), padding var(--transition-fast);
+  opacity: 0;
+
+  &.visible {
+    width: 50px;
+    padding: var(--spacing-lg) 0;
+    opacity: 1;
+  }
+
+  .line-number {
+    padding: 0 var(--spacing-sm);
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+
+    &.highlighted {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+  }
+}
+
 #editor {
   flex: 1;
   padding: var(--spacing-lg);
@@ -586,6 +626,77 @@ code {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+}
+
+.search-options {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.search-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+
+  input[type="checkbox"] {
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.search-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.search-btn {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.9em;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+#local-replace-input {
+  width: calc(100% - 16px);  /* Account for container padding */
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+  &:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--selection-bg);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
 }
 
 #local-search-result,

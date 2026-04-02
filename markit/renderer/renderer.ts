@@ -15,6 +15,7 @@ import { TocModule } from "./modules/toc.js";
 import { WordCountModule } from "./modules/wordCount.js";
 import { ExportService } from "./services/exportService.js";
 import { TableEditorModule } from "./modules/tableEditor.js";
+import { LineNumbersModule } from "./modules/lineNumbers.js";
 
 // Get electron API from window
 const {
@@ -72,6 +73,37 @@ const $main = document.getElementById("main") as HTMLDivElement;
 const $modeIndicator = document.getElementById("mode-indicator") as HTMLDivElement;
 const $modeIcon = document.getElementById("mode-icon") as HTMLSpanElement;
 
+// Search options
+const $localSearchCaseSensitive = document.getElementById(
+  "local-search-case-sensitive",
+) as HTMLInputElement;
+const $localSearchRegex = document.getElementById(
+  "local-search-regex",
+) as HTMLInputElement;
+const $localReplaceInput = document.getElementById(
+  "local-replace-input",
+) as HTMLInputElement;
+const $localReplaceBtn = document.getElementById(
+  "local-replace-btn",
+) as HTMLButtonElement;
+const $localReplaceAllBtn = document.getElementById(
+  "local-replace-all-btn",
+) as HTMLButtonElement;
+
+// Global search options
+const $globalSearchCaseSensitive = document.getElementById(
+  "global-search-case-sensitive",
+) as HTMLInputElement;
+const $globalSearchRegex = document.getElementById(
+  "global-search-regex",
+) as HTMLInputElement;
+const $globalReplaceInput = document.getElementById(
+  "global-replace-input",
+) as HTMLInputElement;
+const $globalReplaceAllBtn = document.getElementById(
+  "global-replace-all-btn",
+) as HTMLButtonElement;
+
 // TOC Panel elements
 const $tocPanel = document.getElementById("toc-panel") as HTMLDivElement;
 const $tocContainer = document.getElementById("toc-container") as HTMLDivElement;
@@ -85,10 +117,15 @@ const $wordCountReadingTime = document.getElementById("word-count-reading-time")
 const $wordCountReadingTimeRow = document.getElementById("word-count-reading-time-row") as HTMLDivElement;
 const $wordCountToggle = document.getElementById("word-count-toggle") as HTMLButtonElement;
 
+// Editor container and line numbers
+const $editorContainer = document.getElementById("editor-container") as HTMLDivElement;
+const $lineNumbersGutter = document.getElementById("line-numbers-gutter") as HTMLDivElement;
+
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService, fileService, ipcImage);
 const previewModule = new PreviewModule($previewer, markdownService);
 const searchManager = new SearchManager($editor, $localSearchResult);
+const lineNumbersModule = new LineNumbersModule($lineNumbersGutter, $editor);
 
 // Initialize TOC module
 const tocModule = new TocModule($tocPanel, $tocContainer, (id: string) => {
@@ -119,6 +156,9 @@ $editor.addEventListener("input", () => {
     updateToc();
   }
   wordCountModule.update(editorModule.getContent());
+  if (lineNumbersModule.visible) {
+    lineNumbersModule.update();
+  }
 });
 
 // Initialize autosave module
@@ -206,8 +246,8 @@ function previewMode(): void {
   const markdownContent = editorModule.getContent();
   previewModule.setMarkdownContent(markdownContent);
 
-  // Hide editor, show preview (READ-ONLY)
-  editorModule.hide();
+  // Hide editor container, show preview (READ-ONLY)
+  $editorContainer.style.display = "none";
   previewModule.show(false); // Read-only mode
 
   // Sync by line number and center in view
@@ -250,8 +290,9 @@ function editMode(): void {
   const plainText = editorModule.getContent();
   editorModule.setContent(plainText);
 
-  // Hide preview, show editor
+  // Hide preview, show editor container
   previewModule.hide();
+  $editorContainer.style.display = "flex";
   editorModule.show();
 
   // Sync by line number and center in view
@@ -522,25 +563,25 @@ async function globalSearch(keyword: string): Promise<void> {
       if (filePath) {
         // Close search and open file
         hideGlobalSearch();
-        $previewer.style.display = "block";
-        $editor.style.display = "none";
+        $editorContainer.style.display = "flex";
+        $previewer.style.display = "none";
         loadFile(filePath);
       }
     });
   });
-  
+
   // Add click handlers for match items (open file at specific location)
   $globalSearchResult.querySelectorAll(".search-match-item").forEach((item) => {
     item.addEventListener("dblclick", () => {
       const group = item.closest(".search-file-group") as HTMLElement;
       const filePath = group?.dataset.file;
       const line = parseInt(item.dataset.line || "0", 10);
-      
+
       if (filePath) {
         // Close search and open file at specific line
         hideGlobalSearch();
-        $previewer.style.display = "block";
-        $editor.style.display = "none";
+        $editorContainer.style.display = "flex";
+        $previewer.style.display = "none";
         loadFile(filePath);
         // TODO: Scroll to specific line after file loads
       }
@@ -661,19 +702,23 @@ ipcOn("toggle-word-count", () => {
   wordCountModule.toggle();
 });
 
+ipcOn("toggle-line-numbers", () => {
+  lineNumbersModule.toggle();
+});
+
 ipcOn("local-search", () => {
   if ($localSearch.style.display === "none") {
     $localSearch.style.display = "block";
     $localSearchInput.focus();
     $localSearchResult.innerHTML = currentContent();
     $previewer.style.display = "none";
-    $editor.style.display = "none";
+    $editorContainer.style.display = "none";
     hideGlobalSearch();
     $main.classList.add("search-active");  // Hide mode indicator
   } else {
     $localSearch.style.display = "none";
     $previewer.style.display = "block";
-    $editor.style.display = "none";
+    $editorContainer.style.display = "flex";
     searchManager.clear();
     $main.classList.remove("search-active");  // Show mode indicator
   }
@@ -683,7 +728,42 @@ ipcOn("local-search", () => {
 $localSearchInput.addEventListener("input", () => {
   const searchTerm = $localSearchInput.value;
   const content = currentContent();
-  searchManager.search(content, searchTerm);
+  const caseSensitive = $localSearchCaseSensitive.checked;
+  const useRegex = $localSearchRegex.checked;
+  searchManager.search(content, searchTerm, caseSensitive, useRegex);
+});
+
+// Handle search options change
+$localSearchCaseSensitive.addEventListener("change", () => {
+  const searchTerm = $localSearchInput.value;
+  const content = currentContent();
+  const caseSensitive = $localSearchCaseSensitive.checked;
+  const useRegex = $localSearchRegex.checked;
+  searchManager.search(content, searchTerm, caseSensitive, useRegex);
+});
+
+$localSearchRegex.addEventListener("change", () => {
+  const searchTerm = $localSearchInput.value;
+  const content = currentContent();
+  const caseSensitive = $localSearchCaseSensitive.checked;
+  const useRegex = $localSearchRegex.checked;
+  searchManager.search(content, searchTerm, caseSensitive, useRegex);
+});
+
+// Handle Replace button
+$localReplaceBtn.addEventListener("click", () => {
+  const replacement = $localReplaceInput.value;
+  searchManager.replaceCurrent(replacement);
+});
+
+// Handle Replace All button
+$localReplaceAllBtn.addEventListener("click", () => {
+  const replacement = $localReplaceInput.value;
+  const count = searchManager.replaceAll(replacement);
+  if (count > 0) {
+    // Update editor content in the DOM
+    editorModule.setContent(searchManager.getState()?.content || "");
+  }
 });
 
 // Handle Find Next (Enter in search box)
@@ -714,7 +794,7 @@ document.addEventListener("keydown", (event) => {
       $localSearch.style.display = "block";
       $localSearchInput.focus();
       $previewer.style.display = "none";
-      $editor.style.display = "none";
+      $editorContainer.style.display = "none";
       $main.classList.add("search-active");
     }
   }
@@ -736,7 +816,7 @@ ipcOn("global-search", () => {
   if (isGlobalSearchOn()) {
     hideGlobalSearch();
     $previewer.style.display = "block";
-    $editor.style.display = "none";
+    $editorContainer.style.display = "flex";
     $main.classList.remove("search-active");
   } else {
     $globalSearch.style.display = "block";
@@ -744,8 +824,52 @@ ipcOn("global-search", () => {
     $globalSearchResult.innerHTML = "";  // Clear previous results
     $globalSearchResult.style.display = "none";
     $previewer.style.display = "none";
-    $editor.style.display = "none";
+    $editorContainer.style.display = "none";
     $main.classList.add("search-active");
+  }
+});
+
+// Handle global replace all
+$globalReplaceAllBtn.addEventListener("click", async () => {
+  const searchTerm = $globalSearchInput.value;
+  const replacement = $globalReplaceInput.value;
+  const caseSensitive = $globalSearchCaseSensitive.checked;
+  const useRegex = $globalSearchRegex.checked;
+  const rootDir = fileTreeModule.getRootDirectory();
+
+  if (!rootDir || !searchTerm) {
+    alert("Please open a folder and enter a search term first.");
+    return;
+  }
+
+  const confirmMsg = `Replace all occurrences of "${searchTerm}" with "${replacement}" in all .md files?\n\nThis action cannot be undone.`;
+  if (!confirm(confirmMsg)) {
+    return;
+  }
+
+  try {
+    const results = await window.electronAPI.replaceInFiles(
+      rootDir,
+      searchTerm,
+      replacement,
+      "md",
+      caseSensitive,
+      useRegex,
+    ) as { file: string; replacements: number }[];
+
+    if (results.length > 0) {
+      const totalReplacements = results.reduce((sum, r) => sum + r.replacements, 0);
+      alert(`Replaced ${totalReplacements} occurrences across ${results.length} files.`);
+      // Refresh the search to show updated results
+      if (searchTerm) {
+        await globalSearch(searchTerm);
+      }
+    } else {
+      alert("No matches found to replace.");
+    }
+  } catch (error) {
+    console.error("Global replace failed:", error);
+    alert("Failed to perform replace. Check console for details.");
   }
 });
 
