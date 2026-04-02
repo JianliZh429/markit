@@ -120,10 +120,12 @@ const $wordCountToggle = document.getElementById("word-count-toggle") as HTMLBut
 // Editor container and line numbers
 const $editorContainer = document.getElementById("editor-container") as HTMLDivElement;
 const $lineNumbersGutter = document.getElementById("line-numbers-gutter") as HTMLDivElement;
+const $previewerContainer = document.getElementById("previewer-container") as HTMLDivElement;
+const $previewLineNumbersGutter = document.getElementById("preview-line-numbers-gutter") as HTMLDivElement;
 
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService, fileService, ipcImage);
-const previewModule = new PreviewModule($previewer, markdownService);
+const previewModule = new PreviewModule($previewer, markdownService, $previewerContainer, $previewLineNumbersGutter);
 const searchManager = new SearchManager($editor, $localSearchResult);
 const lineNumbersModule = new LineNumbersModule($lineNumbersGutter, $editor);
 
@@ -246,9 +248,15 @@ function previewMode(): void {
   const markdownContent = editorModule.getContent();
   previewModule.setMarkdownContent(markdownContent);
 
-  // Hide editor container, show preview (READ-ONLY)
+  // Hide editor container, show preview container (READ-ONLY)
   $editorContainer.style.display = "none";
+  $previewerContainer.style.display = "flex";
   previewModule.show(false); // Read-only mode
+
+  // Sync line numbers visibility
+  if (lineNumbersModule.visible) {
+    previewModule.showLineNumbers();
+  }
 
   // Sync by line number and center in view
   if (editorLine >= 0) {
@@ -290,8 +298,8 @@ function editMode(): void {
   const plainText = editorModule.getContent();
   editorModule.setContent(plainText);
 
-  // Hide preview, show editor container
-  previewModule.hide();
+  // Hide preview container, show editor container
+  $previewerContainer.style.display = "none";
   $editorContainer.style.display = "flex";
   editorModule.show();
 
@@ -564,7 +572,7 @@ async function globalSearch(keyword: string): Promise<void> {
         // Close search and open file
         hideGlobalSearch();
         $editorContainer.style.display = "flex";
-        $previewer.style.display = "none";
+        $previewerContainer.style.display = "none";
         loadFile(filePath);
       }
     });
@@ -581,7 +589,7 @@ async function globalSearch(keyword: string): Promise<void> {
         // Close search and open file at specific line
         hideGlobalSearch();
         $editorContainer.style.display = "flex";
-        $previewer.style.display = "none";
+        $previewerContainer.style.display = "none";
         loadFile(filePath);
         // TODO: Scroll to specific line after file loads
       }
@@ -704,6 +712,14 @@ ipcOn("toggle-word-count", () => {
 
 ipcOn("toggle-line-numbers", () => {
   lineNumbersModule.toggle();
+  // Sync line numbers visibility with preview mode
+  const isVisible = lineNumbersModule.visible;
+  stateManager.set("isLineNumbersVisible", isVisible);
+  if (isVisible) {
+    previewModule.showLineNumbers();
+  } else {
+    previewModule.hideLineNumbers();
+  }
 });
 
 ipcOn("local-search", () => {
@@ -711,13 +727,13 @@ ipcOn("local-search", () => {
     $localSearch.style.display = "block";
     $localSearchInput.focus();
     $localSearchResult.innerHTML = currentContent();
-    $previewer.style.display = "none";
+    $previewerContainer.style.display = "none";
     $editorContainer.style.display = "none";
     hideGlobalSearch();
     $main.classList.add("search-active");  // Hide mode indicator
   } else {
     $localSearch.style.display = "none";
-    $previewer.style.display = "block";
+    $previewerContainer.style.display = "flex";
     $editorContainer.style.display = "flex";
     searchManager.clear();
     $main.classList.remove("search-active");  // Show mode indicator
@@ -793,12 +809,12 @@ document.addEventListener("keydown", (event) => {
       // If no active search, open search panel
       $localSearch.style.display = "block";
       $localSearchInput.focus();
-      $previewer.style.display = "none";
+      $previewerContainer.style.display = "none";
       $editorContainer.style.display = "none";
       $main.classList.add("search-active");
     }
   }
-  
+
   // Cmd+G / Ctrl+G for Find Next
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "g") {
     event.preventDefault();
@@ -815,7 +831,7 @@ document.addEventListener("keydown", (event) => {
 ipcOn("global-search", () => {
   if (isGlobalSearchOn()) {
     hideGlobalSearch();
-    $previewer.style.display = "block";
+    $previewerContainer.style.display = "flex";
     $editorContainer.style.display = "flex";
     $main.classList.remove("search-active");
   } else {
@@ -823,7 +839,7 @@ ipcOn("global-search", () => {
     $globalSearchInput.focus();
     $globalSearchResult.innerHTML = "";  // Clear previous results
     $globalSearchResult.style.display = "none";
-    $previewer.style.display = "none";
+    $previewerContainer.style.display = "none";
     $editorContainer.style.display = "none";
     $main.classList.add("search-active");
   }
