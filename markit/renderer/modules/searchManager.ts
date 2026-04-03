@@ -38,7 +38,7 @@ export class SearchManager {
   /**
    * Perform initial search and find all matches
    */
-  search(content: string, searchTerm: string, caseSensitive: boolean = false, useRegex: boolean = false): void {
+  search(content: string, searchTerm: string, caseSensitive: boolean = false, useRegex: boolean = false, autoSelect: boolean = false): void {
     if (!searchTerm) {
       this.clear();
       return;
@@ -56,6 +56,9 @@ export class SearchManager {
     };
 
     this.highlightMatches(content, searchTerm, useRegex);
+    if (autoSelect) {
+      this.selectCurrentMatchInEditor();
+    }
     this.scrollToCurrentMatch();
   }
 
@@ -65,10 +68,11 @@ export class SearchManager {
   findNext(): void {
     if (!this.state || this.state.matches.length === 0) return;
 
-    this.state.currentMatchIndex = 
+    this.state.currentMatchIndex =
       (this.state.currentMatchIndex + 1) % this.state.matches.length;
-    
+
     this.highlightCurrentMatch();
+    this.selectCurrentMatchInEditor();
     this.scrollToCurrentMatch();
   }
 
@@ -79,12 +83,13 @@ export class SearchManager {
     if (!this.state || this.state.matches.length === 0) return;
 
     const { matches } = this.state;
-    this.state.currentMatchIndex = 
-      this.state.currentMatchIndex <= 0 
-        ? matches.length - 1 
+    this.state.currentMatchIndex =
+      this.state.currentMatchIndex <= 0
+        ? matches.length - 1
         : this.state.currentMatchIndex - 1;
-    
+
     this.highlightCurrentMatch();
+    this.selectCurrentMatchInEditor();
     this.scrollToCurrentMatch();
   }
 
@@ -93,6 +98,63 @@ export class SearchManager {
    */
   clear(): void {
     this.state = null;
+  }
+
+  /**
+   * Select current match in editor textarea
+   */
+  private selectCurrentMatchInEditor(): void {
+    if (!this.state || this.state.currentMatchIndex === -1) return;
+
+    const matchOffset = this.state.matches[this.state.currentMatchIndex];
+    const matchLength = this.state.searchTerm.length;
+
+    // Select the match in the textarea
+    this.editorElement.setSelectionRange(matchOffset, matchOffset + matchLength);
+    this.editorElement.focus();
+
+    // Scroll to make the selection visible
+    this.scrollToSelection();
+  }
+
+  /**
+   * Scroll editor to make the current selection visible
+   */
+  private scrollToSelection(): void {
+    const lineHeight = this.getLineHeight();
+    const selectionStart = this.editorElement.selectionStart;
+    
+    // Calculate which line the selection is on
+    const textBeforeSelection = this.editorElement.value.substring(0, selectionStart);
+    const currentLine = textBeforeSelection.split('\n').length - 1;
+    
+    // Calculate target scroll position
+    const targetY = currentLine * lineHeight;
+    const viewportHeight = this.editorElement.clientHeight;
+    
+    // Check if selection is outside viewport
+    const currentScrollTop = this.editorElement.scrollTop;
+    const selectionY = currentLine * lineHeight;
+    
+    if (selectionY < currentScrollTop || selectionY > currentScrollTop + viewportHeight - lineHeight) {
+      // Scroll to center the selection
+      this.editorElement.scrollTop = selectionY - (viewportHeight / 2) + (lineHeight / 2);
+    }
+  }
+
+  /**
+   * Get approximate line height
+   */
+  private getLineHeight(): number {
+    const computedStyle = window.getComputedStyle(this.editorElement);
+    const lineHeight = computedStyle.lineHeight;
+    
+    if (lineHeight === "normal") {
+      const fontSize = parseFloat(computedStyle.fontSize);
+      return fontSize * 1.2;
+    }
+    
+    return parseFloat(lineHeight) || 20;
   }
 
   /**
