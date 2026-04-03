@@ -726,15 +726,38 @@ ipcOn("local-search", () => {
   if ($localSearch.style.display === "none") {
     $localSearch.style.display = "block";
     $localSearchInput.focus();
-    $localSearchResult.innerHTML = currentContent();
-    $previewerContainer.style.display = "none";
-    $editorContainer.style.display = "none";
+    
+    // Mode-aware search display
+    const isEditMode = stateManager.get("isEditMode");
+    if (isEditMode) {
+      // In Edit mode: keep editor visible, hide search result panel
+      // User can navigate with F3/Cmd+G
+      $editorContainer.style.display = "flex";
+      $previewerContainer.style.display = "none";
+      $localSearchResult.style.display = "none";
+    } else {
+      // In Preview mode: show search results panel
+      $editorContainer.style.display = "none";
+      $previewerContainer.style.display = "none";
+      $localSearchResult.style.display = "block";
+      $localSearchResult.innerHTML = currentContent();
+    }
+    
     hideGlobalSearch();
     $main.classList.add("search-active");  // Hide mode indicator
   } else {
     $localSearch.style.display = "none";
-    $previewerContainer.style.display = "flex";
-    $editorContainer.style.display = "flex";
+    
+    // Restore containers based on mode
+    const isEditMode = stateManager.get("isEditMode");
+    if (isEditMode) {
+      $editorContainer.style.display = "flex";
+      $previewerContainer.style.display = "none";
+    } else {
+      $editorContainer.style.display = "none";
+      $previewerContainer.style.display = "flex";
+    }
+    
     searchManager.clear();
     $main.classList.remove("search-active");  // Show mode indicator
   }
@@ -746,7 +769,8 @@ $localSearchInput.addEventListener("input", () => {
   const content = currentContent();
   const caseSensitive = $localSearchCaseSensitive.checked;
   const useRegex = $localSearchRegex.checked;
-  searchManager.search(content, searchTerm, caseSensitive, useRegex);
+  // Don't auto-select in editor when typing - keep focus on search input
+  searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
 });
 
 // Handle search options change
@@ -755,7 +779,7 @@ $localSearchCaseSensitive.addEventListener("change", () => {
   const content = currentContent();
   const caseSensitive = $localSearchCaseSensitive.checked;
   const useRegex = $localSearchRegex.checked;
-  searchManager.search(content, searchTerm, caseSensitive, useRegex);
+  searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
 });
 
 $localSearchRegex.addEventListener("change", () => {
@@ -763,7 +787,7 @@ $localSearchRegex.addEventListener("change", () => {
   const content = currentContent();
   const caseSensitive = $localSearchCaseSensitive.checked;
   const useRegex = $localSearchRegex.checked;
-  searchManager.search(content, searchTerm, caseSensitive, useRegex);
+  searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
 });
 
 // Handle Replace button
