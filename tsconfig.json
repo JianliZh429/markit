@@ -22,6 +22,6 @@
       "@/*": ["*"]
     }
   },
-  "include": ["markit/main/**/*", "tests/**/*.ts"],
+  "include": ["markit/main/**/*", "markit/renderer/**/*", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist", "build"]
 }
