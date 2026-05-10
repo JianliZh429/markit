@@ -428,16 +428,22 @@ function isGlobalSearchOn(): boolean {
 }
 
 /**
- * Load a file
+ * Open a document file
+ * @param filePath - Absolute path to the file
+ * @param options - Optional flags
  */
-async function loadFile(filePath: string): Promise<void> {
+async function openDocument(
+  filePath: string,
+  options: { trackRecent?: boolean; rebuildTree?: boolean } = {}
+): Promise<void> {
+  const { trackRecent = false, rebuildTree = true } = options;
+
   try {
     // Set base URL to the file's directory for relative paths (images in .assets)
-    const path = fileService.path;
-    const fileDir = path.dirname(filePath);
-    
+    const fileDir = fileService.path.dirname(filePath);
+
     // Use file:// protocol for local file paths
-    const baseUrl = 'file://' + fileDir + '/';
+    const baseUrl = "file://" + fileDir + "/";
     markdownService.setBaseUrl(baseUrl);
 
     const content = await fileService.loadFile(filePath);
@@ -460,15 +466,13 @@ async function loadFile(filePath: string): Promise<void> {
 
     $title.textContent = filePath;
 
-    // Track recent files (only when folder root exists)
-    if (hasFolderRoot() && fileService.isFile(filePath)) {
-      // Add to recent files list (at the beginning)
+    // Track recent files (only when folder root exists and flag is set)
+    if (trackRecent && hasFolderRoot() && fileService.isFile(filePath)) {
       const index = recentFilesList.indexOf(filePath);
       if (index !== -1) {
         recentFilesList.splice(index, 1);
       }
       recentFilesList.unshift(filePath);
-      // Limit to 10 recent files
       if (recentFilesList.length > 10) {
         recentFilesList.pop();
       }
@@ -476,25 +480,23 @@ async function loadFile(filePath: string): Promise<void> {
       console.log(`Added to recent files: ${filePath} (total: ${recentFilesList.length})`);
     }
   } catch (err) {
-    console.error("Error loading file:", err);
+    console.error("Error opening document:", err);
   }
 }
 
 /**
- * Unload a file
+ * Load a file (with recent file tracking)
  */
-function unloadFile(filePath: string): void {
-  if ($title.textContent === filePath) {
-    $title.textContent = "Markdown Editor";
-    editorModule.setContent("");
-    
-    // Reset word count
-    wordCountModule.update("");
-    
-    if (!stateManager.get("isEditMode")) {
-      previewMode();
-    }
-  }
+async function loadFile(filePath: string): Promise<void> {
+  await openDocument(filePath, { trackRecent: true, rebuildTree: true });
+}
+
+/**
+ * Load file content only without rebuilding the tree
+ * Used for recent files switching
+ */
+async function loadFileContentOnly(filePath: string): Promise<void> {
+  await openDocument(filePath, { trackRecent: false, rebuildTree: false });
 }
 
 /**
@@ -503,7 +505,10 @@ function unloadFile(filePath: string): void {
 function localSearch(searchTerm: string): void {
   hideGlobalSearch();
   const content = currentContent();
-  const regex = new RegExp(searchTerm, "gi");
+  const flags = $localSearchCaseSensitive.checked ? "g" : "gi";
+  const regex = $localSearchRegex.checked
+    ? new RegExp(searchTerm, flags)
+    : new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
   const matches = content.match(regex);
 
   if (matches) {

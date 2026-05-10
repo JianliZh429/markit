@@ -60,7 +60,7 @@ jobs:
           retention-days: 7
 
   build-check:
-    runs-on: ubuntu-latest, macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -117,7 +117,7 @@ jobs:
         run: npm ls --depth=0
 
   package-check:
-    runs-on: ubuntu-latest, macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
