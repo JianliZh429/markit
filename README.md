@@ -296,7 +296,7 @@ Jianli Zhang
 
 ---
 
-**Version**: 0.3.0
+**Version**: 0.3.2
 **Status**: Stable Release
 **Platforms**: macOS (Intel + Apple Silicon), Linux
-**Release Date**: March 21, 2026
+**Release Date**: May 10, 2026

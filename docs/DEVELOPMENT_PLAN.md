@@ -1,8 +1,8 @@
 # Markit Development Plan
 
-**Last Updated:** March 21, 2026
-**Current Version:** v0.3.0
-**Status:** v0.3.0 Release Ready
+**Last Updated:** May 10, 2026
+**Current Version:** v0.3.2
+**Status:** Active Development
 
 ---
 
@@ -170,10 +170,11 @@ See [CHANGELOG](../CHANGELOG.md) for detailed version history.
 
 ## Key Metrics
 
-### Current Status (v0.3.0)
-- **Version:** 0.3.0
+### Current Status (v0.3.2)
+- **Version:** 0.3.2
+- **Electron:** 39.8.4
 - **Test Coverage:** ~40% overall
-- **Test Count:** 139 passing tests
+- **Test Count:** 139+ passing tests
 - **TypeScript Coverage:** 100%
 - **Platforms:** macOS (x64/arm64), Linux (x64)
 

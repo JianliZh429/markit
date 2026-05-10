@@ -1,7 +1,7 @@
 # Markit Architecture
 
-**Last Updated:** March 17, 2026  
-**Version:** v0.0.4
+**Last Updated:** May 10, 2026  
+**Version:** v0.3.2
 
 This document describes the architecture of Markit, a modern Electron-based markdown editor with enhanced security, performance optimizations, and a modular architecture.
 
@@ -45,7 +45,18 @@ Markit follows Electron's multi-process architecture with a main process and ren
 │  ┌──────▼──────────────────────────────────────────────┐   │
 │  │              Module Layer                            │   │
 │  │  editor.ts │ preview.ts │ fileTree.ts │ autosave.ts │   │
-│  └─────────────────────────────────────────────────────┘   │
+│  │  toc.ts    │ wordCount  │ lineNumbers │ tableEditor │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│         │                                                       │
+│  ┌──────▼──────────────────────────────────────────────────┐   │
+│  │              Search Layer                                │   │
+│  │  search.ts │ searchManager.ts                            │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│         │                                                       │
+│  ┌──────▼──────────────────────────────────────────────────┐   │
+│  │              Export Layer                                │   │
+│  │  exportService.ts                                        │   │
+│  └─────────────────────────────────────────────────────────┘   │
 │         │                                                    │
 │  ┌──────▼──────────────────────────────────────────────┐   │
 │  │              Web Workers                             │   │
@@ -259,24 +270,70 @@ security.ts
 ### Renderer Process Dependencies
 
 ```
-renderer.js
+renderer.ts
 ├── state.ts
 ├── services/fileService.ts
 ├── services/markdownService.ts
+├── services/exportService.ts
 ├── search.ts
+├── modules/searchManager.ts
+├── modules/editor.ts
+├── modules/preview.ts
+├── modules/fileTree.ts
+├── modules/autosave.ts
+├── modules/toc.ts
+├── modules/wordCount.ts
+├── modules/lineNumbers.ts
+├── modules/tableEditor.ts
 └── electronAPI (from preload)
 
 search.ts
 ├── utils/performance.ts (LRUCache)
 └── fast-glob
 
+modules/searchManager.ts
+├── search.ts
+└── state.ts
+
 services/markdownService.ts
 ├── utils/performance.ts (LRUCache)
 └── marked
 
+services/exportService.ts
+├── services/markdownService.ts
+└── DOMPurify
+
 services/fileService.ts
 ├── state.ts
 └── electronAPI
+
+modules/editor.ts
+├── state.ts
+└── electronAPI
+
+modules/preview.ts
+├── services/markdownService.ts
+└── state.ts
+
+modules/fileTree.ts
+├── state.ts
+└── electronAPI
+
+modules/autosave.ts
+├── state.ts
+└── services/fileService.ts
+
+modules/toc.ts
+└── markdown parsing (headings extraction)
+
+modules/wordCount.ts
+└── text analysis (pure functions)
+
+modules/lineNumbers.ts
+└── editor.ts (scroll sync)
+
+modules/tableEditor.ts
+└── markdown table generation
 ```
 
 ## Security Architecture
@@ -477,21 +534,29 @@ Save: Application → ConfigManager → (debounced) → config.json
 ```
 tests/
 ├── unit/              # Unit tests
-│   ├── recent-files.test.ts
+│   ├── recent-opens.test.ts
 │   ├── security.test.ts
 │   ├── search.test.ts
-│   └── markdown.test.ts
+│   ├── markdown.test.ts
+│   ├── wordCount.test.ts
+│   ├── toc.test.ts
+│   ├── lineNumbers.test.ts
+│   └── tableEditor.test.ts
 ├── integration/       # Integration tests
 │   └── ipc.test.ts
 ├── renderer/          # Renderer tests
 │   ├── preview.test.ts
-│   └── markdownService.test.ts
+│   ├── markdownService.test.ts
+│   ├── editor.test.ts
+│   ├── autosave.test.ts
+│   ├── fileTree.test.ts
+│   └── exportService.test.ts
 └── e2e/              # End-to-end tests (future)
 ```
 
-### Test Coverage (v0.0.4)
+### Test Coverage (v0.3.2)
 
-- **Total Tests:** 139 passing tests
+- **Total Tests:** 139+ passing tests
 - **Overall Coverage:** ~40%
 - **Target Coverage:** 80%+
 
@@ -499,10 +564,10 @@ tests/
 - Main process core: ~60%
 - Security utilities: ~95%
 - Service layer: ~55%
-- Renderer modules: ~30%
+- Renderer modules: ~30% (wordCount, toc, lineNumbers, tableEditor now covered)
 
 **Focus Areas for Improvement:**
-- `renderer.ts`: Add integration tests
+- `renderer.ts`: Add integration tests (after orchestrator extraction)
 - `editor.ts`: Add unit tests
 - `autosave.ts`: Add unit tests
 - `fileTree.ts`: Add unit tests
@@ -538,45 +603,42 @@ dist/
 
 ## Future Architecture Improvements
 
-### v0.1.0 (Q2 2026) - Planned
+### Completed (v0.1.0 - v0.3.2)
 
-1. **Enhanced Search Navigation**
-   - Next/previous match navigation
-   - Auto-scroll to matched text
-   - Keyboard shortcuts (F3, Shift+F3)
+All features from v0.1.0, v0.2.0, and v0.3.0 plans have been implemented:
+- ✅ Enhanced search with local/global search
+- ✅ Recent Files Switcher (Cmd+Tab)
+- ✅ Settings modal with themes, fonts, autosave
+- ✅ Table of Contents generation
+- ✅ Word count and reading time
+- ✅ Export to HTML with CJK support
+- ✅ Markdown table editor
+- ✅ Image drag-and-drop with .assets/ folders
 
-2. **Recent Files Enhancements**
-   - Cmd+Tab shortcut for switching recent files
-   - Filter by root directory
-   - Visual recent files panel
+### v0.4.0 (Planned)
 
-3. **Settings UI**
-   - Dedicated settings panel
-   - Customizable themes (dark mode)
-   - Font preferences
-   - Autosave configuration
+1. **Code Architecture Refactoring**
+   - Extract renderer.ts god file into orchestrators
+   - Deduplicate loadFile/loadFileContentOnly ✅ (done)
+   - Replace `any` types with proper interfaces
+   - Split state into UiState and DocumentState
 
-### v0.2.0 (Q3 2026) - Planned
+2. **Split-View Mode**
+   - Side-by-side editor and preview
+   - Resizable divider
+   - Sync scroll between panels
 
-1. **Enhanced Preview Mode**
-   - Editable preview with live rendering
-   - Side-by-side view option
-   - Customizable preview themes
+3. **Windows Support**
+   - Switch to electron-builder for cross-platform packaging
+   - NSIS installer for Windows
+   - Windows-specific icon
 
-2. **Productivity Features**
-   - Table of contents generation
-   - Word count and reading time
-   - Export to PDF/HTML
-   - Multiple tabs support
+4. **Auto-Update Mechanism**
+   - electron-updater integration
+   - GitHub Releases as update server
+   - Startup update notification
 
-3. **Advanced Editing**
-   - Markdown table editor
-   - Image drag-and-drop
-   - Image upload to cloud storage
-   - Link checker
-   - Spell checker integration
-
-### v0.3.0+ (Future) - Under Consideration
+### v0.5.0 (Future)
 
 1. **Collaboration Features** (Optional)
    - Real-time collaboration
@@ -657,6 +719,6 @@ Logs execution time to console.
 
 ---
 
-**Last Updated:** March 17, 2026  
-**Version:** v0.0.4  
+**Last Updated:** May 10, 2026  
+**Version:** v0.3.2  
 **Maintained by:** Markit Development Team
