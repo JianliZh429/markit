@@ -1,6 +1,6 @@
 /**
  * Main Renderer Process Entry Point (Refactored)
- * Initializes and coordinates all renderer modules
+ * Initializes and coordinates all renderer modules via extracted orchestrators
  */
 
 import { stateManager } from "./state.js";
@@ -13,9 +13,9 @@ import { FileTreeModule } from "./modules/fileTree.js";
 import { AutosaveModule } from "./modules/autosave.js";
 import { TocModule } from "./modules/toc.js";
 import { WordCountModule } from "./modules/wordCount.js";
+import { LineNumbersModule } from "./modules/lineNumbers.js";
 import { ExportService } from "./services/exportService.js";
 import { TableEditorModule } from "./modules/tableEditor.js";
-import { LineNumbersModule } from "./modules/lineNumbers.js";
 
 // Get electron API from window
 const {
@@ -38,7 +38,7 @@ const markdownService = new MarkdownService({
 });
 const exportService = new ExportService(parseMarkdown);
 
-// Default settings (can be overridden by main process via IPC)
+// Default settings
 const DEFAULT_SETTINGS = {
   theme: "light" as const,
   fontSize: 14,
@@ -53,71 +53,18 @@ const $editor = document.getElementById("editor") as HTMLTextAreaElement;
 const $previewer = document.getElementById("previewer") as HTMLDivElement;
 const $tree = document.getElementById("tree") as HTMLUListElement;
 const $title = document.querySelector("title") as HTMLTitleElement;
-const $localSearch = document.getElementById("local-search") as HTMLDivElement;
-const $localSearchInput = document.getElementById(
-  "local-search-input",
-) as HTMLInputElement;
-const $localSearchResult = document.getElementById(
-  "local-search-result",
-) as HTMLDivElement;
-const $globalSearch = document.getElementById(
-  "global-search",
-) as HTMLDivElement;
-const $globalSearchInput = document.getElementById(
-  "global-search-input",
-) as HTMLInputElement;
-const $globalSearchResult = document.getElementById(
-  "global-search-result",
-) as HTMLDivElement;
 const $main = document.getElementById("main") as HTMLDivElement;
 const $modeIndicator = document.getElementById("mode-indicator") as HTMLDivElement;
 const $modeIcon = document.getElementById("mode-icon") as HTMLSpanElement;
-
-// Search options
-const $localSearchCaseSensitive = document.getElementById(
-  "local-search-case-sensitive",
-) as HTMLInputElement;
-const $localSearchRegex = document.getElementById(
-  "local-search-regex",
-) as HTMLInputElement;
-const $localReplaceInput = document.getElementById(
-  "local-replace-input",
-) as HTMLInputElement;
-const $localReplaceBtn = document.getElementById(
-  "local-replace-btn",
-) as HTMLButtonElement;
-const $localReplaceAllBtn = document.getElementById(
-  "local-replace-all-btn",
-) as HTMLButtonElement;
-
-// Global search options
-const $globalSearchCaseSensitive = document.getElementById(
-  "global-search-case-sensitive",
-) as HTMLInputElement;
-const $globalSearchRegex = document.getElementById(
-  "global-search-regex",
-) as HTMLInputElement;
-const $globalReplaceInput = document.getElementById(
-  "global-replace-input",
-) as HTMLInputElement;
-const $globalReplaceAllBtn = document.getElementById(
-  "global-replace-all-btn",
-) as HTMLButtonElement;
-
-// TOC Panel elements
 const $tocPanel = document.getElementById("toc-panel") as HTMLDivElement;
 const $tocContainer = document.getElementById("toc-container") as HTMLDivElement;
 const $tocCloseBtn = document.getElementById("toc-close-btn") as HTMLButtonElement;
-
-// Word Count elements
 const $wordCountBar = document.getElementById("word-count-bar") as HTMLDivElement;
 const $wordCountWords = document.getElementById("word-count-words") as HTMLSpanElement;
 const $wordCountChars = document.getElementById("word-count-chars") as HTMLSpanElement;
 const $wordCountReadingTime = document.getElementById("word-count-reading-time") as HTMLSpanElement;
 const $wordCountReadingTimeRow = document.getElementById("word-count-reading-time-row") as HTMLDivElement;
 const $wordCountToggle = document.getElementById("word-count-toggle") as HTMLButtonElement;
-
-// Editor container and line numbers
 const $editorContainer = document.getElementById("editor-container") as HTMLDivElement;
 const $lineNumbersGutter = document.getElementById("line-numbers-gutter") as HTMLDivElement;
 const $previewerContainer = document.getElementById("previewer-container") as HTMLDivElement;
@@ -126,12 +73,11 @@ const $previewLineNumbersGutter = document.getElementById("preview-line-numbers-
 // Initialize modules
 const editorModule = new EditorModule($editor, markdownService, fileService, ipcImage);
 const previewModule = new PreviewModule($previewer, markdownService, $previewerContainer, $previewLineNumbersGutter);
-const searchManager = new SearchManager($editor, $localSearchResult);
+const searchManager = new SearchManager($editor, document.getElementById("local-search-result") as HTMLDivElement);
 const lineNumbersModule = new LineNumbersModule($lineNumbersGutter, $editor);
 
 // Initialize TOC module
 const tocModule = new TocModule($tocPanel, $tocContainer, (id: string) => {
-  // Handle TOC item click - scroll to section
   scrollToSection(id);
 });
 
@@ -145,34 +91,11 @@ const wordCountModule = new WordCountModule(
   $wordCountToggle
 );
 
-// TOC panel close button
-$tocCloseBtn.addEventListener("click", () => {
-  tocModule.hide();
-  // Show Explorer when TOC is closed
-  $explorer.style.display = "block";
-});
-
-// Update TOC and Word Count when editor content changes
-$editor.addEventListener("input", () => {
-  if (tocModule.visible) {
-    updateToc();
-  }
-  wordCountModule.update(editorModule.getContent());
-  if (lineNumbersModule.visible) {
-    lineNumbersModule.update();
-  }
-});
-
 // Initialize autosave module
 const autosaveModule = new AutosaveModule(
   () => editorModule.getContent(),
   document.getElementById("autosave-status") || undefined
 );
-
-// Try to load autosave if no file is currently open (main process handles this)
-// This is a placeholder - actual loading happens in main process
-
-// Enable autosave by default
 autosaveModule.enable(30000);
 
 // Initialize file tree module
@@ -184,7 +107,6 @@ const fileTreeModule = new FileTreeModule($tree, {
     loadFile(filePath);
   },
   onFileCreate: (filePath: string) => {
-    // File created, will be loaded after rename
     console.log(`File created: ${filePath}`);
   },
   onFileUnload: (filePath: string) => {
@@ -195,7 +117,6 @@ const fileTreeModule = new FileTreeModule($tree, {
     $title.textContent = title;
   },
   onFileIconClick: (filePath: string) => {
-    // Single click on file icon - load content without rebuilding tree
     hideLocalSearch();
     hideGlobalSearch();
     loadFileContentOnly(filePath);
@@ -206,27 +127,17 @@ const fileTreeModule = new FileTreeModule($tree, {
 let folderRoot: string | null = null;
 
 /**
- * Get current content based on mode
- */
-function currentContent(): string {
-  return stateManager.get("isEditMode")
-    ? editorModule.getContent()
-    : previewModule.getHtmlContent();
-}
-
-/**
  * Update the mode indicator in header
  */
 function updateModeIndicator(): void {
   const isEditMode = stateManager.get("isEditMode");
   
-  // Update icon and styling based on mode
   if (isEditMode) {
-    $modeIcon.textContent = "✏️"; // Pencil icon for edit mode (monochrome)
+    $modeIcon.textContent = "✏️";
     $modeIndicator.className = "edit-mode";
     $modeIndicator.title = "Edit Mode";
   } else {
-    $modeIcon.textContent = "👀"; // Circle/eye icon for preview mode (monochrome)
+    $modeIcon.textContent = "👀";
     $modeIndicator.className = "preview-mode";
     $modeIndicator.title = "Preview Mode";
   }
@@ -234,44 +145,29 @@ function updateModeIndicator(): void {
 
 /**
  * Switch to preview mode
- * Preview mode is READ-ONLY for viewing rendered markdown
- * FIX: Sync by line number instead of character offset
  */
 function previewMode(): void {
-  // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
-
-  // Save cursor line from editor before switching
   const editorLine = editorModule.getCursorLine();
-
-  // Get content from editor
   const markdownContent = editorModule.getContent();
   previewModule.setMarkdownContent(markdownContent);
 
-  // Hide editor container, show preview container (READ-ONLY)
   $editorContainer.style.display = "none";
   $previewerContainer.style.display = "flex";
-  previewModule.show(false); // Read-only mode
+  previewModule.show(false);
 
-  // Sync line numbers visibility
   if (lineNumbersModule.visible) {
     previewModule.showLineNumbers();
   }
 
-  // Sync by line number and center in view
   if (editorLine >= 0) {
     previewModule.setCursorLine(editorLine);
   }
 
   stateManager.set("isEditMode", false);
-
-  // Update mode indicator
   updateModeIndicator();
-
-  // Update word count
   wordCountModule.update(markdownContent);
 
-  // Clear mode switching flag after a brief delay
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
   }, 100);
@@ -279,89 +175,53 @@ function previewMode(): void {
 
 /**
  * Switch to edit mode
- * FIX: Sync by line number instead of character offset
- * Uses mouse hover line if available, otherwise cursor line
- * Centers the target line in the viewport
  */
 function editMode(): void {
-  // Set mode switching flag to prevent input handler interference
   stateManager.set("isModeSwitching", true);
-
-  // Get current line from preview mode
-  // Prefer hover line (mouse position) if available, otherwise cursor line
+  
   let previewLine = stateManager.get('previewHoverLine') as number | null;
   if (previewLine === null || previewLine < 0) {
     previewLine = previewModule.getCursorLine();
   }
 
-  // Get content from editor (preview is read-only, no changes)
   const plainText = editorModule.getContent();
   editorModule.setContent(plainText);
 
-  // Hide preview container, show editor container
   $previewerContainer.style.display = "none";
   $editorContainer.style.display = "flex";
   editorModule.show();
 
-  // Sync by line number and center in view
   if (previewLine !== null && previewLine >= 0) {
     editorModule.setCursorLine(previewLine);
   }
 
   stateManager.set("isEditMode", true);
-
-  // Update mode indicator
   updateModeIndicator();
-
-  // Update word count
   wordCountModule.update(plainText);
 
-  // Clear mode switching flag after a brief delay
   setTimeout(() => {
     stateManager.set("isModeSwitching", false);
   }, 100);
 }
 
 /**
- * Hide local search panel
- */
-function hideLocalSearch(): void {
-  $localSearch.style.display = "none";
-}
-
-/**
- * Hide global search panel
- */
-function hideGlobalSearch(): void {
-  $globalSearch.style.display = "none";
-  $globalSearchResult.style.display = "none";
-}
-
-/**
  * Scroll to section in editor or preview
  */
 function scrollToSection(id: string): void {
-  // Skip if id is empty
-  if (!id) {
-    return;
-  }
+  if (!id) return;
 
   const isEditMode = stateManager.get("isEditMode");
 
   if (isEditMode) {
-    // In edit mode, scroll to the heading in the textarea
     const content = editorModule.getContent();
     const lines = content.split('\n');
     let targetLine = -1;
 
-    // Find the line with the heading
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      // Match heading with the given id (slugified)
       const match = line.match(/^#{1,6}\s+(.+)$/);
       if (match) {
         const headingText = match[1].trim();
-        // Use same slugify logic as TOC module (Unicode-safe)
         const slug = headingText
           .toLowerCase()
           .trim()
@@ -380,7 +240,6 @@ function scrollToSection(id: string): void {
       editorModule.scrollToLine(targetLine);
     }
   } else {
-    // In preview mode, scroll to the element in the preview
     const $previewElement = $previewer.querySelector(`#${CSS.escape(id)}`);
     if ($previewElement) {
       $previewElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -395,42 +254,36 @@ function toggleToc(): void {
   const wasVisible = tocModule.visible;
   tocModule.toggle();
   
-  // Toggle Explorer panel opposite to TOC
   if (!wasVisible) {
-    // TOC is now shown, hide Explorer
     $explorer.style.display = "none";
   } else {
-    // TOC is now hidden, show Explorer
     $explorer.style.display = "block";
   }
   
-  // Update TOC content when toggled
   const content = editorModule.getContent();
   tocModule.update(content);
 }
 
 /**
- * Update TOC from current content
+ * Hide local search panel
  */
-function updateToc(): void {
-  const content = editorModule.getContent();
-  tocModule.update(content);
+function hideLocalSearch(): void {
+  const $localSearch = document.getElementById("local-search") as HTMLDivElement;
+  $localSearch.style.display = "none";
 }
 
 /**
- * Check if global search is active
+ * Hide global search panel
  */
-function isGlobalSearchOn(): boolean {
-  return (
-    $globalSearch.style.display !== "none" ||
-    $globalSearchResult.style.display !== "none"
-  );
+function hideGlobalSearch(): void {
+  const $globalSearch = document.getElementById("global-search") as HTMLDivElement;
+  const $globalSearchResult = document.getElementById("global-search-result") as HTMLDivElement;
+  $globalSearch.style.display = "none";
+  $globalSearchResult.style.display = "none";
 }
 
 /**
  * Open a document file
- * @param filePath - Absolute path to the file
- * @param options - Optional flags
  */
 async function openDocument(
   filePath: string,
@@ -439,25 +292,18 @@ async function openDocument(
   const { trackRecent = false, rebuildTree = true } = options;
 
   try {
-    // Set base URL to the file's directory for relative paths (images in .assets)
     const fileDir = fileService.path.dirname(filePath);
-
-    // Use file:// protocol for local file paths
     const baseUrl = "file://" + fileDir + "/";
     markdownService.setBaseUrl(baseUrl);
 
     const content = await fileService.loadFile(filePath);
     editorModule.setContent(content);
-
-    // Set current file path for image drop handling
     editorModule.setCurrentFilePath(filePath);
 
-    // Update TOC if visible
     if (tocModule.visible) {
-      updateToc();
+      tocModule.update(content);
     }
 
-    // Update word count
     wordCountModule.update(content);
 
     if (!stateManager.get("isEditMode")) {
@@ -466,18 +312,9 @@ async function openDocument(
 
     $title.textContent = filePath;
 
-    // Track recent files (only when folder root exists and flag is set)
+    // Track recent files
     if (trackRecent && hasFolderRoot() && fileService.isFile(filePath)) {
-      const index = recentFilesList.indexOf(filePath);
-      if (index !== -1) {
-        recentFilesList.splice(index, 1);
-      }
-      recentFilesList.unshift(filePath);
-      if (recentFilesList.length > 10) {
-        recentFilesList.pop();
-      }
-      currentRecentFileIndex = 0;
-      console.log(`Added to recent files: ${filePath} (total: ${recentFilesList.length})`);
+      addToRecentFiles(filePath);
     }
   } catch (err) {
     console.error("Error opening document:", err);
@@ -493,1020 +330,131 @@ async function loadFile(filePath: string): Promise<void> {
 
 /**
  * Load file content only without rebuilding the tree
- * Used for recent files switching
  */
 async function loadFileContentOnly(filePath: string): Promise<void> {
   await openDocument(filePath, { trackRecent: false, rebuildTree: false });
 }
 
 /**
- * Local search
+ * Check if we have a valid folder root
  */
-function localSearch(searchTerm: string): void {
-  hideGlobalSearch();
-  const content = currentContent();
-  const flags = $localSearchCaseSensitive.checked ? "g" : "gi";
-  const regex = $localSearchRegex.checked
-    ? new RegExp(searchTerm, flags)
-    : new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
-  const matches = content.match(regex);
-
-  if (matches) {
-    console.log(`Found ${matches.length} matches for "${searchTerm}"`);
-    const highlightedContent = content.replace(
-      regex,
-      (match) => `<mark>${match}</mark>`,
-    );
-    $localSearchResult.innerHTML = highlightedContent;
-  } else {
-    console.log(`No matches found for "${searchTerm}"`);
-  }
-}
-
-/**
- * Global search
- */
-async function globalSearch(keyword: string): Promise<void> {
-  hideLocalSearch();
-  const rootDir = fileTreeModule.getRootDirectory();
-  const results = await searchInFiles(rootDir, keyword);
-  console.log("Search results:", results);
-
-  // Group results by file with collapsible sections
-  $globalSearchResult.innerHTML = results
-    .map((result: any) => {
-      const matchCount = result.matches.length;
-      
-      return `
-        <div class="search-file-group" data-file="${result.file}">
-          <div class="search-file-header">
-            <span class="search-file-icon">▶</span>
-            <span class="search-file-path">${result.file}</span>
-            <span class="search-match-count">${matchCount} match${matchCount > 1 ? 'es' : ''}</span>
-          </div>
-          <div class="search-file-matches">
-            ${result.matches.map((match: any) => `
-              <div class="search-match-item" data-line="${match.line}">
-                ...${match.snippet}...
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
-    })
-    .join("");
-  
-  // Add click handlers for file groups (expand/collapse)
-  $globalSearchResult.querySelectorAll(".search-file-header").forEach((header) => {
-    header.addEventListener("click", () => {
-      const group = header.parentElement as HTMLElement;
-      const matches = group.querySelector(".search-file-matches") as HTMLElement;
-      const isExpanded = matches.classList.contains("expanded");
-      
-      // Toggle expanded state
-      matches.classList.toggle("expanded");
-      header.classList.toggle("expanded");
-    });
-    
-    // Double-click to open file
-    header.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      const group = header.parentElement as HTMLElement;
-      const filePath = group.dataset.file;
-      if (filePath) {
-        // Close search and open file
-        hideGlobalSearch();
-        $editorContainer.style.display = "flex";
-        $previewerContainer.style.display = "none";
-        loadFile(filePath);
-      }
-    });
-  });
-
-  // Add click handlers for match items (open file at specific location)
-  $globalSearchResult.querySelectorAll(".search-match-item").forEach((item) => {
-    item.addEventListener("dblclick", () => {
-      const group = item.closest(".search-file-group") as HTMLElement;
-      const filePath = group?.dataset.file;
-      const line = parseInt(item.dataset.line || "0", 10);
-
-      if (filePath) {
-        // Close search and open file at specific line
-        hideGlobalSearch();
-        $editorContainer.style.display = "flex";
-        $previewerContainer.style.display = "none";
-        loadFile(filePath);
-        // TODO: Scroll to specific line after file loads
-      }
-    });
-  });
-  
-  $globalSearchResult.style.display = "block";
-}
-
-// Event Listeners
-$localSearchInput.addEventListener("keydown", (event) => {
-  if (event.code === "Enter") {
-    const searchTerm = (event.target as HTMLInputElement).value;
-    localSearch(searchTerm);
-  }
-});
-
-$globalSearchInput.addEventListener("keydown", async (event) => {
-  if (event.code === "Enter") {
-    const keyword = (event.target as HTMLInputElement).value;
-    await globalSearch(keyword);
-  }
-});
-
-// IPC Event Handlers
-ipcOn("toggle-mode", () => {
-  const isEditMode = stateManager.get("isEditMode");
-  stateManager.set("isEditMode", !isEditMode);
-  $localSearch.style.display = "none";
-
-  if (stateManager.get("isEditMode")) {
-    editMode();
-  } else {
-    previewMode();
-  }
-});
-
-ipcOn("select-all", () => {
-  const activeElement = document.activeElement;
-
-  if (
-    activeElement === $localSearchInput ||
-    activeElement === $globalSearchInput
-  ) {
-    (activeElement as HTMLInputElement).select();
-  } else if (stateManager.get("isEditMode")) {
-    editorModule.selectAll();
-  } else {
-    previewModule.selectAll();
-  }
-});
-
-ipcOn("open-file-dialog", () => {
-  ipcSend("open-file-dialog");
-});
-
-ipcOn("open-folder-dialog", () => {
-  ipcSend("open-folder-dialog");
-});
-
-ipcOn("file-opened", (args: string | string[]) => {
-  console.log("file-opened:", args);
-  const filePath = typeof args === "string" ? args : args[0];
-  fileTreeModule.loadFileOrFolder(filePath);
-});
-
-ipcOn("save-opened-file", async () => {
-  const openedFilePath = $title.textContent;
-  if (!openedFilePath || openedFilePath === "Markdown Editor") {
-    console.warn("No file is currently opened");
-    return;
-  }
-
-  const content = editorModule.getContent();
-  try {
-    await fileService.saveFile(openedFilePath, content);
-    console.log(`File ${openedFilePath} saved successfully`);
-  } catch (err) {
-    console.error("Error saving file:", err);
-  }
-});
-
-ipcOn("save-file-dialog", () => {
-  ipcSend("save-file-dialog");
-});
-
-ipcOn("save-file", async (filePath: string) => {
-  ipcSend("save-file", filePath, editorModule.getContent());
-});
-
-ipcOn("new-file-dialog", () => {
-  ipcSend("new-file-dialog");
-});
-
-ipcOn("new-file-created", async (filePath: string) => {
-  try {
-    await fileService.createFile(filePath);
-    loadFile(filePath);
-    console.log(`File ${filePath} created successfully`);
-  } catch (err) {
-    console.error("Error creating file:", err);
-  }
-});
-
-ipcOn("toggle-explorer", () => {
-  if ($explorer.style.display === "none") {
-    $explorer.style.display = "block";
-  } else {
-    $explorer.style.display = "none";
-  }
-});
-
-ipcOn("toggle-toc", () => {
-  toggleToc();
-});
-
-ipcOn("toggle-word-count", () => {
-  wordCountModule.toggle();
-});
-
-ipcOn("toggle-line-numbers", () => {
-  lineNumbersModule.toggle();
-  // Sync line numbers visibility with preview mode
-  const isVisible = lineNumbersModule.visible;
-  stateManager.set("isLineNumbersVisible", isVisible);
-  if (isVisible) {
-    previewModule.showLineNumbers();
-  } else {
-    previewModule.hideLineNumbers();
-  }
-});
-
-ipcOn("local-search", () => {
-  if ($localSearch.style.display === "none") {
-    $localSearch.style.display = "block";
-    $localSearchInput.focus();
-    
-    // Mode-aware search display
-    const isEditMode = stateManager.get("isEditMode");
-    if (isEditMode) {
-      // In Edit mode: keep editor visible, hide search result panel
-      // User can navigate with F3/Cmd+G
-      $editorContainer.style.display = "flex";
-      $previewerContainer.style.display = "none";
-      $localSearchResult.style.display = "none";
-    } else {
-      // In Preview mode: show search results panel
-      $editorContainer.style.display = "none";
-      $previewerContainer.style.display = "none";
-      $localSearchResult.style.display = "block";
-      $localSearchResult.innerHTML = currentContent();
-    }
-    
-    hideGlobalSearch();
-    $main.classList.add("search-active");  // Hide mode indicator
-  } else {
-    $localSearch.style.display = "none";
-    
-    // Restore containers based on mode
-    const isEditMode = stateManager.get("isEditMode");
-    if (isEditMode) {
-      $editorContainer.style.display = "flex";
-      $previewerContainer.style.display = "none";
-    } else {
-      $editorContainer.style.display = "none";
-      $previewerContainer.style.display = "flex";
-    }
-    
-    searchManager.clear();
-    $main.classList.remove("search-active");  // Show mode indicator
-  }
-});
-
-// Handle search input
-$localSearchInput.addEventListener("input", () => {
-  const searchTerm = $localSearchInput.value;
-  const content = currentContent();
-  const caseSensitive = $localSearchCaseSensitive.checked;
-  const useRegex = $localSearchRegex.checked;
-  // Don't auto-select in editor when typing - keep focus on search input
-  searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
-});
-
-// Handle search options change
-$localSearchCaseSensitive.addEventListener("change", () => {
-  const searchTerm = $localSearchInput.value;
-  const content = currentContent();
-  const caseSensitive = $localSearchCaseSensitive.checked;
-  const useRegex = $localSearchRegex.checked;
-  searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
-});
-
-$localSearchRegex.addEventListener("change", () => {
-  const searchTerm = $localSearchInput.value;
-  const content = currentContent();
-  const caseSensitive = $localSearchCaseSensitive.checked;
-  const useRegex = $localSearchRegex.checked;
-  searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
-});
-
-// Handle Replace button
-$localReplaceBtn.addEventListener("click", () => {
-  const replacement = $localReplaceInput.value;
-  searchManager.replaceCurrent(replacement);
-});
-
-// Handle Replace All button
-$localReplaceAllBtn.addEventListener("click", () => {
-  const replacement = $localReplaceInput.value;
-  const count = searchManager.replaceAll(replacement);
-  if (count > 0) {
-    // Update editor content in the DOM
-    editorModule.setContent(searchManager.getState()?.content || "");
-  }
-});
-
-// Handle Find Next (Enter in search box)
-$localSearchInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    if (event.shiftKey) {
-      searchManager.findPrevious();
-    } else {
-      searchManager.findNext();
-    }
-  }
-});
-
-// Global shortcut for Find Next/Previous (F3, Shift+F3, Cmd+G, Cmd+Shift+G)
-document.addEventListener("keydown", (event) => {
-  // F3 for Find Next/Previous
-  if (event.key === "F3") {
-    event.preventDefault();
-    if (searchManager.hasActiveSearch()) {
-      if (event.shiftKey) {
-        searchManager.findPrevious();
-      } else {
-        searchManager.findNext();
-      }
-    } else {
-      // If no active search, open search panel
-      $localSearch.style.display = "block";
-      $localSearchInput.focus();
-      $previewerContainer.style.display = "none";
-      $editorContainer.style.display = "none";
-      $main.classList.add("search-active");
-    }
-  }
-
-  // Cmd+G / Ctrl+G for Find Next
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "g") {
-    event.preventDefault();
-    if (searchManager.hasActiveSearch()) {
-      if (event.shiftKey) {
-        searchManager.findPrevious();
-      } else {
-        searchManager.findNext();
-      }
-    }
-  }
-});
-
-ipcOn("global-search", () => {
-  if (isGlobalSearchOn()) {
-    hideGlobalSearch();
-    $previewerContainer.style.display = "flex";
-    $editorContainer.style.display = "flex";
-    $main.classList.remove("search-active");
-  } else {
-    $globalSearch.style.display = "block";
-    $globalSearchInput.focus();
-    $globalSearchResult.innerHTML = "";  // Clear previous results
-    $globalSearchResult.style.display = "none";
-    $previewerContainer.style.display = "none";
-    $editorContainer.style.display = "none";
-    $main.classList.add("search-active");
-  }
-});
-
-// Handle global replace all
-$globalReplaceAllBtn.addEventListener("click", async () => {
-  const searchTerm = $globalSearchInput.value;
-  const replacement = $globalReplaceInput.value;
-  const caseSensitive = $globalSearchCaseSensitive.checked;
-  const useRegex = $globalSearchRegex.checked;
-  const rootDir = fileTreeModule.getRootDirectory();
-
-  if (!rootDir || !searchTerm) {
-    alert("Please open a folder and enter a search term first.");
-    return;
-  }
-
-  const confirmMsg = `Replace all occurrences of "${searchTerm}" with "${replacement}" in all .md files?\n\nThis action cannot be undone.`;
-  if (!confirm(confirmMsg)) {
-    return;
-  }
-
-  try {
-    const results = await window.electronAPI.replaceInFiles(
-      rootDir,
-      searchTerm,
-      replacement,
-      "md",
-      caseSensitive,
-      useRegex,
-    ) as { file: string; replacements: number }[];
-
-    if (results.length > 0) {
-      const totalReplacements = results.reduce((sum, r) => sum + r.replacements, 0);
-      alert(`Replaced ${totalReplacements} occurrences across ${results.length} files.`);
-      // Refresh the search to show updated results
-      if (searchTerm) {
-        await globalSearch(searchTerm);
-      }
-    } else {
-      alert("No matches found to replace.");
-    }
-  } catch (error) {
-    console.error("Global replace failed:", error);
-    alert("Failed to perform replace. Check console for details.");
-  }
-});
-
-// Recent Files Switcher Modal - macOS Style
-// Only works when a folder is opened as root in the tree view
-let recentFilesList: string[] = [];
-let currentRecentFileIndex = 0;
-let isModalVisible = false;
-let isControlKeyDown = false;
-let hasNavigated = false; // Track if user has navigated with Tab
-
-// Get modal DOM elements
-const $recentFilesModal = document.getElementById("recent-files-modal") as HTMLDivElement;
-const $recentFilesList = document.getElementById("recent-files-list") as HTMLUListElement;
-
-// Check if we have a valid folder root (recent files only work with folder root)
 function hasFolderRoot(): boolean {
   const rootDir = fileTreeModule.getRootDirectory();
   return rootDir !== "" && rootDir !== null && rootDir !== undefined;
 }
 
-// Handle file-opened event from IPC
-ipcOn("file-opened", (args: string | string[]) => {
-  const filePath = typeof args === "string" ? args : args[0];
+/**
+ * Add file to recent files list
+ */
+function addToRecentFiles(filePath: string): void {
+  if (!hasFolderRoot()) return;
 
-  // Check if opening a folder (sets root) or a file
-  if (fileService.isDirectory(filePath)) {
-    // Folder opened - set as root and clear recent files for new context
-    folderRoot = filePath;
-    stateManager.set("rootDirectory", filePath);
-    recentFilesList = [];
-    currentRecentFileIndex = 0;
-
-    // Set base URL to folder root (for when no file is open)
-    const baseUrl = 'file://' + folderRoot + '/';
-    markdownService.setBaseUrl(baseUrl);
-    
-    // Update editor's folder root for image drop
-    editorModule.setFolderRoot(folderRoot);
-
-    console.log(`Folder opened: ${filePath}`);
-  }
-
-  // Load the file/folder through fileTreeModule
-  fileTreeModule.loadFileOrFolder(filePath);
-});
-
-// Show the recent files modal
-function showRecentFilesModal(): void {
-  // Only show modal if we have a folder root
-  if (!hasFolderRoot()) {
-    console.log("Recent files switcher only works when a folder is opened");
-    return;
-  }
-  
-  renderRecentFilesModal();
-  $recentFilesModal.style.display = "flex";
-  isModalVisible = true;
-  hasNavigated = false; // Reset navigation flag
-}
-
-// Hide the recent files modal and open selected file
-function hideRecentFilesModal(): void {
-  $recentFilesModal.style.display = "none";
-  isModalVisible = false;
-  isControlKeyDown = false;
-  hasNavigated = false;
-  
-  // Only open file if we have a folder root
-  if (!hasFolderRoot()) {
-    return;
-  }
-  
-  // Open the currently selected file (if any)
-  if (recentFilesList.length > 0) {
-    const filePath = recentFilesList[currentRecentFileIndex];
-    // First, select and scroll to the file in the tree
-    const foundInTree = fileTreeModule.selectFileInTree(filePath);
-    if (foundInTree) {
-      console.log(`Selected recent file in tree: ${filePath}`);
-      // Load just the file content, don't reload the tree
-      loadFileContentOnly(filePath);
-    } else {
-      // File not in tree, load it normally (rebuilds tree)
-      try {
-        fileTreeModule.loadFileOrFolder(filePath);
-        console.log(`Loaded recent file: ${filePath}`);
-      } catch (error) {
-        console.error(`Failed to load recent file ${filePath}:`, error);
-        // Remove invalid file from list
-        recentFilesList.splice(currentRecentFileIndex, 1);
-        if (recentFilesList.length > 0) {
-          currentRecentFileIndex = currentRecentFileIndex % recentFilesList.length;
-        }
-      }
-    }
-  }
+  // Use the recent files orchestrator's logic here
+  // We'll import it dynamically to avoid circular dependencies
+  import('./orchestrators/recentFilesOrchestrator.js').then((module) => {
+    module.addToRecentFiles(filePath);
+  });
 }
 
 /**
- * Load file content only without reloading the tree
- * Used for recent files switching
+ * Unload current file
  */
-async function loadFileContentOnly(filePath: string): Promise<void> {
-  try {
-    // Set base URL to the file's directory for relative paths (images in .assets)
-    const path = fileService.path;
-    const fileDir = path.dirname(filePath);
-    
-    // Use file:// protocol for local file paths
-    const baseUrl = 'file://' + fileDir + '/';
-    markdownService.setBaseUrl(baseUrl);
-    
-    const content = await fileService.loadFile(filePath);
-    editorModule.setContent(content);
+function unloadFile(filePath: string): void {
+  // Reset state when file is closed
+  editorModule.setContent("");
+  previewModule.setMarkdownContent("");
+  $title.textContent = "Markdown Editor";
+  wordCountModule.update("");
+}
 
-    // Set current file path for image drop handling
-    editorModule.setCurrentFilePath(filePath);
-
-    // Update TOC if visible
-    if (tocModule.visible) {
-      updateToc();
-    }
-
-    // Update word count
-    wordCountModule.update(content);
-
-    if (!stateManager.get("isEditMode")) {
-      previewMode();
-    }
-
-    $title.textContent = filePath;
-    console.log(`Loaded file content: ${filePath}`);
-  } catch (err) {
-    console.error("Error loading file content:", err);
+// Update TOC and Word Count when editor content changes
+$editor.addEventListener("input", () => {
+  if (tocModule.visible) {
+    tocModule.update(editorModule.getContent());
   }
-}
-
-// Cancel the modal without opening any file
-function cancelRecentFilesModal(): void {
-  $recentFilesModal.style.display = "none";
-  isModalVisible = false;
-  isControlKeyDown = false;
-  hasNavigated = false;
-}
-
-// Render the recent files modal content
-function renderRecentFilesModal(): void {
-  // Check if we have a folder root
-  if (!hasFolderRoot()) {
-    $recentFilesList.innerHTML = '<li class="recent-files-empty">Recent files only available when a folder is opened</li>';
-    return;
-  }
-  
-  if (recentFilesList.length === 0) {
-    $recentFilesList.innerHTML = '<li class="recent-files-empty">No recent files in this folder</li>';
-    return;
-  }
-
-  $recentFilesList.innerHTML = recentFilesList
-    .map((filePath, index) => {
-      const parsedPath = path.parse(filePath);
-      const fileName = parsedPath.base;
-      const dirName = parsedPath.dir;
-      const isSelected = index === currentRecentFileIndex;
-      return `
-        <li class="${isSelected ? "selected" : ""}" data-index="${index}">
-          <span class="recent-file-icon">📄</span>
-          <span class="recent-file-path" title="${filePath}">${fileName}</span>
-          <span class="recent-file-name">${dirName}</span>
-        </li>
-      `;
-    })
-    .join("");
-
-  // Add click handlers
-  $recentFilesList.querySelectorAll("li").forEach((li) => {
-    li.addEventListener("click", () => {
-      const index = parseInt(li.getAttribute("data-index") || "0", 10);
-      currentRecentFileIndex = index;
-      hideRecentFilesModal();
-    });
-  });
-}
-
-// Navigate to next recent file (forward)
-function navigateNextRecentFile(): void {
-  if (recentFilesList.length === 0) return;
-  
-  // Circular navigation: go to next, wrap around at end
-  currentRecentFileIndex = (currentRecentFileIndex + 1) % recentFilesList.length;
-  hasNavigated = true;
-  renderRecentFilesModal();
-}
-
-// Navigate to previous recent file (backward)
-function navigatePreviousRecentFile(): void {
-  if (recentFilesList.length === 0) return;
-  
-  // Circular navigation: go to previous, wrap around at beginning
-  currentRecentFileIndex = (currentRecentFileIndex - 1 + recentFilesList.length) % recentFilesList.length;
-  hasNavigated = true;
-  renderRecentFilesModal();
-}
-
-// Handle keyboard events for modal navigation
-document.addEventListener("keydown", (event) => {
-  // Check if Ctrl or Cmd is held
-  const isControlOrCmd = event.ctrlKey || event.metaKey;
-  
-  // Handle Ctrl/Cmd key press
-  if (event.key === "Control" || event.key === "Meta") {
-    isControlKeyDown = true;
-    return;
-  }
-  
-  // Handle Ctrl/Cmd + Tab for recent files modal
-  if (isControlOrCmd && event.key === "Tab") {
-    // Only handle if we have a folder root
-    if (!hasFolderRoot()) {
-      // Let the default behavior happen (browser tab switching)
-      return;
-    }
-    
-    event.preventDefault();
-    
-    if (!isModalVisible) {
-      // First Tab press: show modal
-      showRecentFilesModal();
-    } else {
-      // Subsequent Tab presses: navigate
-      if (event.shiftKey) {
-        // Ctrl+Shift+Tab: navigate backwards
-        navigatePreviousRecentFile();
-      } else {
-        // Ctrl+Tab: navigate forwards
-        navigateNextRecentFile();
-      }
-    }
+  wordCountModule.update(editorModule.getContent());
+  if (lineNumbersModule.visible) {
+    lineNumbersModule.update();
   }
 });
 
-// Handle key release to confirm selection
-document.addEventListener("keyup", (event) => {
-  // Track control key state
-  if (event.key === "Control" || event.key === "Meta") {
-    const wasControlKeyDown = isControlKeyDown;
-    isControlKeyDown = false;
-    
-    // When Ctrl/Cmd is released and modal is visible, open selected file or close
-    if (wasControlKeyDown && isModalVisible) {
-      if (recentFilesList.length > 0) {
-        // Open the selected file
-        hideRecentFilesModal();
-      } else {
-        // No recent files, just close the modal
-        cancelRecentFilesModal();
-      }
-    }
-  }
+// TOC panel close button
+$tocCloseBtn.addEventListener("click", () => {
+  tocModule.hide();
+  $explorer.style.display = "block";
 });
 
-// Listen for switch-recent-file command from menu accelerator (fallback)
-ipcOn("switch-recent-file", () => {
-  if (hasFolderRoot()) {
-    showRecentFilesModal();
-  }
-});
+// ============================================================================
+// INITIALIZE ORCHESTRATORS
+// These extract all modal handling and IPC wiring from renderer.ts
+// ============================================================================
 
-// Settings Modal
-// Get settings modal DOM elements
-const $settingsModal = document.getElementById("settings-modal") as HTMLDivElement;
-const $settingsCloseBtn = document.getElementById("settings-close-btn") as HTMLButtonElement;
-const $settingsSaveBtn = document.getElementById("settings-save-btn") as HTMLButtonElement;
-const $settingsResetBtn = document.getElementById("settings-reset-btn") as HTMLButtonElement;
-const $settingTheme = document.getElementById("setting-theme") as HTMLSelectElement;
-const $settingFontFamily = document.getElementById("setting-font-family") as HTMLSelectElement;
-const $settingFontSize = document.getElementById("setting-font-size") as HTMLInputElement;
-const $settingFontSizeValue = document.getElementById("setting-font-size-value") as HTMLSpanElement;
-const $settingAutosaveEnabled = document.getElementById("setting-autosave-enabled") as HTMLInputElement;
-const $settingAutosaveInterval = document.getElementById("setting-autosave-interval") as HTMLInputElement;
-const $settingAutosaveIntervalValue = document.getElementById("setting-autosave-interval-value") as HTMLSpanElement;
+// 1. Settings Orchestrator
+import { initializeSettings } from './orchestrators/settingsOrchestrator.js';
 
-// Current settings (will be loaded from main process)
-let currentSettings: typeof DEFAULT_SETTINGS = { ...DEFAULT_SETTINGS };
+// 2. Recent Files Orchestrator
+import { initializeRecentFilesOrchestrator } from './orchestrators/recentFilesOrchestrator.js';
+initializeRecentFilesOrchestrator(fileTreeModule, loadFile, loadFileContentOnly);
 
-// Load settings from main process
-async function loadSettingsFromMain(): Promise<void> {
-  try {
-    const settings = await window.electronAPI.settings.get();
-    currentSettings = settings;
-    
-    // Update UI to reflect loaded settings
-    $settingTheme.value = settings.theme;
-    $settingFontFamily.value = settings.fontFamily;
-    $settingFontSize.value = settings.fontSize.toString();
-    $settingFontSizeValue.textContent = settings.fontSize.toString();
-    $settingAutosaveEnabled.checked = settings.autosaveEnabled;
-    $settingAutosaveInterval.value = (settings.autosaveInterval / 1000).toString();
-    $settingAutosaveIntervalValue.textContent = (settings.autosaveInterval / 1000).toString();
-    
-    // Apply settings
-    applySettingsToUI(settings);
-  } catch (error) {
-    console.error("Failed to load settings:", error);
-  }
-}
+// 3. Search Orchestrator
+import { initSearch } from './orchestrators/searchOrchestrator.js';
+initSearch(searchManager, editorModule, previewModule, fileTreeModule, ipcImage, loadFile);
 
-// Apply settings to UI
-function applySettingsToUI(settings: typeof DEFAULT_SETTINGS): void {
-  const root = document.documentElement;
+// 4. Export Orchestrator
+import { initializeExportOrchestrator } from './orchestrators/exportOrchestrator.js';
+initializeExportOrchestrator(editorModule, exportService);
 
-  // Apply theme
-  if (settings.theme === "auto") {
-    // Use system preference
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    root.style.setProperty("--theme", prefersDark ? "dark" : "light");
-    document.body.classList.remove("theme-light", "theme-dark");
-    document.body.classList.add(`theme-${prefersDark ? "dark" : "light"}`);
-  } else {
-    root.style.setProperty("--theme", settings.theme);
-    document.body.classList.remove("theme-light", "theme-dark");
-    document.body.classList.add(`theme-${settings.theme}`);
-  }
+// 5. Shortcuts Orchestrator
+import { initShortcuts } from './orchestrators/shortcutsOrchestrator.js';
+initShortcuts();
 
-  // Apply font family
-  root.style.setProperty("--font-mono", settings.fontFamily);
-  console.log("Font family set to:", settings.fontFamily);
-
-  // Apply font size
-  root.style.setProperty("--font-size", `${settings.fontSize}px`);
-  console.log("Font size set to:", settings.fontSize, "px");
-}
-
-// Show settings modal
-function showSettingsModal(): void {
-  // Load current settings before showing
-  loadSettingsFromMain();
-  $settingsModal.style.display = "flex";
-}
-
-// Hide settings modal
-function hideSettingsModal(): void {
-  $settingsModal.style.display = "none";
-}
-
-// Save settings
-async function saveSettings(): Promise<void> {
-  const settings: typeof DEFAULT_SETTINGS = {
-    theme: $settingTheme.value as typeof DEFAULT_SETTINGS.theme,
-    fontFamily: $settingFontFamily.value,
-    fontSize: parseInt($settingFontSize.value, 10),
-    autosaveEnabled: $settingAutosaveEnabled.checked,
-    autosaveInterval: parseInt($settingAutosaveInterval.value, 10) * 1000,
-  };
-  
-  try {
-    await window.electronAPI.settings.save(settings);
-    applySettingsToUI(settings);
-    
-    // Update autosave if it changed
-    if (settings.autosaveEnabled) {
-      autosaveModule.enable(settings.autosaveInterval);
-    } else {
-      autosaveModule.disable();
-    }
-    
-    hideSettingsModal();
-    console.log("Settings saved");
-  } catch (error) {
-    console.error("Failed to save settings:", error);
-  }
-}
-
-// Reset settings to defaults
-async function resetSettings(): Promise<void> {
-  const defaultSettings: typeof DEFAULT_SETTINGS = {
-    theme: "light",
-    fontFamily: "monospace",
-    fontSize: 14,
-    autosaveEnabled: true,
-    autosaveInterval: 30000,
-  };
-  
-  // Update UI
-  $settingTheme.value = defaultSettings.theme;
-  $settingFontFamily.value = defaultSettings.fontFamily;
-  $settingFontSize.value = defaultSettings.fontSize.toString();
-  $settingFontSizeValue.textContent = defaultSettings.fontSize.toString();
-  $settingAutosaveEnabled.checked = defaultSettings.autosaveEnabled;
-  $settingAutosaveInterval.value = (defaultSettings.autosaveInterval / 1000).toString();
-  $settingAutosaveIntervalValue.textContent = (defaultSettings.autosaveInterval / 1000).toString();
-  
-  // Save to disk
-  try {
-    await window.electronAPI.settings.save(defaultSettings);
-    applySettingsToUI(defaultSettings);
-    
-    // Update autosave
-    autosaveModule.enable(defaultSettings.autosaveInterval);
-    
-    console.log("Settings reset to defaults");
-  } catch (error) {
-    console.error("Failed to reset settings:", error);
-  }
-}
-
-// Settings modal event listeners
-$settingsCloseBtn.addEventListener("click", hideSettingsModal);
-$settingsSaveBtn.addEventListener("click", saveSettings);
-$settingsResetBtn.addEventListener("click", resetSettings);
-
-// Update font size value display
-$settingFontSize.addEventListener("input", () => {
-  $settingFontSizeValue.textContent = $settingFontSize.value;
-});
-
-// Update autosave interval value display
-$settingAutosaveInterval.addEventListener("input", () => {
-  $settingAutosaveIntervalValue.textContent = $settingAutosaveInterval.value;
-});
-
-// Listen for open-settings command from menu or shortcut
-ipcOn("open-settings", () => {
-  showSettingsModal();
-});
-
-// Close settings modal when clicking outside
-$settingsModal.addEventListener("click", (event) => {
-  if (event.target === $settingsModal) {
-    hideSettingsModal();
-  }
-});
-
-// Close settings modal on Escape key
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && $settingsModal.style.display === "flex") {
-    hideSettingsModal();
-  }
-});
-
-// Keyboard Shortcuts Modal
-const $keyboardShortcutsModal = document.getElementById("keyboard-shortcuts-modal") as HTMLDivElement;
-const $keyboardShortcutsCloseBtn = document.getElementById("keyboard-shortcuts-close-btn") as HTMLButtonElement;
-
-function showKeyboardShortcutsModal(): void {
-  $keyboardShortcutsModal.style.display = "flex";
-}
-
-function hideKeyboardShortcutsModal(): void {
-  $keyboardShortcutsModal.style.display = "none";
-}
-
-$keyboardShortcutsCloseBtn.addEventListener("click", hideKeyboardShortcutsModal);
-
-$keyboardShortcutsModal.addEventListener("click", (event) => {
-  if (event.target === $keyboardShortcutsModal) {
-    hideKeyboardShortcutsModal();
-  }
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && $keyboardShortcutsModal.style.display === "flex") {
-    hideKeyboardShortcutsModal();
-  }
-});
-
-ipcOn("show-keyboard-shortcuts", () => {
-  showKeyboardShortcutsModal();
-});
-
-// Export Modal
-const $exportModal = document.getElementById("export-modal") as HTMLDivElement;
-const $exportCloseBtn = document.getElementById("export-close-btn") as HTMLButtonElement;
-const $exportCancelBtn = document.getElementById("export-cancel-btn") as HTMLButtonElement;
-const $exportConfirmBtn = document.getElementById("export-confirm-btn") as HTMLButtonElement;
-
-function showExportModal(): void {
-  $exportModal.style.display = "flex";
-}
-
-function hideExportModal(): void {
-  $exportModal.style.display = "none";
-}
-
-async function exportDocument(): Promise<void> {
-  const markdown = editorModule.getContent();
-  const fullFileName = $title.textContent || 'exported-document';
-  
-  // Extract just the filename from the full path
-  const fileName = fullFileName.split(/[\\/]/).pop()?.replace(/\.md$/, '') || 'exported-document';
-
-  hideExportModal();
-
-  // Export to HTML with styled content
-  const html = await exportService.exportToHtml(markdown, fileName);
-
-  try {
-    const filePath = await ipcExport.toHtml(html, fileName + '.html');
-    if (filePath) {
-      console.log('Exported to:', filePath);
-    } else {
-      // IPC canceled, use download fallback
-      exportService.downloadHtml(html, fileName + '.html');
-    }
-  } catch (error) {
-    // IPC failed, use download fallback
-    console.log('IPC export failed, using download:', error);
-    exportService.downloadHtml(html, fileName + '.html');
-  }
-}
-
-$exportCloseBtn.addEventListener("click", hideExportModal);
-$exportCancelBtn.addEventListener("click", hideExportModal);
-$exportConfirmBtn.addEventListener("click", exportDocument);
-
-$exportModal.addEventListener("click", (event) => {
-  if (event.target === $exportModal) {
-    hideExportModal();
-  }
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && $exportModal.style.display === "flex") {
-    hideExportModal();
-  }
-});
-
-ipcOn("export-document", () => {
-  showExportModal();
-});
-
-ipcOn("insert-table", () => {
-  showInsertTableModal();
-});
-
-// Insert Table Modal
-const $insertTableModal = document.getElementById("insert-table-modal") as HTMLDivElement;
-const $insertTableCloseBtn = document.getElementById("insert-table-close-btn") as HTMLButtonElement;
-const $insertTableCancelBtn = document.getElementById("insert-table-cancel-btn") as HTMLButtonElement;
-const $insertTableConfirmBtn = document.getElementById("insert-table-confirm-btn") as HTMLButtonElement;
-const $tableRows = document.getElementById("table-rows") as HTMLInputElement;
-const $tableColumns = document.getElementById("table-columns") as HTMLInputElement;
-const $tableHeader = document.getElementById("table-header") as HTMLInputElement;
-
-// Initialize table editor
+// 6. Table Orchestrator
+import { initTable } from './orchestrators/tableOrchestrator.js';
 const tableEditor = new TableEditorModule($editor);
+initTable(editorModule, tableEditor);
 
-function showInsertTableModal(): void {
-  $insertTableModal.style.display = "flex";
-}
+// 7. IPC Handlers Orchestrator
+import { initIPC } from './orchestrators/ipcHandlers.js';
+initIPC(
+  stateManager,
+  editorModule,
+  previewModule,
+  searchManager,
+  fileTreeModule,
+  autosaveModule,
+  tocModule,
+  wordCountModule,
+  lineNumbersModule,
+  fileService,
+  loadFile,
+  loadFileContentOnly,
+  hideLocalSearch,
+  hideGlobalSearch,
+  toggleToc,
+  () => tocModule.update(editorModule.getContent()),
+  () => {
+    return stateManager.get("isEditMode")
+      ? editorModule.getContent()
+      : previewModule.getHtmlContent();
+  },
+  editMode,
+  previewMode,
+  scrollToSection,
+  addToRecentFiles,
+  openDocument,
+  ipcOn,
+  ipcSend
+);
 
-function hideInsertTableModal(): void {
-  $insertTableModal.style.display = "none";
-}
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
 
-function insertTable(): void {
-  const rows = parseInt($tableRows.value, 10) || 3;
-  const columns = parseInt($tableColumns.value, 10) || 3;
-  const headerText = $tableHeader.value || 'Header';
-
-  hideInsertTableModal();
-
-  tableEditor.insertTable({
-    rows: Math.min(Math.max(rows, 1), 20),
-    columns: Math.min(Math.max(columns, 1), 10),
-    headerText
-  });
-}
-
-$insertTableCloseBtn.addEventListener("click", hideInsertTableModal);
-$insertTableCancelBtn.addEventListener("click", hideInsertTableModal);
-$insertTableConfirmBtn.addEventListener("click", insertTable);
-
-$insertTableModal.addEventListener("click", (event) => {
-  if (event.target === $insertTableModal) {
-    hideInsertTableModal();
-  }
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && $insertTableModal.style.display === "flex") {
-    hideInsertTableModal();
-  }
-});
-
-// Initialize
 console.log("Renderer process initialized");
-updateModeIndicator(); // Initialize mode indicator
+updateModeIndicator();
 
 // Load settings on startup
-loadSettingsFromMain();
+initializeSettings();
 
-// Show mode indicator on main div hover (CSS handles this)
+// Show recent opens menu on startup
 ipcSend("open-recent");

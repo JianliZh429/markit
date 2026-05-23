@@ -1,12 +1,14 @@
 /**
  * Search Orchestrator
- * Handles local/global search UI wiring (keep searchManager.ts for logic)
+ * Handles local/global search UI wiring (keeps searchManager.ts for logic)
+ * 
+ * Extracted from renderer.ts (originally ~200 lines of search-related code)
  */
 
 import { SearchManager } from "../modules/searchManager.js";
 import { stateManager } from "../state.js";
 
-// DOM elements for search
+// DOM elements
 const $localSearch = document.getElementById("local-search") as HTMLDivElement;
 const $localSearchInput = document.getElementById("local-search-input") as HTMLInputElement;
 const $localSearchResult = document.getElementById("local-search-result") as HTMLDivElement;
@@ -30,30 +32,35 @@ const $globalSearchRegex = document.getElementById("global-search-regex") as HTM
 const $globalReplaceInput = document.getElementById("global-replace-input") as HTMLInputElement;
 const $globalReplaceAllBtn = document.getElementById("global-replace-all-btn") as HTMLButtonElement;
 
-// Dependencies
-let searchManager: SearchManager;
-let editorModule: any; // Will be passed in
-let previewModule: any; // Will be passed in
-let fileTreeModule: any; // Will be passed in
+// Dependencies (injected via init)
+let searchManager: SearchManager | null = null;
+let editorModule: any = null;
+let previewModule: any = null;
+let fileTreeModule: any = null;
+let ipcImage: any = null;
+let loadFileFn: ((filePath: string) => Promise<void>) | null = null;
 
 // Initialize with dependencies
-export function initializeSearchOrchestrator(
+export function initSearch(
   _searchManager: SearchManager,
   _editorModule: any,
   _previewModule: any,
-  _fileTreeModule: any
+  _fileTreeModule: any,
+  _ipcImage: any,
+  _loadFileFn: (filePath: string) => Promise<void>
 ): void {
   searchManager = _searchManager;
   editorModule = _editorModule;
   previewModule = _previewModule;
   fileTreeModule = _fileTreeModule;
-  
+  ipcImage = _ipcImage;
+  loadFileFn = _loadFileFn;
   setupEventListeners();
 }
 
 // Set up event listeners
 function setupEventListeners(): void {
-  // Local search input
+  // Local search input enter key
   $localSearchInput.addEventListener("keydown", (event) => {
     if (event.code === "Enter") {
       const searchTerm = (event.target as HTMLInputElement).value;
@@ -61,7 +68,7 @@ function setupEventListeners(): void {
     }
   });
 
-  // Global search input
+  // Global search input enter key
   $globalSearchInput.addEventListener("keydown", async (event) => {
     if (event.code === "Enter") {
       const keyword = (event.target as HTMLInputElement).value;
@@ -69,23 +76,22 @@ function setupEventListeners(): void {
     }
   });
 
-  // Handle search input
+  // Handle search input change
   $localSearchInput.addEventListener("input", () => {
     const searchTerm = $localSearchInput.value;
     const content = currentContent();
     const caseSensitive = $localSearchCaseSensitive.checked;
     const useRegex = $localSearchRegex.checked;
-    // Don't auto-select in editor when typing - keep focus on search input
-    searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
+    searchManager?.search(content, searchTerm, caseSensitive, useRegex, false);
   });
 
-  // Handle search options change
+  // Handle search option changes
   $localSearchCaseSensitive.addEventListener("change", () => {
     const searchTerm = $localSearchInput.value;
     const content = currentContent();
     const caseSensitive = $localSearchCaseSensitive.checked;
     const useRegex = $localSearchRegex.checked;
-    searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
+    searchManager?.search(content, searchTerm, caseSensitive, useRegex, false);
   });
 
   $localSearchRegex.addEventListener("change", () => {
@@ -93,29 +99,29 @@ function setupEventListeners(): void {
     const content = currentContent();
     const caseSensitive = $localSearchCaseSensitive.checked;
     const useRegex = $localSearchRegex.checked;
-    searchManager.search(content, searchTerm, caseSensitive, useRegex, false);
+    searchManager?.search(content, searchTerm, caseSensitive, useRegex, false);
   });
 
   // Handle Replace button
   $localReplaceBtn.addEventListener("click", () => {
     const replacement = $localReplaceInput.value;
-    searchManager.replaceCurrent(replacement);
+    searchManager?.replaceCurrent(replacement);
   });
 
   // Handle Replace All button
   $localReplaceAllBtn.addEventListener("click", () => {
     const replacement = $localReplaceInput.value;
-    const count = searchManager.replaceAll(replacement);
-    if (count > 0) {
-      // Update editor content in the DOM
-      editorModule.setContent(searchManager.getState()?.content || "");
+    const count = searchManager?.replaceAll(replacement) || 0;
+    if (count > 0 && editorModule) {
+      editorModule.setContent(searchManager!.getState()?.content || "");
     }
   });
 
-  // Handle Find Next (Enter in search box)
+  // Find Next/Previous via Enter key
   $localSearchInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
+      if (!searchManager) return;
       if (event.shiftKey) {
         searchManager.findPrevious();
       } else {
@@ -124,47 +130,13 @@ function setupEventListeners(): void {
     }
   });
 
-  // Global shortcut for Find Next/Previous (F3, Shift+F3, Cmd+G, Cmd+Shift+G)
-  document.addEventListener("keydown", (event) => {
-    // F3 for Find Next/Previous
-    if (event.key === "F3") {
-      event.preventDefault();
-      if (searchManager.hasActiveSearch()) {
-        if (event.shiftKey) {
-          searchManager.findPrevious();
-        } else {
-          searchManager.findNext();
-        }
-      } else {
-        // If no active search, open search panel
-        $localSearch.style.display = "block";
-        $localSearchInput.focus();
-        $previewerContainer.style.display = "none";
-        $editorContainer.style.display = "none";
-        $main.classList.add("search-active");
-      }
-    }
-
-    // Cmd+G / Ctrl+G for Find Next
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "g") {
-      event.preventDefault();
-      if (searchManager.hasActiveSearch()) {
-        if (event.shiftKey) {
-          searchManager.findPrevious();
-        } else {
-          searchManager.findNext();
-        }
-      }
-    }
-  });
-
-  // Handle global replace all
+  // Global replace all
   $globalReplaceAllBtn.addEventListener("click", async () => {
     const searchTerm = $globalSearchInput.value;
     const replacement = $globalReplaceInput.value;
     const caseSensitive = $globalSearchCaseSensitive.checked;
     const useRegex = $globalSearchRegex.checked;
-    const rootDir = fileTreeModule.getRootDirectory();
+    const rootDir = fileTreeModule?.getRootDirectory();
 
     if (!rootDir || !searchTerm) {
       alert("Please open a folder and enter a search term first.");
@@ -172,9 +144,7 @@ function setupEventListeners(): void {
     }
 
     const confirmMsg = `Replace all occurrences of "${searchTerm}" with "${replacement}" in all .md files?\n\nThis action cannot be undone.`;
-    if (!confirm(confirmMsg)) {
-      return;
-    }
+    if (!confirm(confirmMsg)) return;
 
     try {
       const results = await (window as any).electronAPI.replaceInFiles(
@@ -189,7 +159,6 @@ function setupEventListeners(): void {
       if (results.length > 0) {
         const totalReplacements = results.reduce((sum, r) => sum + r.replacements, 0);
         alert(`Replaced ${totalReplacements} occurrences across ${results.length} files.`);
-        // Refresh the search to show updated results
         if (searchTerm) {
           await globalSearch(searchTerm);
         }
@@ -201,27 +170,58 @@ function setupEventListeners(): void {
       alert("Failed to perform replace. Check console for details.");
     }
   });
+
+  // Global shortcut for Find Next/Previous (F3, Cmd+G)
+  document.addEventListener("keydown", (event) => {
+    // F3 for Find Next/Previous
+    if (event.key === "F3") {
+      event.preventDefault();
+      if (searchManager?.hasActiveSearch()) {
+        if (event.shiftKey) {
+          searchManager.findPrevious();
+        } else {
+          searchManager.findNext();
+        }
+      } else {
+        handleLocalSearch();
+        $localSearchInput.focus();
+        $previewerContainer.style.display = "none";
+        $editorContainer.style.display = "none";
+        $main.classList.add("search-active");
+      }
+    }
+
+    // Cmd+G / Ctrl+G for Find Next/Previous
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "g") {
+      event.preventDefault();
+      if (searchManager?.hasActiveSearch()) {
+        if (event.shiftKey) {
+          searchManager.findPrevious();
+        } else {
+          searchManager.findNext();
+        }
+      }
+    }
+  });
 }
 
-// Helper function to get current content based on mode
+// Helper functions
 function currentContent(): string {
   return stateManager.get("isEditMode")
-    ? editorModule.getContent()
-    : previewModule.getHtmlContent();
+    ? editorModule?.getContent()
+    : previewModule?.getHtmlContent()
+    || "";
 }
 
-// Hide local search panel
 function hideLocalSearch(): void {
   $localSearch.style.display = "none";
 }
 
-// Hide global search panel
 function hideGlobalSearch(): void {
   $globalSearch.style.display = "none";
   $globalSearchResult.style.display = "none";
 }
 
-// Check if global search is active
 function isGlobalSearchOn(): boolean {
   return (
     $globalSearch.style.display !== "none" ||
@@ -229,14 +229,13 @@ function isGlobalSearchOn(): boolean {
   );
 }
 
-// Local search
 function localSearch(searchTerm: string): void {
   hideGlobalSearch();
   const content = currentContent();
   const flags = $localSearchCaseSensitive.checked ? "g" : "gi";
   const regex = $localSearchRegex.checked
     ? new RegExp(searchTerm, flags)
-    : new RegExp(searchTerm.replace(/[.*+?^${}()|[\\\]]/g, "\\$&"), flags);
+    : new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
   const matches = content.match(regex);
 
   if (matches) {
@@ -251,18 +250,15 @@ function localSearch(searchTerm: string): void {
   }
 }
 
-// Global search
 async function globalSearch(keyword: string): Promise<void> {
   hideLocalSearch();
-  const rootDir = fileTreeModule.getRootDirectory();
+  const rootDir = fileTreeModule?.getRootDirectory();
   const results = await (window as any).electronAPI.searchInFiles(rootDir, keyword);
   console.log("Search results:", results);
 
-  // Group results by file with collapsible sections
   $globalSearchResult.innerHTML = results
     .map((result: any) => {
       const matchCount = result.matches.length;
-      
       return `
         <div class="search-file-group" data-file="${result.file}">
           <div class="search-file-header">
@@ -282,47 +278,38 @@ async function globalSearch(keyword: string): Promise<void> {
     })
     .join("");
 
-  // Add click handlers for file groups (expand/collapse)
+  // Add click handlers for expand/collapse
   $globalSearchResult.querySelectorAll(".search-file-header").forEach((header) => {
     header.addEventListener("click", () => {
       const group = header.parentElement as HTMLElement;
       const matches = group.querySelector(".search-file-matches") as HTMLElement;
-      const isExpanded = matches.classList.contains("expanded");
-      
-      // Toggle expanded state
       matches.classList.toggle("expanded");
       header.classList.toggle("expanded");
     });
-    
+
     // Double-click to open file
     header.addEventListener("dblclick", (e) => {
       e.stopPropagation();
-      const group = header.parentElement as HTMLElement;
-      const filePath = group.dataset.file;
-      if (filePath) {
-        // Close search and open file
+      const filePath = (header.parentElement as HTMLElement)?.dataset.file;
+      if (filePath && loadFileFn) {
         hideGlobalSearch();
         $editorContainer.style.display = "flex";
         $previewerContainer.style.display = "none";
-        // This would call the main loadFile function
+        loadFileFn(filePath);
       }
     });
   });
 
-  // Add click handlers for match items (open file at specific location)
+  // Add click handlers for match items
   $globalSearchResult.querySelectorAll(".search-match-item").forEach((item) => {
     item.addEventListener("dblclick", () => {
       const group = item.closest(".search-file-group") as HTMLElement;
       const filePath = group?.dataset.file;
-      const line = parseInt(item.dataset.line || "0", 10);
-
-      if (filePath) {
-        // Close search and open file at specific line
+      if (filePath && loadFileFn) {
         hideGlobalSearch();
         $editorContainer.style.display = "flex";
         $previewerContainer.style.display = "none";
-        // This would call the main loadFile function
-        // TODO: Scroll to specific line after file loads
+        loadFileFn(filePath);
       }
     });
   });
@@ -330,22 +317,18 @@ async function globalSearch(keyword: string): Promise<void> {
   $globalSearchResult.style.display = "block";
 }
 
-// Export functions for IPC handlers
+// Exported IPC handler functions
 export function handleLocalSearch(): void {
   if ($localSearch.style.display === "none") {
     $localSearch.style.display = "block";
     $localSearchInput.focus();
     
-    // Mode-aware search display
     const isEditMode = stateManager.get("isEditMode");
     if (isEditMode) {
-      // In Edit mode: keep editor visible, hide search result panel
-      // User can navigate with F3/Cmd+G
       $editorContainer.style.display = "flex";
       $previewerContainer.style.display = "none";
       $localSearchResult.style.display = "none";
     } else {
-      // In Preview mode: show search results panel
       $editorContainer.style.display = "none";
       $previewerContainer.style.display = "none";
       $localSearchResult.style.display = "block";
@@ -353,11 +336,10 @@ export function handleLocalSearch(): void {
     }
     
     hideGlobalSearch();
-    $main.classList.add("search-active");  // Hide mode indicator
+    $main.classList.add("search-active");
   } else {
     $localSearch.style.display = "none";
     
-    // Restore containers based on mode
     const isEditMode = stateManager.get("isEditMode");
     if (isEditMode) {
       $editorContainer.style.display = "flex";
@@ -367,8 +349,8 @@ export function handleLocalSearch(): void {
       $previewerContainer.style.display = "flex";
     }
     
-    searchManager.clear();
-    $main.classList.remove("search-active");  // Show mode indicator
+    searchManager?.clear();
+    $main.classList.remove("search-active");
   }
 }
 
@@ -381,7 +363,7 @@ export function handleGlobalSearch(): void {
   } else {
     $globalSearch.style.display = "block";
     $globalSearchInput.focus();
-    $globalSearchResult.innerHTML = "";  // Clear previous results
+    $globalSearchResult.innerHTML = "";
     $globalSearchResult.style.display = "none";
     $previewerContainer.style.display = "none";
     $editorContainer.style.display = "none";
