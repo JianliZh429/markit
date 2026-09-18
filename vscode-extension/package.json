@@ -1,0 +1,50 @@
+{
+  "name": "markit-vscode",
+  "displayName": "Markit",
+  "description": "A focused Markdown preview for VS Code",
+  "version": "0.1.0",
+  "publisher": "jianlizhang",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onCommand:markit.openPreview",
+    "onLanguage:markdown"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "markit.openPreview",
+        "title": "Markit: Open Preview"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "markit.openPreview",
+          "when": "editorLangId == markdown",
+          "group": "navigation@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "markit.openPreview",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "markit.openPreview",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m",
+        "when": "editorLangId == markdown"
+      }
+    ]
+  }
+}
